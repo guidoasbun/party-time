@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database for development
+  postgres:
+    image: postgres:16-alpine
+    container_name: party-time-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: party_time
+      POSTGRES_USER: party_admin
+      POSTGRES_PASSWORD: party_secure_2024
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - party_time_db_data:/var/lib/postgresql/data
+      - ./backend/sql/init:/docker-entrypoint-initdb.d
+    networks:
+      - party-time-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U party_admin -d party_time"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session management
+  redis:
+    image: redis:7-alpine
+    container_name: party-time-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - party_time_redis_data:/data
+    networks:
+      - party-time-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Backend FastAPI service (for development)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: party-time-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # Exclude virtual environment from volume mount
+    environment:
+      - DATABASE_URL=postgresql://party_admin:party_secure_2024@postgres:5432/party_time
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+      - DEBUG=true
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - party-time-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Frontend Next.js service (for development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: party-time-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # Exclude node_modules from volume mount
+      - /app/.next  # Exclude .next from volume mount
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NODE_ENV=development
+    depends_on:
+      - backend
+    networks:
+      - party-time-network
+    command: npm run dev
+
+volumes:
+  party_time_db_data:
+    driver: local
+  party_time_redis_data:
+    driver: local
+
+networks:
+  party-time-network:
+    driver: bridge
