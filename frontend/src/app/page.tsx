@@ -40,7 +40,7 @@ export default function Home() {
                   </div>
                   <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Event Management</h3>
                   <p className="mt-5 text-base text-gray-500">
-                    Create and manage events with ease. From weddings to corporate events, we've got you covered.
+                    Create and manage events with ease. From weddings to corporate events, we&apos;ve got you covered.
                   </p>
                 </div>
               </div>
