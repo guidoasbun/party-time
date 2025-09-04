@@ -52,8 +52,8 @@
   * Configure docker-compose for local development  
 * **Days 3-4:** Database and authentication setup  
   * Design and implement PostgreSQL schema (users, events, guests tables)  
-  * Set up AWS Cognito with email/password auth only (skip OAuth initially)  
-  * Create basic JWT token handling  
+  * Set up AWS Cognito User Pools with email/password and Google OAuth  
+  * Create basic JWT token handling with python-jose  
 * **Days 5-7:** Core API structure  
   * Implement base FastAPI routes structure  
   * Set up SQLAlchemy models and Alembic migrations  
@@ -64,16 +64,20 @@
 
 **Goals:** Complete user registration and authentication flow
 
-* **Days 1-3:** Frontend authentication  
-  * Build login/register pages with React Hook Form  
+* **Days 1-3:** Frontend authentication setup  
+  * Configure NextAuth.js with AWS Cognito provider
+  * Build custom login/register pages with React Hook Form  
+  * Set up Google OAuth integration
   * Implement protected routes and auth context  
   * Create basic layout components (header, sidebar)  
 * **Days 4-5:** Backend authentication completion  
-  * User registration endpoint with email verification  
-  * Password reset functionality  
-  * Role-based access control (planner vs guest)  
+  * JWT token validation with AWS Cognito
+  * User registration flow with email verification  
+  * Password reset functionality via Cognito
+  * Role-based access control (admin, planner, guest)  
 * **Days 6-7:** Integration and testing  
-  * Connect frontend to backend auth  
+  * Test both email/password and Google OAuth flows
+  * Connect frontend to backend auth with JWT tokens
   * Test authentication flow end-to-end  
   * Fix bugs and handle edge cases  
 * **Deliverables:** Complete authentication system, user registration/login working

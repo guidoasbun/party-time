@@ -4,7 +4,7 @@
 
  
 
-Party-Time is a comprehensive event planning web application designed to streamline the entire event management process from initial planning to execution. The platform enables event planners to create and manage various types of events (weddings, birthdays, corporate events, etc.) while providing tools for venue discovery through Google Places API integration, guest list management with Excel import capabilities, and real-time budget tracking across multiple expense categories. The application features a multi-tier user system supporting admins, planners, and guests, with secure authentication through AWS Cognito and Google OAuth.
+Party-Time is a comprehensive event planning web application designed to streamline the entire event management process from initial planning to execution. The platform enables event planners to create and manage various types of events (weddings, birthdays, corporate events, etc.) while providing tools for venue discovery through Google Places API integration, guest list management with Excel import capabilities, and real-time budget tracking across multiple expense categories. The application features a multi-tier user system supporting admins, planners, and guests, with secure authentication through AWS Cognito supporting both email/password registration and Google OAuth social login.
 
 The platform offers advanced features including interactive seating chart creation, automated timeline generation based on event types, integrated chat rooms for real-time communication between all stakeholders, and AI-powered assistance for event planning guidance. Additional functionality encompasses RSVP management, email invitation systems, vendor management tools, payment processing with split payment options, and calendar integration for seamless scheduling. Built with a modern tech stack featuring FastAPI backend, Next.js frontend, and comprehensive AWS cloud infrastructure including ECS, RDS, and S3, the application emphasizes robust DevOps practices with Terraform infrastructure as code, Docker containerization, and automated CI/CD pipelines through GitHub Actions.
 
@@ -18,9 +18,11 @@ The platform offers advanced features including interactive seating chart creati
 
 ·   	**User Authentication System**
 
-* AWS Cognito integration with hosted UI  
-  * Google OAuth authentication  
+* AWS Cognito User Pools with hosted UI
+  * Email/password registration and login
+  * Google OAuth 2.0 social authentication  
   * Multi-tier user roles (admin, planner, guest)
+  * JWT token-based API authentication
 
   ·   	**Event Management**
 
@@ -51,6 +53,7 @@ The platform offers advanced features including interactive seating chart creati
   * Complete Terraform infrastructure setup  
   * Docker containerization for local development  
   * AWS ECS with Fargate deployment  
+  * AWS Cognito User Pools setup with email/password and Google OAuth
   * GitHub Actions CI/CD pipeline with automated testing  
   * Monitoring setup with CloudWatch and Sentry  
   * Secrets management with AWS Secrets Manager
@@ -253,16 +256,21 @@ The platform offers advanced features including interactive seating chart creati
 
 **AWS Cognito Integration**
 
-·   	**Multi-tier Authentication**
+·   	**Authentication Methods**
 
-* AWS Cognito User Pools  
-  * Google OAuth integration  
-  * JWT token-based authentication
+* AWS Cognito User Pools with multiple sign-in options
+  * Email/password registration and login
+  * Google OAuth 2.0 social authentication
+  * AWS Cognito hosted UI for unified login experience
+  * Custom login/registration pages as alternative
+  * JWT token-based API authentication with python-jose
 
   ·   	**User Roles & Permissions**
 
   * Admin, Planner, and Guest role hierarchy  
   * Role-based access control (RBAC)
+  * Secure token storage and refresh mechanism
+  * Session management and logout functionality
 
 ## File Storage & Media
 

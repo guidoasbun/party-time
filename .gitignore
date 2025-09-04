@@ -133,3 +133,6 @@ tmp/
 temp/
 *.tmp
 .parcel-cache/
+
+# Claude-related files
+.claude/
