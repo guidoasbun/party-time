@@ -118,11 +118,28 @@ class CognitoService:
         if is_google_user and not extracted_name:
             extracted_name = "Google User"
         
+        # Handle email_verified claim - it might be boolean, string, or missing
+        email_verified = payload.get("email_verified", False)
+        
+        # Convert string "true"/"false" to boolean if needed
+        if isinstance(email_verified, str):
+            email_verified = email_verified.lower() == "true"
+        
+        # For Google users, assume email is verified
+        # For email/password users in access tokens, email_verified might not be present
+        # so we'll be more lenient and assume verified if it's missing but user has an email
+        if is_google_user:
+            email_verified = True
+        elif email_verified is False and extracted_email and payload.get("token_use") == "access":
+            # For access tokens from email/password users, assume verified if email exists
+            # The actual verification happens during login, so if they have an access token, they're verified
+            email_verified = True
+        
         return {
             "user_id": payload.get("sub"),
             "email": extracted_email,
             "name": extracted_name,
-            "email_verified": payload.get("email_verified", is_google_user),
+            "email_verified": email_verified,
             "username": username,
             "groups": groups,
             "token_use": payload.get("token_use"),

@@ -60,11 +60,11 @@ export default function DashboardPage() {
 
   const testProtectedRoute = async () => {
     try {
-      if (!session?.accessToken) return
+      if (!session?.idToken) return
       
       const response = await fetch("http://localhost:8000/api/v1/auth/protected", {
         headers: {
-          "Authorization": `Bearer ${session.accessToken}`,
+          "Authorization": `Bearer ${session.idToken}`,
           "Content-Type": "application/json",
         },
       })
