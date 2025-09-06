@@ -151,6 +151,37 @@ const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? process.env.NEXTAUTH_COOKIE_DOMAIN : undefined,
+      }
+    },
+    callbackUrl: {
+      name: `next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      }
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      }
+    }
+  },
+  useSecureCookies: process.env.NODE_ENV === 'production',
   secret: process.env.NEXTAUTH_SECRET,
 }
 
