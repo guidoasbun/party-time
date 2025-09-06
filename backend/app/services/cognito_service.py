@@ -1,9 +1,14 @@
 import json
 import httpx
+import boto3
 from jose import jwt, JWTError
+from botocore.exceptions import ClientError
 from typing import Optional, Dict, Any
 import asyncio
 import time
+import hmac
+import hashlib
+import base64
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -20,6 +25,14 @@ class CognitoService:
         self._jwks_cache = None
         self._jwks_cache_time = 0
         self._cache_duration = 3600  # Cache for 1 hour
+        
+        # Initialize boto3 client for Cognito operations
+        self.cognito_client = boto3.client(
+            'cognito-idp',
+            region_name=self.region,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY
+        )
     
     async def get_jwks(self) -> Dict[str, Any]:
         """Fetch and cache JWKS from Cognito"""
@@ -145,6 +158,241 @@ class CognitoService:
             "token_use": payload.get("token_use"),
             "is_google_user": is_google_user,
         }
+    
+    def _calculate_secret_hash(self, username: str) -> str:
+        """Calculate secret hash for Cognito client operations"""
+        message = bytes(username + self.client_id, 'utf-8')
+        key = bytes(self.client_secret, 'utf-8')
+        secret_hash = base64.b64encode(
+            hmac.new(key, message, digestmod=hashlib.sha256).digest()
+        ).decode()
+        return secret_hash
+    
+    async def register_user(self, email: str, password: str, name: str) -> Dict[str, Any]:
+        """Register a new user with Cognito"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.sign_up(
+                ClientId=self.client_id,
+                Username=email,
+                Password=password,
+                SecretHash=secret_hash,
+                UserAttributes=[
+                    {
+                        'Name': 'email',
+                        'Value': email
+                    },
+                    {
+                        'Name': 'name',
+                        'Value': name
+                    }
+                ]
+            )
+            
+            return {
+                "user_id": response['UserSub'],
+                "email": email,
+                "name": name,
+                "email_verified": False,
+                "username": email,
+                "confirmation_delivery": response.get('CodeDeliveryDetails', {})
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'UsernameExistsException':
+                raise ValueError("User with this email already exists")
+            elif error_code == 'InvalidPasswordException':
+                raise ValueError("Password does not meet requirements")
+            elif error_code == 'InvalidParameterException':
+                raise ValueError("Invalid email or parameter format")
+            else:
+                raise Exception(f"Registration failed: {error_message}")
+    
+    async def confirm_user_email(self, email: str, confirmation_code: str) -> Dict[str, Any]:
+        """Confirm user email with verification code"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.confirm_sign_up(
+                ClientId=self.client_id,
+                Username=email,
+                ConfirmationCode=confirmation_code,
+                SecretHash=secret_hash
+            )
+            
+            return {
+                "confirmed": True,
+                "message": "Email verified successfully"
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'CodeMismatchException':
+                raise ValueError("Invalid verification code")
+            elif error_code == 'ExpiredCodeException':
+                raise ValueError("Verification code has expired")
+            elif error_code == 'UserNotFoundException':
+                raise ValueError("User not found")
+            else:
+                raise Exception(f"Email verification failed: {error_message}")
+    
+    async def resend_confirmation_code(self, email: str) -> Dict[str, Any]:
+        """Resend email verification code"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.resend_confirmation_code(
+                ClientId=self.client_id,
+                Username=email,
+                SecretHash=secret_hash
+            )
+            
+            return {
+                "message": "Verification code resent",
+                "delivery": response.get('CodeDeliveryDetails', {})
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'UserNotFoundException':
+                raise ValueError("User not found")
+            elif error_code == 'InvalidParameterException':
+                raise ValueError("User is already verified")
+            else:
+                raise Exception(f"Failed to resend code: {error_message}")
+    
+    async def initiate_password_reset(self, email: str) -> Dict[str, Any]:
+        """Initiate password reset process"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.forgot_password(
+                ClientId=self.client_id,
+                Username=email,
+                SecretHash=secret_hash
+            )
+            
+            return {
+                "message": "Password reset code sent",
+                "delivery": response.get('CodeDeliveryDetails', {})
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'UserNotFoundException':
+                raise ValueError("User not found")
+            elif error_code == 'InvalidParameterException':
+                raise ValueError("User is not confirmed or invalid parameter")
+            else:
+                raise Exception(f"Password reset failed: {error_message}")
+    
+    async def confirm_password_reset(self, email: str, confirmation_code: str, new_password: str) -> Dict[str, Any]:
+        """Confirm password reset with new password"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.confirm_forgot_password(
+                ClientId=self.client_id,
+                Username=email,
+                ConfirmationCode=confirmation_code,
+                Password=new_password,
+                SecretHash=secret_hash
+            )
+            
+            return {
+                "message": "Password reset successfully"
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'CodeMismatchException':
+                raise ValueError("Invalid confirmation code")
+            elif error_code == 'ExpiredCodeException':
+                raise ValueError("Confirmation code has expired")
+            elif error_code == 'InvalidPasswordException':
+                raise ValueError("New password does not meet requirements")
+            elif error_code == 'UserNotFoundException':
+                raise ValueError("User not found")
+            else:
+                raise Exception(f"Password reset confirmation failed: {error_message}")
+    
+    async def get_user_profile(self, access_token: str) -> Dict[str, Any]:
+        """Get user profile using access token"""
+        try:
+            response = self.cognito_client.get_user(
+                AccessToken=access_token
+            )
+            
+            # Extract attributes
+            attributes = {}
+            for attr in response.get('UserAttributes', []):
+                attributes[attr['Name']] = attr['Value']
+            
+            return {
+                "user_id": response.get('Username'),
+                "email": attributes.get('email'),
+                "name": attributes.get('name'),
+                "email_verified": attributes.get('email_verified', 'false').lower() == 'true',
+                "username": response.get('Username'),
+                "created_at": response.get('UserCreateDate').isoformat() if response.get('UserCreateDate') else None,
+                "updated_at": response.get('UserLastModifiedDate').isoformat() if response.get('UserLastModifiedDate') else None
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'NotAuthorizedException':
+                raise ValueError("Invalid access token")
+            else:
+                raise Exception(f"Failed to get user profile: {error_message}")
+    
+    async def update_user_profile(self, access_token: str, name: Optional[str] = None) -> Dict[str, Any]:
+        """Update user profile attributes"""
+        try:
+            user_attributes = []
+            updated_fields = []
+            
+            if name is not None:
+                user_attributes.append({
+                    'Name': 'name',
+                    'Value': name
+                })
+                updated_fields.append('name')
+            
+            if user_attributes:
+                response = self.cognito_client.update_user_attributes(
+                    UserAttributes=user_attributes,
+                    AccessToken=access_token
+                )
+            
+            return {
+                "message": "Profile updated successfully",
+                "updated_fields": updated_fields
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'NotAuthorizedException':
+                raise ValueError("Invalid access token")
+            elif error_code == 'InvalidParameterException':
+                raise ValueError("Invalid parameter value")
+            else:
+                raise Exception(f"Profile update failed: {error_message}")
 
 
 # Global instance
