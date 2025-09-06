@@ -28,12 +28,12 @@
 ### Phase 1.2: Frontend-Backend Integration
 **Priority**: HIGH | **Status**: 📋 PENDING | **Duration**: 1 day
 
-- [ ] Create API client utilities in `/frontend/src/lib/api.ts`
-- [ ] Update NextAuth to validate tokens with backend
-- [ ] Add axios interceptors for JWT token attachment
-- [ ] Implement protected route wrappers
-- [ ] Create API error handling utilities
-- [ ] Test API calls from frontend to backend
+- [x] Create API client utilities in `/frontend/src/lib/api.ts`
+- [x] Update NextAuth to validate tokens with backend
+- [x] Add axios interceptors for JWT token attachment
+- [x] Implement protected route wrappers
+- [x] Create API error handling utilities
+- [x] Test API calls from frontend to backend
 
 **Key Files to Create/Modify:**
 - `frontend/src/lib/api.ts` - API client utilities
