@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "@/components/ui/Button"
 
 interface UserInfo {
@@ -21,19 +21,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin")
-      return
-    }
-
-    if (status === "authenticated" && session?.idToken) {
-      // Fetch user info from backend using the ID token
-      fetchUserInfo()
-    }
-  }, [status, session, router])
-
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = useCallback(async () => {
     try {
       if (!session?.idToken) return
       
@@ -50,13 +38,25 @@ export default function DashboardPage() {
       } else {
         setError("Failed to fetch user information")
       }
-    } catch (err) {
+    } catch (error) {
       setError("Error connecting to backend")
-      console.error("Error fetching user info:", err)
+      console.error("Error fetching user info:", error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [session?.idToken])
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/signin")
+      return
+    }
+
+    if (status === "authenticated" && session?.idToken) {
+      // Fetch user info from backend using the ID token
+      fetchUserInfo()
+    }
+  }, [status, session, router, fetchUserInfo])
 
   const testProtectedRoute = async () => {
     try {
@@ -75,8 +75,9 @@ export default function DashboardPage() {
       } else {
         alert(`Protected route error: ${data.detail}`)
       }
-    } catch (err) {
+    } catch (error) {
       alert("Error calling protected route")
+      console.error("Protected route error:", error)
     }
   }
 

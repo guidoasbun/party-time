@@ -35,6 +35,23 @@ class UserRegisterResponse(BaseModel):
     message: str
 
 
+class UserLoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=1)
+
+
+class UserLoginResponse(BaseModel):
+    access_token: str
+    id_token: str
+    refresh_token: str
+    token_type: str = "Bearer"
+    expires_in: int
+    user_id: str
+    email: str
+    name: str
+    email_verified: bool
+
+
 class EmailVerificationRequest(BaseModel):
     email: EmailStr
     verification_code: str = Field(..., min_length=6, max_length=6)

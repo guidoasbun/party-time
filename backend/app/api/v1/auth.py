@@ -4,6 +4,7 @@ from typing import Dict, Any, Optional
 from app.core.auth import get_current_user, get_current_active_user
 from app.schemas.auth import (
     UserRegisterRequest, UserRegisterResponse,
+    UserLoginRequest, UserLoginResponse,
     EmailVerificationRequest, EmailVerificationResponse,
     PasswordResetRequest, PasswordResetResponse,
     PasswordResetConfirmRequest, PasswordResetConfirmResponse,
@@ -74,6 +75,35 @@ async def register_user(request: UserRegisterRequest):
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
+
+
+@router.post("/login", response_model=UserLoginResponse)
+async def login_user(request: UserLoginRequest):
+    """
+    Authenticate user with email/password and return JWT tokens
+    """
+    try:
+        result = await cognito_service.authenticate_user(
+            email=request.email,
+            password=request.password
+        )
+        
+        return UserLoginResponse(
+            access_token=result["access_token"],
+            id_token=result["id_token"],
+            refresh_token=result["refresh_token"],
+            token_type="Bearer",
+            expires_in=result["expires_in"],
+            user_id=result["user_id"],
+            email=result["email"],
+            name=result["name"],
+            email_verified=result["email_verified"]
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Authentication failed. Please try again.")
 
 
 @router.post("/verify-email", response_model=EmailVerificationResponse)
