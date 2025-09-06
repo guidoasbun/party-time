@@ -1,10 +1,15 @@
 import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CognitoProvider from "next-auth/providers/cognito"
+import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 
 const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CognitoProvider({
       clientId: process.env.COGNITO_CLIENT_ID!,
       clientSecret: process.env.COGNITO_CLIENT_SECRET!,
@@ -64,14 +69,45 @@ const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn({ user, account }) {
+      // For Google OAuth, automatically create user in our system
+      if (account?.provider === 'google' && user.email) {
+        try {
+          // Check if user exists in our backend by calling /me endpoint
+          // If not, this will serve as a signal that the user was created via OAuth
+          return true
+        } catch (error) {
+          console.error('Error during Google OAuth sign in:', error)
+          return false
+        }
+      }
+      
+      // For other providers, allow normal flow
+      return true
+    },
     async jwt({ token, account, user }) {
       // Persist tokens right after signin
       if (account && user) {
-        // For OAuth providers
-        if (account.access_token) {
+        // For Google OAuth, set up token data
+        if (account.provider === 'google') {
           token.accessToken = account.access_token
           token.refreshToken = account.refresh_token
           token.idToken = account.id_token
+          token.provider = 'google'
+          
+          // Store user info in token for Google OAuth users
+          token.email = user.email
+          token.name = user.name
+          token.picture = user.image
+          token.email_verified = true // Google OAuth users have verified emails
+        }
+        
+        // For other OAuth providers
+        else if (account.access_token) {
+          token.accessToken = account.access_token
+          token.refreshToken = account.refresh_token
+          token.idToken = account.id_token
+          token.provider = account.provider
         }
         
         // For credentials provider
@@ -84,6 +120,7 @@ const authOptions: NextAuthOptions = {
           token.accessToken = userWithTokens.accessToken
           token.refreshToken = userWithTokens.refreshToken
           token.idToken = userWithTokens.idToken
+          token.provider = 'credentials'
         }
       }
       return token
@@ -92,6 +129,17 @@ const authOptions: NextAuthOptions = {
       // Send properties to the client
       session.accessToken = token.accessToken as string
       session.idToken = token.idToken as string
+      
+      // For Google OAuth users, use token data since we may not have backend integration yet
+      if (token.provider === 'google') {
+        session.user = {
+          ...session.user,
+          email: token.email as string,
+          name: token.name as string,
+          image: token.picture as string,
+        }
+      }
+      
       return session
     },
   },

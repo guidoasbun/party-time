@@ -49,7 +49,7 @@ export function useAuth() {
 
   const loginWithGoogle = async () => {
     try {
-      await signIn('cognito', { 
+      await signIn('google', { 
         callbackUrl: '/dashboard',
         redirect: true 
       })
