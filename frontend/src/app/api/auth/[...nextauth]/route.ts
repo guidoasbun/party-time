@@ -1,6 +1,8 @@
 import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CognitoProvider from "next-auth/providers/cognito"
+import CredentialsProvider from "next-auth/providers/credentials"
+import { authApi } from "@/lib/api-client"
 
 const authOptions: NextAuthOptions = {
   providers: [
@@ -10,14 +12,75 @@ const authOptions: NextAuthOptions = {
       issuer: process.env.COGNITO_ISSUER!,
       checks: ["pkce", "state"],
     }),
+    CredentialsProvider({
+      id: "credentials",
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        try {
+          // For credentials authentication, we'll use AWS Cognito's InitiateAuth
+          // This requires implementing the backend authentication flow
+          // For now, we'll call our backend to authenticate
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error('Authentication failed')
+          }
+
+          const data = await response.json()
+          
+          if (data.access_token) {
+            return {
+              id: data.user_id || data.sub,
+              email: credentials.email,
+              name: data.name || data.given_name,
+              accessToken: data.access_token,
+              idToken: data.id_token,
+              refreshToken: data.refresh_token,
+            }
+          }
+
+          return null
+        } catch (error) {
+          console.error('Credentials authentication failed:', error)
+          return null
+        }
+      },
+    }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
-      // Persist the OAuth access_token and refresh_token to the token right after signin
-      if (account) {
-        token.accessToken = account.access_token
-        token.refreshToken = account.refresh_token
-        token.idToken = account.id_token
+    async jwt({ token, account, user }) {
+      // Persist tokens right after signin
+      if (account && user) {
+        // For OAuth providers
+        if (account.access_token) {
+          token.accessToken = account.access_token
+          token.refreshToken = account.refresh_token
+          token.idToken = account.id_token
+        }
+        
+        // For credentials provider
+        if (user.accessToken) {
+          token.accessToken = user.accessToken
+          token.refreshToken = user.refreshToken
+          token.idToken = user.idToken
+        }
       }
       return token
     },

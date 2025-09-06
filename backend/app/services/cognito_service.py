@@ -212,6 +212,65 @@ class CognitoService:
             else:
                 raise Exception(f"Registration failed: {error_message}")
     
+    async def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
+        """Authenticate user with email/password and return JWT tokens"""
+        try:
+            secret_hash = self._calculate_secret_hash(email)
+            
+            response = self.cognito_client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='USER_PASSWORD_AUTH',
+                AuthParameters={
+                    'USERNAME': email,
+                    'PASSWORD': password,
+                    'SECRET_HASH': secret_hash
+                }
+            )
+            
+            if 'ChallengeName' in response:
+                # Handle challenges like NEW_PASSWORD_REQUIRED, MFA, etc.
+                challenge_name = response['ChallengeName']
+                if challenge_name == 'NEW_PASSWORD_REQUIRED':
+                    raise ValueError("New password required. Please reset your password.")
+                elif challenge_name == 'SMS_MFA' or challenge_name == 'SOFTWARE_TOKEN_MFA':
+                    raise ValueError("MFA challenge required")
+                else:
+                    raise ValueError(f"Authentication challenge required: {challenge_name}")
+            
+            auth_result = response['AuthenticationResult']
+            
+            # Decode ID token to get user info
+            id_token = auth_result['IdToken']
+            user_info = jwt.get_unverified_claims(id_token)
+            
+            return {
+                "access_token": auth_result['AccessToken'],
+                "id_token": id_token,
+                "refresh_token": auth_result['RefreshToken'],
+                "expires_in": auth_result['ExpiresIn'],
+                "user_id": user_info.get('sub'),
+                "email": user_info.get('email'),
+                "name": user_info.get('name', ''),
+                "email_verified": user_info.get('email_verified', False)
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'NotAuthorizedException':
+                raise ValueError("Incorrect email or password")
+            elif error_code == 'UserNotConfirmedException':
+                raise ValueError("Email not verified. Please verify your email first.")
+            elif error_code == 'UserNotFoundException':
+                raise ValueError("User not found. Please check your email or register.")
+            elif error_code == 'TooManyRequestsException':
+                raise ValueError("Too many login attempts. Please try again later.")
+            elif error_code == 'PasswordResetRequiredException':
+                raise ValueError("Password reset required. Please reset your password.")
+            else:
+                raise Exception(f"Authentication failed: {error_message}")
+    
     async def confirm_user_email(self, email: str, confirmation_code: str) -> Dict[str, Any]:
         """Confirm user email with verification code"""
         try:
