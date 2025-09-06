@@ -48,7 +48,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassword }: L
       } else {
         setLoginError(result?.error || 'Login failed. Please try again.')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoginError(getErrorMessage(error))
     } finally {
       setIsLoading(false)
@@ -59,7 +59,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassword }: L
     try {
       setLoginError(null)
       await loginWithGoogle()
-    } catch (error: any) {
+    } catch (error: unknown) {
       setLoginError(getErrorMessage(error))
     }
   }
@@ -195,7 +195,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister, onForgotPassword }: L
         {onSwitchToRegister && (
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <button
                 type="button"
                 onClick={onSwitchToRegister}

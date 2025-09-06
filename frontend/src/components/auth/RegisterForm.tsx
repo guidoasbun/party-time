@@ -46,7 +46,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const result = await registerUser({
+      await registerUser({
         name: data.name,
         email: data.email,
         password: data.password,

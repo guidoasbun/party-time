@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -49,25 +49,7 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
 
   const verificationCode = watch('verification_code')
 
-  // Auto-submit when 6 digits are entered
-  useEffect(() => {
-    if (verificationCode && verificationCode.length === 6 && /^\d{6}$/.test(verificationCode)) {
-      handleSubmit(onSubmit)()
-    }
-  }, [verificationCode])
-
-  // Resend timer countdown
-  useEffect(() => {
-    let interval: NodeJS.Timeout
-    if (resendTimer > 0) {
-      interval = setInterval(() => {
-        setResendTimer((prev) => prev - 1)
-      }, 1000)
-    }
-    return () => clearInterval(interval)
-  }, [resendTimer])
-
-  const onSubmit = async (data: VerificationFormData) => {
+  const onSubmit = useCallback(async (data: VerificationFormData) => {
     try {
       setSuccessMessage(null)
       const result = await verifyEmail({
@@ -86,7 +68,25 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
       // Error is handled by the useAuth hook
       console.error('Email verification failed:', error)
     }
-  }
+  }, [verifyEmail, email, reset, onSuccess])
+
+  // Auto-submit when 6 digits are entered
+  useEffect(() => {
+    if (verificationCode && verificationCode.length === 6 && /^\d{6}$/.test(verificationCode)) {
+      handleSubmit(onSubmit)()
+    }
+  }, [verificationCode, handleSubmit, onSubmit])
+
+  // Resend timer countdown
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1)
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [resendTimer])
 
   const handleResendCode = async () => {
     try {
@@ -118,7 +118,7 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Check Your Email</h2>
           <p className="text-gray-600">
-            We've sent a 6-digit verification code to
+            We&apos;ve sent a 6-digit verification code to
             <br />
             <span className="font-medium">{formatEmail(email)}</span>
           </p>
@@ -182,7 +182,7 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
 
         {/* Resend Section */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600 mb-3">Didn't receive the code?</p>
+          <p className="text-sm text-gray-600 mb-3">Didn&apos;t receive the code?</p>
           
           {resendMessage && (
             <div className="bg-green-50 border border-green-200 rounded-md p-3 mb-3">

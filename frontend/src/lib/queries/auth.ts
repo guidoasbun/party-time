@@ -109,16 +109,23 @@ export function useUpdateProfile() {
 }
 
 // Helper functions for error handling
-export function getErrorMessage(error: any): string {
-  if (error?.response?.data?.detail) {
-    if (Array.isArray(error.response.data.detail)) {
-      return error.response.data.detail.join(', ')
+export function getErrorMessage(error: unknown): string {
+  // Type guard for axios-like errors
+  if (error && typeof error === 'object' && 'response' in error) {
+    const axiosError = error as { response?: { data?: { detail?: string | string[] } } }
+    if (axiosError.response?.data?.detail) {
+      const detail = axiosError.response.data.detail
+      if (Array.isArray(detail)) {
+        return detail.join(', ')
+      }
+      return detail
     }
-    return error.response.data.detail
   }
   
-  if (error?.message) {
-    return error.message
+  // Type guard for error with message
+  if (error && typeof error === 'object' && 'message' in error) {
+    const errorWithMessage = error as { message: string }
+    return errorWithMessage.message
   }
   
   return 'An unexpected error occurred. Please try again.'

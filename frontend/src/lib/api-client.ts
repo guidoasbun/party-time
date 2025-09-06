@@ -50,7 +50,7 @@ apiClient.interceptors.response.use(
 )
 
 // API response types
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   data: T
   message?: string
   success?: boolean
@@ -63,27 +63,27 @@ export interface ApiError {
 
 // Generic API functions
 export const api = {
-  get: async <T = any>(url: string, params?: Record<string, any>): Promise<T> => {
+  get: async <T = unknown>(url: string, params?: Record<string, unknown>): Promise<T> => {
     const response = await apiClient.get<T>(url, { params })
     return response.data
   },
 
-  post: async <T = any>(url: string, data?: any): Promise<T> => {
+  post: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
     const response = await apiClient.post<T>(url, data)
     return response.data
   },
 
-  put: async <T = any>(url: string, data?: any): Promise<T> => {
+  put: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
     const response = await apiClient.put<T>(url, data)
     return response.data
   },
 
-  patch: async <T = any>(url: string, data?: any): Promise<T> => {
+  patch: async <T = unknown>(url: string, data?: unknown): Promise<T> => {
     const response = await apiClient.patch<T>(url, data)
     return response.data
   },
 
-  delete: async <T = any>(url: string): Promise<T> => {
+  delete: async <T = unknown>(url: string): Promise<T> => {
     const response = await apiClient.delete<T>(url)
     return response.data
   },

@@ -2,7 +2,6 @@ import NextAuth from "next-auth"
 import type { NextAuthOptions } from "next-auth"
 import CognitoProvider from "next-auth/providers/cognito"
 import CredentialsProvider from "next-auth/providers/credentials"
-import { authApi } from "@/lib/api-client"
 
 const authOptions: NextAuthOptions = {
   providers: [
@@ -76,10 +75,15 @@ const authOptions: NextAuthOptions = {
         }
         
         // For credentials provider
-        if (user.accessToken) {
-          token.accessToken = user.accessToken
-          token.refreshToken = user.refreshToken
-          token.idToken = user.idToken
+        const userWithTokens = user as typeof user & {
+          accessToken?: string
+          refreshToken?: string
+          idToken?: string
+        }
+        if (userWithTokens.accessToken) {
+          token.accessToken = userWithTokens.accessToken
+          token.refreshToken = userWithTokens.refreshToken
+          token.idToken = userWithTokens.idToken
         }
       }
       return token

@@ -17,10 +17,13 @@ export function QueryProvider({ children }: QueryProviderProps) {
             // With SSR, we usually want to set some default staleTime
             // above 0 to avoid refetching immediately on the client
             staleTime: 60 * 1000, // 1 minute
-            retry: (failureCount, error: any) => {
+            retry: (failureCount, error: unknown) => {
               // Don't retry on 4xx errors
-              if (error?.response?.status >= 400 && error?.response?.status < 500) {
-                return false
+              if (error && typeof error === 'object' && 'response' in error) {
+                const err = error as { response?: { status?: number } }
+                if (err.response?.status && err.response.status >= 400 && err.response.status < 500) {
+                  return false
+                }
               }
               return failureCount < 3
             },
