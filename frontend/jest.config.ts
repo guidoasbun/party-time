@@ -19,6 +19,11 @@ const config: Config = {
     '<rootDir>/node_modules/',
     '<rootDir>/__tests__/mocks/',
   ],
+  // Exclude test files from Next.js build
+  testMatch: [
+    '**/__tests__/**/*.(ts|tsx|js)',
+    '**/*.(test|spec).(ts|tsx|js)'
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
