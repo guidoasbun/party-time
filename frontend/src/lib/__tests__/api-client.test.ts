@@ -40,11 +40,11 @@ describe('API Client', () => {
 
   describe('Request Interceptor', () => {
     it('adds authorization header when session has idToken', async () => {
-      const session = { idToken: 'test-token' }
+      const session = { idToken: 'test-token', expires: '2024-12-31T23:59:59Z' }
       mockGetSession.mockResolvedValue(session)
 
       mock.onGet('/test').reply((config) => {
-        expect(config.headers.Authorization).toBe('Bearer test-token')
+        expect(config.headers?.Authorization).toBe('Bearer test-token')
         return [200, { success: true }]
       })
 
@@ -53,11 +53,11 @@ describe('API Client', () => {
     })
 
     it('does not add authorization header when session has no idToken', async () => {
-      const session = { user: { email: 'test@example.com' } }
+      const session = { user: { email: 'test@example.com' }, expires: '2024-12-31T23:59:59Z' }
       mockGetSession.mockResolvedValue(session)
 
       mock.onGet('/test').reply((config) => {
-        expect(config.headers.Authorization).toBeUndefined()
+        expect(config.headers?.Authorization).toBeUndefined()
         return [200, { success: true }]
       })
 
@@ -68,7 +68,7 @@ describe('API Client', () => {
       mockGetSession.mockResolvedValue(null)
 
       mock.onGet('/test').reply((config) => {
-        expect(config.headers.Authorization).toBeUndefined()
+        expect(config.headers?.Authorization).toBeUndefined()
         return [200, { success: true }]
       })
 
@@ -79,7 +79,7 @@ describe('API Client', () => {
       mockGetSession.mockRejectedValue(new Error('Session error'))
 
       mock.onGet('/test').reply((config) => {
-        expect(config.headers.Authorization).toBeUndefined()
+        expect(config.headers?.Authorization).toBeUndefined()
         return [200, { success: true }]
       })
 

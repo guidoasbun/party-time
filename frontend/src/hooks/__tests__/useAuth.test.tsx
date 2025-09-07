@@ -34,35 +34,35 @@ describe('useAuth', () => {
   const mockRegisterMutation = {
     mutateAsync: jest.fn(),
     isPending: false,
-    error: null,
+    error: null as Error | null,
     reset: jest.fn(),
   }
 
   const mockVerifyEmailMutation = {
     mutateAsync: jest.fn(),
     isPending: false,
-    error: null,
+    error: null as Error | null,
     reset: jest.fn(),
   }
 
   const mockResendVerificationMutation = {
     mutateAsync: jest.fn(),
     isPending: false,
-    error: null,
+    error: null as Error | null,
     reset: jest.fn(),
   }
 
   const mockPasswordResetMutation = {
     mutateAsync: jest.fn(),
     isPending: false,
-    error: null,
+    error: null as Error | null,
     reset: jest.fn(),
   }
 
   const mockPasswordResetConfirmMutation = {
     mutateAsync: jest.fn(),
     isPending: false,
-    error: null,
+    error: null as Error | null,
     reset: jest.fn(),
   }
 
@@ -72,7 +72,8 @@ describe('useAuth', () => {
     // Mock useSession default
     mockUseSession.mockReturnValue({
       data: null,
-      status: 'unauthenticated'
+      status: 'unauthenticated',
+      update: jest.fn()
     })
 
     // Mock mutations
@@ -94,7 +95,8 @@ describe('useAuth', () => {
     it('returns correct loading state when session is loading', () => {
       mockUseSession.mockReturnValue({
         data: null,
-        status: 'loading'
+        status: 'loading',
+        update: jest.fn()
       })
 
       const { result } = renderHook(() => useAuth())
@@ -117,14 +119,15 @@ describe('useAuth', () => {
 
     it('returns authenticated state when session exists', () => {
       mockUseSession.mockReturnValue({
-        data: { user: { email: 'test@example.com' } },
-        status: 'authenticated'
+        data: { user: { email: 'test@example.com' }, expires: '2024-12-31T23:59:59Z' },
+        status: 'authenticated',
+        update: jest.fn()
       })
 
       const { result } = renderHook(() => useAuth())
 
       expect(result.current.isAuthenticated).toBe(true)
-      expect(result.current.session).toEqual({ user: { email: 'test@example.com' } })
+      expect(result.current.session).toEqual({ user: { email: 'test@example.com' }, expires: '2024-12-31T23:59:59Z' })
     })
 
     it('returns email verified state when user has verified email', () => {
@@ -154,7 +157,7 @@ describe('useAuth', () => {
 
   describe('Authentication Methods', () => {
     it('calls signIn with credentials on login', async () => {
-      mockSignIn.mockResolvedValue({ ok: true })
+      mockSignIn.mockResolvedValue({ ok: true, error: null, status: 200, url: null })
 
       const { result } = renderHook(() => useAuth())
 
@@ -168,7 +171,7 @@ describe('useAuth', () => {
     })
 
     it('throws error on login failure', async () => {
-      mockSignIn.mockResolvedValue({ error: 'Invalid credentials' })
+      mockSignIn.mockResolvedValue({ ok: false, error: 'Invalid credentials', status: 401, url: null })
       const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {})
 
       const { result } = renderHook(() => useAuth())
