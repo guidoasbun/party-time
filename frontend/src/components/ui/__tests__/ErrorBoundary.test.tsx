@@ -208,11 +208,19 @@ describe('ErrorBoundary Integration Tests', () => {
     const originalEnv = process.env.NODE_ENV
 
     beforeEach(() => {
-      process.env.NODE_ENV = 'development'
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'development',
+        writable: true,
+        configurable: true,
+      })
     })
 
     afterEach(() => {
-      process.env.NODE_ENV = originalEnv
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: originalEnv,
+        writable: true,
+        configurable: true,
+      })
     })
 
     it('should show error details in development mode', () => {
@@ -234,7 +242,11 @@ describe('ErrorBoundary Integration Tests', () => {
     })
 
     it('should hide error details in production mode', () => {
-      process.env.NODE_ENV = 'production'
+      Object.defineProperty(process.env, 'NODE_ENV', {
+        value: 'production',
+        writable: true,
+        configurable: true,
+      })
 
       render(
         <ErrorBoundary>
@@ -262,7 +274,7 @@ describe('ErrorBoundary Integration Tests', () => {
       render(<WrappedComponent shouldThrow={false} />)
       expect(screen.getByText('HOC component rendered')).toBeInTheDocument()
 
-      const { rerender } = render(<WrappedComponent shouldThrow={true} />)
+      render(<WrappedComponent shouldThrow={true} />)
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument()
     })
 

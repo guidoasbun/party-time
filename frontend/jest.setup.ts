@@ -10,8 +10,19 @@ import 'whatwg-fetch'
 
 // TextEncoder/TextDecoder polyfill for MSW
 import { TextEncoder, TextDecoder } from 'util'
-global.TextEncoder = TextEncoder
-global.TextDecoder = TextDecoder as typeof global.TextDecoder
+
+// Polyfill TextEncoder/TextDecoder for Jest environment
+Object.defineProperty(global, 'TextEncoder', {
+  value: TextEncoder,
+  writable: true,
+  configurable: true,
+})
+
+Object.defineProperty(global, 'TextDecoder', {
+  value: TextDecoder,
+  writable: true,
+  configurable: true,
+})
 
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
