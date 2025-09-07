@@ -8,6 +8,11 @@ import '@testing-library/jest-dom'
 // Polyfills for MSW and JSDOM
 import 'whatwg-fetch'
 
+// TextEncoder/TextDecoder polyfill for MSW
+import { TextEncoder, TextDecoder } from 'util'
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder as typeof global.TextDecoder
+
 // Mock Next.js router
 jest.mock('next/navigation', () => ({
   useRouter() {
