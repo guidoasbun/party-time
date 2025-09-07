@@ -10,7 +10,9 @@ describe('useToast', () => {
   })
 
   afterEach(() => {
-    jest.runOnlyPendingTimers()
+    act(() => {
+      jest.runOnlyPendingTimers()
+    })
   })
 
   it('initializes with empty toasts array', () => {
