@@ -1,6 +1,6 @@
-import { renderHook, waitFor } from '../../../__tests__/test-utils'
+import { renderHook } from '../../../__tests__/test-utils'
 import { useAuth } from '../useAuth'
-import { signIn, signOut } from 'next-auth/react'
+import { signIn, signOut, useSession } from 'next-auth/react'
 
 // Mock next-auth
 jest.mock('next-auth/react', () => ({
@@ -28,6 +28,7 @@ jest.mock('@/lib/queries/auth', () => ({
 
 const mockSignIn = signIn as jest.MockedFunction<typeof signIn>
 const mockSignOut = signOut as jest.MockedFunction<typeof signOut>
+const mockUseSession = useSession as jest.MockedFunction<typeof useSession>
 
 describe('useAuth', () => {
   const mockRegisterMutation = {
@@ -69,10 +70,10 @@ describe('useAuth', () => {
     jest.clearAllMocks()
 
     // Mock useSession default
-    require('next-auth/react').useSession = jest.fn(() => ({
+    mockUseSession.mockReturnValue({
       data: null,
       status: 'unauthenticated'
-    }))
+    })
 
     // Mock mutations
     mockUseRegister.mockReturnValue(mockRegisterMutation)
@@ -91,10 +92,10 @@ describe('useAuth', () => {
 
   describe('Auth State', () => {
     it('returns correct loading state when session is loading', () => {
-      require('next-auth/react').useSession = jest.fn(() => ({
+      mockUseSession.mockReturnValue({
         data: null,
         status: 'loading'
-      }))
+      })
 
       const { result } = renderHook(() => useAuth())
 
@@ -115,10 +116,10 @@ describe('useAuth', () => {
     })
 
     it('returns authenticated state when session exists', () => {
-      require('next-auth/react').useSession = jest.fn(() => ({
+      mockUseSession.mockReturnValue({
         data: { user: { email: 'test@example.com' } },
         status: 'authenticated'
-      }))
+      })
 
       const { result } = renderHook(() => useAuth())
 

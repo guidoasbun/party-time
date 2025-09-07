@@ -15,14 +15,14 @@ jest.mock('@/hooks/useAuth', () => ({
 
 // Mock the Button component
 jest.mock('@/components/ui/Button', () => ({
-  Button: ({ children, ...props }: any) => <button {...props}>{children}</button>,
+  Button: ({ children, ...props }: React.ComponentProps<'button'>) => <button {...props}>{children}</button>,
 }))
 
 // Mock the error utility
 jest.mock('@/lib/queries/auth', () => ({
-  getErrorMessage: (error: any) => {
+  getErrorMessage: (error: unknown) => {
     if (typeof error === 'string') return error
-    return error?.message || 'An error occurred'
+    return (error as Error)?.message || 'An error occurred'
   },
 }))
 
