@@ -19,8 +19,8 @@ jest.mock('next/navigation', () => ({
 // Mock NextAuth
 jest.mock('next-auth/react', () => ({
   signIn: jest.fn(),
-  signOut: jest.fn(),
-  getSession: jest.fn(),
+  signOut: jest.fn(), 
+  getSession: jest.fn().mockResolvedValue(null),
   useSession: () => ({
     data: null,
     status: 'unauthenticated',
@@ -82,6 +82,9 @@ describe('Authentication Flow Integration Tests', () => {
     jest.clearAllMocks()
     mockPush.mockClear()
     mockReplace.mockClear()
+    
+    // Reset the default mock behavior 
+    ;(getSession as jest.Mock).mockResolvedValue(null)
   })
 
   describe('Complete Login Flow', () => {

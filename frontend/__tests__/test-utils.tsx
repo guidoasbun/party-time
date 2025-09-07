@@ -1,7 +1,6 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { SessionProvider } from 'next-auth/react'
 
 // Test-specific QueryClient with shorter retry delays
 function createTestQueryClient() {
@@ -28,11 +27,9 @@ const AllTheProviders = ({ children, queryClient }: AllTheProvidersProps) => {
   const testQueryClient = queryClient || createTestQueryClient()
 
   return (
-    <SessionProvider session={null}>
-      <QueryClientProvider client={testQueryClient}>
-        {children}
-      </QueryClientProvider>
-    </SessionProvider>
+    <QueryClientProvider client={testQueryClient}>
+      {children}
+    </QueryClientProvider>
   )
 }
 
