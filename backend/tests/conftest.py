@@ -2,13 +2,16 @@
 Pytest configuration and fixtures for the Party-Time backend tests.
 """
 import pytest
+import pytest_asyncio
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
+from typing import Dict, Any, AsyncGenerator
 import os
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.main import app
 from app.core.config import Settings
+from app.db.base import Base
 
 
 @pytest.fixture(scope="session")
@@ -135,3 +138,56 @@ def real_cognito_service():
     """Real Cognito service for integration testing (not mocked)."""
     from app.services.cognito_service import cognito_service
     return cognito_service
+
+
+# Database fixtures for testing
+@pytest_asyncio.fixture
+async def async_engine():
+    """Create async test database engine."""
+    # Use in-memory SQLite for tests (faster)
+    # Note: Some PostgreSQL-specific features may not work
+    SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+    
+    engine = create_async_engine(
+        SQLALCHEMY_DATABASE_URL,
+        echo=False,
+        future=True
+    )
+    
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    yield engine
+    
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def async_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create async database session for tests."""
+    async_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+    
+    async with async_session_maker() as session:
+        yield session
+        await session.rollback()
+
+
+@pytest_asyncio.fixture
+async def async_session_with_commit(async_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create async database session that commits (for testing commits)."""
+    async_session_maker = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+    
+    async with async_session_maker() as session:
+        yield session
