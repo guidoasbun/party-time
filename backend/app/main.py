@@ -2,6 +2,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.api.v1.auth import router as auth_router
+from app.api.v1.events import router as events_router
+from app.api.v1.guests import router as guests_router
+from app.api.v1.budget import router as budget_router
 
 settings = get_settings()
 
@@ -45,6 +48,9 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
+app.include_router(events_router, prefix=f"{settings.API_V1_STR}/events", tags=["events"])
+app.include_router(guests_router, prefix=f"{settings.API_V1_STR}/events", tags=["guests"])
+app.include_router(budget_router, prefix=f"{settings.API_V1_STR}/events", tags=["budget"])
 
 
 @app.get("/")

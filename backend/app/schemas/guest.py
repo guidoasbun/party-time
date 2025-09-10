@@ -1,7 +1,8 @@
 """Pydantic schemas for guest management."""
 from typing import Optional, List
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from uuid import UUID
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_serializer
 from app.models.guest import RsvpStatus
 
 
@@ -19,11 +20,12 @@ class GuestBase(BaseModel):
 
 class GuestCreate(GuestBase):
     """Schema for creating a new guest."""
-    event_id: str  # UUID as string
+    pass
 
 
 class GuestUpdate(BaseModel):
     """Schema for updating guest information."""
+    email: Optional[EmailStr] = None
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = None
@@ -44,13 +46,18 @@ class Guest(GuestBase):
     """Schema for guest response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str  # UUID as string
-    event_id: str
+    id: UUID
+    event_id: UUID
     rsvp_status: RsvpStatus
     invitation_sent_at: Optional[datetime] = None
     rsvp_responded_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    
+    @field_serializer('id', 'event_id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
 
 
 class GuestWithToken(Guest):
@@ -62,11 +69,16 @@ class GuestSummary(BaseModel):
     """Summary schema for guest lists."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     first_name: str
     last_name: str
     email: EmailStr
     rsvp_status: RsvpStatus
+    
+    @field_serializer('id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
     plus_one_allowed: bool
     plus_one_name: Optional[str] = None
 

@@ -118,6 +118,11 @@ class UserProfileUpdateResponse(BaseModel):
     updated_fields: List[str]
 
 
+class TokenData(BaseModel):
+    user_id: Optional[str] = None
+    email: Optional[str] = None
+
+
 class AuthErrorResponse(BaseModel):
     detail: str
     error_code: Optional[str] = None
