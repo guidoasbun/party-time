@@ -94,7 +94,14 @@ export const createTestLoginRequest = (overrides?: Partial<typeof TEST_CREDENTIA
   ...overrides,
 })
 
-export const createTestRegisterRequest = (overrides?: Partial<any>) => ({
+interface RegisterRequest {
+  name: string
+  email: string
+  password: string
+  confirmPassword: string
+}
+
+export const createTestRegisterRequest = (overrides?: Partial<RegisterRequest>) => ({
   name: TEST_CREDENTIALS.name,
   email: TEST_CREDENTIALS.email,
   password: TEST_CREDENTIALS.password,

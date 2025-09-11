@@ -493,8 +493,8 @@ export class BudgetService {
   /**
    * Generate default budget categories for event type
    */
-  getDefaultCategories(eventType: string): BudgetCategoryCreate[] {
-    const categoryTemplates: Record<string, BudgetCategoryCreate[]> = {
+  getDefaultCategories(eventType: string): Omit<BudgetCategoryCreate, 'event_id'>[] {
+    const categoryTemplates: Record<string, Omit<BudgetCategoryCreate, 'event_id'>[]> = {
       wedding: [
         { name: 'Venue', allocated_amount: 5000, color: '#3B82F6' },
         { name: 'Catering', allocated_amount: 3000, color: '#EF4444' },

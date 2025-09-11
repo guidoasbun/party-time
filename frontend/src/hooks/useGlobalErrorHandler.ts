@@ -30,13 +30,11 @@ export function useGlobalErrorHandler() {
     window.addEventListener('unhandledrejection', handleRejection)
     window.addEventListener('error', handleError)
 
-    // Set up React Query global error handler
+    // Set up React Query global defaults
+    // Note: Global error handling removed as onError is not available in default options
+    // Individual queries/mutations should handle their own errors
     queryClient.setDefaultOptions({
       queries: {
-        onError: (error) => {
-          const appError = handleQueryError(error)
-          showError(appError)
-        },
         retry: (failureCount, error) => {
           const appError = normalizeError(error)
           // Only retry retryable errors, max 3 times
@@ -44,10 +42,6 @@ export function useGlobalErrorHandler() {
         },
       },
       mutations: {
-        onError: (error) => {
-          const appError = handleQueryError(error)
-          showError(appError)
-        },
         retry: (failureCount, error) => {
           const appError = normalizeError(error)
           // Only retry retryable mutations, max 1 time

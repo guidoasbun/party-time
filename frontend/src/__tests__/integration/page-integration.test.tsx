@@ -134,7 +134,7 @@ describe('Page Integration Tests', () => {
     
     // Set up default mock implementations
     mockedGetSession.mockResolvedValue(null)
-    mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null })
+    mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null, status: 200 })
     mockedSignOut.mockResolvedValue({ url: '/' })
     
     // Mock window.alert for tests
@@ -394,7 +394,7 @@ describe('Page Integration Tests', () => {
       const { rerender } = render(<SignInPage />)
 
       // Mock successful login
-      mockedSignIn.mockResolvedValue({ ok: true, error: null })
+      mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null, status: 200 })
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)

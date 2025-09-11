@@ -1,4 +1,4 @@
-import axios, { AxiosError, AxiosResponse } from 'axios'
+import axios, { AxiosError, AxiosResponse, isAxiosError } from 'axios'
 import { getSession } from 'next-auth/react'
 import { ApiError } from '@/types'
 
@@ -159,29 +159,39 @@ apiClient.interceptors.response.use(
   },
   (error: AxiosError | Error) => {
     // Clean up cancel token
-    const requestId = error.config?.metadata?.requestId
+    const requestId = isAxiosError(error) ? error.config?.metadata?.requestId : undefined
     if (requestId) {
       cancelTokens.delete(requestId)
     }
 
     // Handle request cancellation
-    if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (axios.isCancel(error) || (isAxiosError(error) && (error as any).code === 'ERR_CANCELED')) {
       return Promise.reject(new Error('Request cancelled'))
     }
 
     // Handle timeout
-    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((isAxiosError(error) && (error as any).code === 'ECONNABORTED') || ((error as any).message && (error as any).message.includes('timeout'))) {
       return Promise.reject(new TimeoutException())
     }
 
     // Handle network errors
-    if (!error.response) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (isAxiosError(error) && !(error as any).response) {
       return Promise.reject(new NetworkException('Network connection failed'))
     }
 
     // Handle 5xx server errors only (4xx are handled in success interceptor)
-    const status = error.response.status
-    const errorData = error.response.data as ApiError
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (!isAxiosError(error) || !(error as any).response) {
+      return Promise.reject(error)
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const status = (error as any).response.status
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errorData = (error as any).response.data as ApiError
     
     if (status >= 500) {
       console.error('Server error:', errorData)
@@ -294,25 +304,31 @@ export const createApiClient = (config?: ApiClientConfig) => {
       return response
     },
     (error: AxiosError | Error) => {
-      const requestId = error.config?.metadata?.requestId
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const requestId = (error as any).config?.metadata?.requestId
       if (requestId) {
         cancelTokens.delete(requestId)
       }
 
-      if (axios.isCancel(error) || error.code === 'ERR_CANCELED') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (axios.isCancel(error) || (error as any).code === 'ERR_CANCELED') {
         return Promise.reject(new Error('Request cancelled'))
       }
 
-      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((error as any).code === 'ECONNABORTED' || (error as any).message?.includes('timeout')) {
         return Promise.reject(new TimeoutException())
       }
 
-      if (!error.response) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (!(error as any).response) {
         return Promise.reject(new NetworkException('Network connection failed'))
       }
 
-      const status = error.response.status
-      const errorData = error.response.data as ApiError
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const status = (error as any).response.status
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const errorData = (error as any).response.data as ApiError
       
       const apiError = new ApiException(
         typeof errorData?.detail === 'string' 
