@@ -47,6 +47,7 @@ process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000'
 
 // Global test utilities
 declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace jest {
     interface Matchers<R> {
       toBeValidUUID(): R

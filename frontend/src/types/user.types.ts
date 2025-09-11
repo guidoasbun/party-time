@@ -173,7 +173,7 @@ export interface UserEditFormData {
 }
 
 export interface UserPreferencesFormData extends UserPreferences {
-  // Additional form-specific fields can be added here in the future
+  confirmed?: boolean
 }
 
 // User search and filtering

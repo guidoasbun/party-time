@@ -12,7 +12,7 @@ export interface BudgetCategoryBase {
 }
 
 export interface BudgetCategoryCreate extends BudgetCategoryBase {
-  // Additional fields can be added here in the future
+  event_id: UUID
 }
 
 export interface BudgetCategoryUpdate {

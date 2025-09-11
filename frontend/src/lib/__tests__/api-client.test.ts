@@ -1,4 +1,4 @@
-import { AxiosError } from 'axios'
+// import { AxiosError } from 'axios' - unused
 import MockAdapter from 'axios-mock-adapter'
 import { apiClient, api, authApi, ApiException } from '../api-client'
 import { getSession } from 'next-auth/react'

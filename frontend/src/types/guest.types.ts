@@ -25,7 +25,7 @@ export interface GuestBase {
 }
 
 export interface GuestCreate extends GuestBase {
-  // Additional fields can be added here in the future
+  event_id: UUID
 }
 
 export interface GuestUpdate {

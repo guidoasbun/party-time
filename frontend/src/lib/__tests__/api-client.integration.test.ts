@@ -2,13 +2,10 @@
  * Integration tests for API Client
  */
 
-import axios from 'axios'
 import MockAdapter from 'axios-mock-adapter'
 import { 
   api, 
   apiClient,
-  ApiException, 
-  NetworkException, 
   TimeoutException,
   isApiException,
   isNetworkException,
@@ -258,7 +255,7 @@ describe('API Client Integration Tests', () => {
 
       mockAxios.onPost('/api/v1/events').reply(201, { id: '123', ...requestData })
 
-      const result = await api.post<any, CreateEventRequest>('/api/v1/events', requestData)
+      const result = await api.post<unknown, CreateEventRequest>('/api/v1/events', requestData)
       
       expect(result.name).toBe('Test Event')
     })
@@ -271,7 +268,7 @@ describe('API Client Integration Tests', () => {
       
       mockAxios.onPost('/api/v1/events/123/guests/import').reply(200, responseData)
 
-      let progressCalls: number[] = []
+      const progressCalls: number[] = []
       const result = await api.upload('/api/v1/events/123/guests/import', mockFile, (progress) => {
         progressCalls.push(progress)
       })

@@ -8,16 +8,11 @@ import {
   EventType, 
   EventStatus, 
   RsvpStatus,
-  UserRegisterRequest,
   EventCreate,
   GuestCreate,
   BudgetCategoryCreate,
   ExpenseCreate
 } from '@/types'
-
-// Test data
-const TEST_EVENT_ID = 'test-event-123'
-const TEST_USER_EMAIL = 'test@example.com'
 
 /**
  * Manual test runner - logs results to console
@@ -167,7 +162,7 @@ export class ManualTestRunner {
         { rsvp_status: RsvpStatus.CONFIRMED, plus_one_name: 'Jane' },
         { rsvp_status: RsvpStatus.PENDING },
         { rsvp_status: RsvpStatus.DECLINED }
-      ] as any[]
+      ] as Array<{rsvp_status: RsvpStatus; plus_one_name?: string}>
 
       const summary = guestsService.generateRSVPSummary(mockGuests)
       this.assert('RSVP summary total', summary.total === 3)
@@ -242,7 +237,7 @@ export class ManualTestRunner {
     })
   }
 
-  private recordError(testSuite: string, error: any) {
+  private recordError(testSuite: string, error: Error | unknown) {
     console.error(`❌ ${testSuite} failed:`, error)
     this.results.push({
       test: testSuite,

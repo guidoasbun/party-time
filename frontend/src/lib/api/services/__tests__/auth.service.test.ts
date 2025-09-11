@@ -7,10 +7,10 @@ import { api } from '@/lib/api-client'
 import {
   UserRegisterRequest,
   UserLoginRequest,
-  EmailVerificationRequest,
-  PasswordResetRequest,
-  PasswordResetConfirmRequest,
-  UserProfileUpdateRequest
+  // EmailVerificationRequest,
+  // PasswordResetRequest,
+  // PasswordResetConfirmRequest,
+  // UserProfileUpdateRequest
 } from '@/types'
 
 // Mock the API client

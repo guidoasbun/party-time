@@ -24,7 +24,7 @@ global.fetch = jest.fn(() =>
     headers: new Headers(),
     redirected: false,
     statusText: 'OK',
-    type: 'basic',
+    type: 'basic' as ResponseType,
     url: '',
     clone: jest.fn(),
     body: null,
@@ -33,6 +33,7 @@ global.fetch = jest.fn(() =>
     blob: jest.fn(),
     formData: jest.fn(),
     text: jest.fn(),
+    bytes: jest.fn(),
   } as Response)
 ) as jest.Mock
 

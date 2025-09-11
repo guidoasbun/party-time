@@ -244,7 +244,7 @@ export class EventsService {
   async exportEvent(
     eventId: UUID, 
     format: 'pdf' | 'excel' | 'csv',
-    options?: {
+    _options?: {
       include_guests?: boolean
       include_budget?: boolean
       include_timeline?: boolean

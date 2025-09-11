@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '../../../__tests__/test-utils'
+import { render, screen, waitFor } from '../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { signIn, signOut, getSession, useSession } from 'next-auth/react'
+import { signIn, signOut, getSession } from 'next-auth/react'
 import SignInPage from '@/app/auth/signin/page'
 import DashboardPage from '@/app/dashboard/page'
 // MSW imports commented out to avoid Jest environment issues
@@ -44,7 +44,9 @@ jest.mock('next-auth/react', () => ({
 }))
 
 // Get references to the mocked functions
-const { signIn, signOut, getSession } = require('next-auth/react')
+const mockedSignIn = signIn as jest.MockedFunction<typeof signIn>
+const mockedSignOut = signOut as jest.MockedFunction<typeof signOut>
+const mockedGetSession = getSession as jest.MockedFunction<typeof getSession>
 
 // Mock the auth queries
 jest.mock('@/lib/queries/auth', () => ({
@@ -131,9 +133,9 @@ describe('Page Integration Tests', () => {
     mockSessionStatus = 'unauthenticated'
     
     // Set up default mock implementations
-    getSession.mockResolvedValue(null)
-    signIn.mockResolvedValue({ ok: true, error: null, url: null })
-    signOut.mockResolvedValue({ url: '/' })
+    mockedGetSession.mockResolvedValue(null)
+    mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null })
+    mockedSignOut.mockResolvedValue({ url: '/' })
     
     // Mock window.alert for tests
     global.alert = jest.fn()
@@ -212,7 +214,7 @@ describe('Page Integration Tests', () => {
     describe('Authentication Redirects', () => {
       it('should redirect to dashboard if already authenticated', async () => {
         // Mock authenticated session
-        ;(getSession as jest.Mock).mockResolvedValue({
+        mockedGetSession.mockResolvedValue({
           user: { id: 'test-user', email: 'test@example.com' },
           idToken: 'test-token',
         })
@@ -225,7 +227,7 @@ describe('Page Integration Tests', () => {
       })
 
       it('should redirect to dashboard after successful login', async () => {
-        ;(signIn as jest.Mock).mockResolvedValue({
+        mockedSignIn.mockResolvedValue({
           ok: true,
           status: 200,
           error: null,
@@ -249,7 +251,7 @@ describe('Page Integration Tests', () => {
 
     describe('Error Handling', () => {
       it('should display login errors', async () => {
-        ;(signIn as jest.Mock).mockResolvedValue({
+        mockedSignIn.mockResolvedValue({
           ok: false,
           error: 'Invalid credentials',
         })
@@ -350,7 +352,7 @@ describe('Page Integration Tests', () => {
         const signOutBtn = screen.getByRole('button', { name: /sign out/i })
         await user.click(signOutBtn)
 
-        expect(signOut).toHaveBeenCalledWith({ callbackUrl: '/' })
+        expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: '/' })
       })
 
       it('should test protected route functionality', async () => {
@@ -392,7 +394,7 @@ describe('Page Integration Tests', () => {
       const { rerender } = render(<SignInPage />)
 
       // Mock successful login
-      ;(signIn as jest.Mock).mockResolvedValue({ ok: true, error: null })
+      mockedSignIn.mockResolvedValue({ ok: true, error: null })
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)

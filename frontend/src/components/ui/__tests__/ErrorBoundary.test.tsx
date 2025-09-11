@@ -24,19 +24,19 @@ const ThrowError: React.FC<{ shouldThrow?: boolean; errorMessage?: string }> = (
   return <div>No error occurred</div>
 }
 
-// Test component with async error
-const AsyncError: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = false }) => {
-  React.useEffect(() => {
-    if (shouldThrow) {
-      // Simulate async error (like network request failure)
-      setTimeout(() => {
-        throw new Error('Async error')
-      }, 100)
-    }
-  }, [shouldThrow])
+// Test component with async error - unused but kept for future async error testing
+// const AsyncError: React.FC<{ shouldThrow?: boolean }> = ({ shouldThrow = false }) => {
+//   React.useEffect(() => {
+//     if (shouldThrow) {
+//       // Simulate async error (like network request failure)
+//       setTimeout(() => {
+//         throw new Error('Async error')
+//       }, 100)
+//     }
+//   }, [shouldThrow])
 
-  return <div>Async component loaded</div>
-}
+//   return <div>Async component loaded</div>
+// }
 
 describe('ErrorBoundary Integration Tests', () => {
   const user = userEvent.setup()

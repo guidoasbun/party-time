@@ -6,10 +6,10 @@ import { budgetService } from '../budget.service'
 import { api } from '@/lib/api-client'
 import {
   BudgetCategoryCreate,
-  BudgetCategoryUpdate,
+  // BudgetCategoryUpdate,
   ExpenseCreate,
-  ExpenseUpdate,
-  EventType
+  // ExpenseUpdate,
+  // EventType
 } from '@/types'
 
 // Mock the API client

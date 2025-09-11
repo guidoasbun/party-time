@@ -2,7 +2,7 @@
  * Authentication and authorization types
  */
 
-import type { UUID } from './common.types'
+// import type { UUID } from './common.types' // unused currently
 
 // Authentication request types
 export interface UserRegisterRequest {

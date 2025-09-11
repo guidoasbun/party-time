@@ -1,6 +1,6 @@
-import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios'
+import axios, { AxiosError, AxiosResponse } from 'axios'
 import { getSession } from 'next-auth/react'
-import { ApiError, ApiResponse } from '@/types'
+import { ApiError } from '@/types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
@@ -102,7 +102,7 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => {
+  () => {
     return Promise.reject(new NetworkException('Request preparation failed'))
   }
 )
@@ -157,7 +157,7 @@ apiClient.interceptors.response.use(
     
     return response
   },
-  (error: AxiosError | any) => {
+  (error: AxiosError | Error) => {
     // Clean up cancel token
     const requestId = error.config?.metadata?.requestId
     if (requestId) {
@@ -280,7 +280,7 @@ export const createApiClient = (config?: ApiClientConfig) => {
       }
       return config
     },
-    (error) => {
+    () => {
       return Promise.reject(new NetworkException('Request preparation failed'))
     }
   )
@@ -293,7 +293,7 @@ export const createApiClient = (config?: ApiClientConfig) => {
       }
       return response
     },
-    (error: AxiosError | any) => {
+    (error: AxiosError | Error) => {
       const requestId = error.config?.metadata?.requestId
       if (requestId) {
         cancelTokens.delete(requestId)

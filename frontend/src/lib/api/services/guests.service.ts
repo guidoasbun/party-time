@@ -171,7 +171,7 @@ export class GuestsService {
       filter?: GuestSearchParams
     }
   ): Promise<void> {
-    const params = {
+    const _params = {
       format,
       ...options?.filter,
       include_fields: options?.include_fields?.join(',')

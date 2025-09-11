@@ -177,7 +177,7 @@ describe('Phase 2.3.1 API Integration Tests', () => {
         { rsvp_status: RsvpStatus.CONFIRMED, plus_one_name: 'Jane' },
         { rsvp_status: RsvpStatus.PENDING },
         { rsvp_status: RsvpStatus.DECLINED }
-      ] as any[]
+      ] as Array<{rsvp_status: RsvpStatus; plus_one_name?: string}>
 
       const summary = guestsService.generateRSVPSummary(mockGuests)
       expect(summary.total).toBe(3)

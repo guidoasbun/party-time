@@ -304,7 +304,7 @@ export class BudgetService {
       category_filter?: UUID[]
     }
   ): Promise<void> {
-    const params = {
+    const _params = {
       format,
       ...options
     }

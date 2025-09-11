@@ -135,7 +135,7 @@ export class AuthService {
     try {
       await this.getCurrentUser()
       return true
-    } catch (error) {
+    } catch {
       return false
     }
   }
