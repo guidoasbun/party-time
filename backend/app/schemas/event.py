@@ -2,7 +2,8 @@
 from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
-from pydantic import BaseModel, Field, ConfigDict
+from uuid import UUID
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 from app.models.event import EventType, EventStatus
 
 
@@ -48,9 +49,9 @@ class Event(EventBase):
     """Schema for event response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str  # UUID as string
+    id: UUID
     status: EventStatus
-    planner_id: str
+    planner_id: UUID
     created_at: datetime
     updated_at: datetime
     
@@ -58,6 +59,11 @@ class Event(EventBase):
     guest_count: Optional[int] = 0
     confirmed_guests: Optional[int] = 0
     total_expenses: Optional[Decimal] = Decimal("0.00")
+    
+    @field_serializer('id', 'planner_id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
 
 
 class EventWithDetails(Event):

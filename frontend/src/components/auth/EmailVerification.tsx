@@ -57,7 +57,7 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
         verification_code: data.verification_code,
       })
       
-      setSuccessMessage(result.message)
+      setSuccessMessage((result as { message: string }).message)
       reset()
       
       // Wait a moment to show success message, then call onSuccess
@@ -92,7 +92,7 @@ export function EmailVerification({ email, onSuccess, onBack }: EmailVerificatio
     try {
       setResendMessage(null)
       const result = await resendVerification(email)
-      setResendMessage(result.message)
+      setResendMessage((result as { message: string }).message)
       setResendTimer(60) // 60 second cooldown
     } catch (error) {
       // Error is handled by the useAuth hook

@@ -25,7 +25,8 @@ export function useAuth() {
   // Computed values
   const isLoading = status === 'loading' || isLoadingUser
   const isAuthenticated = !!session
-  const isEmailVerified = currentUser?.email_verified ?? false
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const isEmailVerified = (currentUser as any)?.email_verified ?? false
 
   // Authentication methods
   const login = async (email: string, password: string) => {

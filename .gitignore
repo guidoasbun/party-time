@@ -136,3 +136,4 @@ temp/
 
 # Claude-related files
 .claude/
+.playwright-mcp

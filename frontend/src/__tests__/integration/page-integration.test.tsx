@@ -1,6 +1,6 @@
-import { render, screen, waitFor, within } from '../../../__tests__/test-utils'
+import { render, screen, waitFor } from '../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { signIn, signOut, getSession, useSession } from 'next-auth/react'
+import { signIn, signOut, getSession } from 'next-auth/react'
 import SignInPage from '@/app/auth/signin/page'
 import DashboardPage from '@/app/dashboard/page'
 // MSW imports commented out to avoid Jest environment issues
@@ -42,6 +42,11 @@ jest.mock('next-auth/react', () => ({
     status: mockSessionStatus,
   }),
 }))
+
+// Get references to the mocked functions
+const mockedSignIn = signIn as jest.MockedFunction<typeof signIn>
+const mockedSignOut = signOut as jest.MockedFunction<typeof signOut>
+const mockedGetSession = getSession as jest.MockedFunction<typeof getSession>
 
 // Mock the auth queries
 jest.mock('@/lib/queries/auth', () => ({
@@ -126,6 +131,14 @@ describe('Page Integration Tests', () => {
     mockRefresh.mockClear()
     mockSessionData = null
     mockSessionStatus = 'unauthenticated'
+    
+    // Set up default mock implementations
+    mockedGetSession.mockResolvedValue(null)
+    mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null, status: 200 })
+    mockedSignOut.mockResolvedValue({ url: '/' })
+    
+    // Mock window.alert for tests
+    global.alert = jest.fn()
   })
 
   describe('SignIn Page Integration', () => {
@@ -185,14 +198,14 @@ describe('Page Integration Tests', () => {
 
         await user.type(nameInput, 'Test User')
         await user.type(emailInput, 'test@example.com')
-        await user.type(passwordInput, 'password123')
-        await user.type(confirmPasswordInput, 'password123')
+        await user.type(passwordInput, 'Password123!')
+        await user.type(confirmPasswordInput, 'Password123!')
         await user.click(registerBtn)
 
         // Should switch to email verification view
         await waitFor(() => {
           expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
-          expect(screen.getByText(/test@example\.com/)).toBeInTheDocument()
+          expect(screen.getByText(/t\*\*t@example\.com/)).toBeInTheDocument()
           expect(screen.getByLabelText(/verification code/i)).toBeInTheDocument()
         })
       })
@@ -201,9 +214,9 @@ describe('Page Integration Tests', () => {
     describe('Authentication Redirects', () => {
       it('should redirect to dashboard if already authenticated', async () => {
         // Mock authenticated session
-        ;(getSession as jest.Mock).mockResolvedValue({
-          user: { id: 'test-user', email: 'test@example.com' },
-          idToken: 'test-token',
+        mockedGetSession.mockResolvedValue({
+          user: { name: 'Test User', email: 'test@example.com', image: null },
+          expires: '2030-01-01T00:00:00.000Z',
         })
 
         render(<SignInPage />)
@@ -214,10 +227,11 @@ describe('Page Integration Tests', () => {
       })
 
       it('should redirect to dashboard after successful login', async () => {
-        ;(signIn as jest.Mock).mockResolvedValue({
+        mockedSignIn.mockResolvedValue({
           ok: true,
           status: 200,
           error: null,
+          url: null,
         })
 
         render(<SignInPage />)
@@ -238,9 +252,11 @@ describe('Page Integration Tests', () => {
 
     describe('Error Handling', () => {
       it('should display login errors', async () => {
-        ;(signIn as jest.Mock).mockResolvedValue({
+        mockedSignIn.mockResolvedValue({
           ok: false,
           error: 'Invalid credentials',
+          status: 401,
+          url: null,
         })
 
         render(<SignInPage />)
@@ -316,15 +332,45 @@ describe('Page Integration Tests', () => {
       // These error scenarios would be covered by component-specific tests
 
       it('should allow signing out', async () => {
+        // Set up authenticated session for dashboard to render properly
+        mockSessionStatus = 'authenticated'
+        mockSessionData = {
+          user: {
+            id: 'test-user-123',
+            email: 'test@example.com',
+            name: 'Test User'
+          },
+          idToken: 'test-id-token',
+          expires: '2024-12-31T23:59:59Z'
+        }
+
         render(<DashboardPage />)
+
+        // Wait for dashboard to render and find sign out button
+        await waitFor(() => {
+          const signOutBtn = screen.getByRole('button', { name: /sign out/i })
+          expect(signOutBtn).toBeInTheDocument()
+        })
 
         const signOutBtn = screen.getByRole('button', { name: /sign out/i })
         await user.click(signOutBtn)
 
-        expect(signOut).toHaveBeenCalledWith({ callbackUrl: '/' })
+        expect(mockedSignOut).toHaveBeenCalledWith({ callbackUrl: '/' })
       })
 
       it('should test protected route functionality', async () => {
+        // Set up authenticated session for dashboard to render properly
+        mockSessionStatus = 'authenticated'
+        mockSessionData = {
+          user: {
+            id: 'test-user-123',
+            email: 'test@example.com',
+            name: 'Test User'
+          },
+          idToken: 'test-id-token',
+          expires: '2024-12-31T23:59:59Z'
+        }
+
         render(<DashboardPage />)
 
         await waitFor(() => {
@@ -351,7 +397,7 @@ describe('Page Integration Tests', () => {
       const { rerender } = render(<SignInPage />)
 
       // Mock successful login
-      ;(signIn as jest.Mock).mockResolvedValue({ ok: true, error: null })
+      mockedSignIn.mockResolvedValue({ ok: true, error: null, url: null, status: 200 })
       
       const emailInput = screen.getByLabelText(/email address/i)
       const passwordInput = screen.getByLabelText(/password/i)
@@ -379,8 +425,8 @@ describe('Page Integration Tests', () => {
       // Should render dashboard successfully
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /dashboard/i })).toBeInTheDocument()
-        // Dashboard shows backend connection error in test environment
-        expect(screen.getByText(/error connecting to backend/i)).toBeInTheDocument()
+        // Dashboard shows successful authentication with mocked data
+        expect(screen.getByText(/✅ Successfully authenticated!/i)).toBeInTheDocument()
       })
     })
   })

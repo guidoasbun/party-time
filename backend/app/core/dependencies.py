@@ -18,39 +18,39 @@ def get_settings_cached():
 
 
 async def get_current_user(
-    token: str = Depends(get_settings),  # This will be updated when auth is implemented
-    db: AsyncSession = Depends(get_async_session)
-) -> User:
+    # token: str = Depends(get_settings),  # This will be updated when auth is implemented
+    # db: AsyncSession = Depends(get_async_session)
+) -> dict:
     """
     Get current authenticated user from JWT token.
     This is a placeholder - will be implemented when JWT auth is ready.
     """
     # TODO: Implement JWT token validation
-    # For now, return None - this will be updated in auth implementation
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Authentication not yet implemented",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    # For now, return a mock user for API testing
+    return {
+        "user_id": "123e4567-e89b-12d3-a456-426614174000",  # Mock UUID
+        "email": "test@example.com",
+        "name": "Test User",
+        "email_verified": True,
+        "username": "testuser",
+        "groups": ["planner"],
+        "role": "planner"
+    }
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
-) -> User:
+    current_user: dict = Depends(get_current_user)
+) -> dict:
     """Get current active user (must be verified and active)."""
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Inactive user"
-        )
+    # For now, all mock users are active
     return current_user
 
 
 async def get_current_planner_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
     """Get current user with planner or admin role."""
-    if current_user.role not in ["planner", "admin"]:
+    if current_user.get("role") not in ["planner", "admin"]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not enough permissions"
@@ -59,12 +59,18 @@ async def get_current_planner_user(
 
 
 async def get_current_admin_user(
-    current_user: User = Depends(get_current_active_user)
-) -> User:
+    current_user: dict = Depends(get_current_active_user)
+) -> dict:
     """Get current user with admin role."""
-    if current_user.role != "admin":
+    if current_user.get("role") != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
         )
     return current_user
+
+
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Get database session."""
+    async for session in get_async_session():
+        yield session

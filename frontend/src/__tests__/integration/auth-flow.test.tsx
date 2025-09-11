@@ -1,9 +1,7 @@
-import { render, screen, waitFor, act } from '../../../__tests__/test-utils'
+import { render, screen, waitFor } from '../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
-import { signIn, signOut, getSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { signIn, getSession } from 'next-auth/react'
 import SignInPage from '@/app/auth/signin/page'
-import DashboardPage from '@/app/dashboard/page'
 
 // Mock Next.js navigation
 const mockPush = jest.fn()
@@ -192,7 +190,10 @@ describe('Authentication Flow Integration Tests', () => {
       await user.click(googleButton)
 
       await waitFor(() => {
-        expect(signIn).toHaveBeenCalledWith('google')
+        expect(signIn).toHaveBeenCalledWith('google', {
+          callbackUrl: '/dashboard',
+          redirect: true
+        })
       })
     })
 

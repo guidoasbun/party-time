@@ -2,7 +2,8 @@
 from typing import Optional, List
 from datetime import datetime, date
 from decimal import Decimal
-from pydantic import BaseModel, Field, ConfigDict
+from uuid import UUID
+from pydantic import BaseModel, Field, ConfigDict, field_serializer
 
 
 class BudgetCategoryBase(BaseModel):
@@ -14,7 +15,7 @@ class BudgetCategoryBase(BaseModel):
 
 class BudgetCategoryCreate(BudgetCategoryBase):
     """Schema for creating budget category."""
-    event_id: str  # UUID as string
+    pass
 
 
 class BudgetCategoryUpdate(BaseModel):
@@ -28,25 +29,35 @@ class BudgetCategory(BudgetCategoryBase):
     """Schema for budget category response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str  # UUID as string
-    event_id: str
+    id: UUID
+    event_id: UUID
     created_at: datetime
     
     # Calculated fields
     spent_amount: Optional[Decimal] = Decimal("0.00")
     remaining_amount: Optional[Decimal] = Decimal("0.00")
     expense_count: Optional[int] = 0
+    
+    @field_serializer('id', 'event_id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
 
 
 class BudgetCategorySummary(BaseModel):
     """Summary schema for budget categories."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     name: str
     allocated_amount: Decimal
     spent_amount: Decimal
     color: Optional[str] = None
+    
+    @field_serializer('id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
 
 
 class ExpenseBase(BaseModel):
@@ -62,8 +73,7 @@ class ExpenseBase(BaseModel):
 
 class ExpenseCreate(ExpenseBase):
     """Schema for creating expense."""
-    event_id: str  # UUID as string
-    category_id: Optional[str] = None  # UUID as string
+    category_id: Optional[UUID] = None
 
 
 class ExpenseUpdate(BaseModel):
@@ -75,30 +85,40 @@ class ExpenseUpdate(BaseModel):
     vendor_name: Optional[str] = None
     is_paid: Optional[bool] = None
     receipt_url: Optional[str] = None
-    category_id: Optional[str] = None  # UUID as string
+    category_id: Optional[UUID] = None
 
 
 class Expense(ExpenseBase):
     """Schema for expense response."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str  # UUID as string
-    event_id: str
-    category_id: Optional[str] = None
+    id: UUID
+    event_id: UUID
+    category_id: Optional[UUID] = None
     created_at: datetime
     updated_at: datetime
+    
+    @field_serializer('id', 'event_id', 'category_id')
+    def serialize_uuid(self, value: Optional[UUID]) -> Optional[str]:
+        """Convert UUID to string for JSON serialization."""
+        return str(value) if value else None
 
 
 class ExpenseSummary(BaseModel):
     """Summary schema for expense lists."""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: UUID
     name: str
     amount: Decimal
     expense_date: date
     is_paid: bool
     category_name: Optional[str] = None
+    
+    @field_serializer('id')
+    def serialize_uuid(self, value: UUID) -> str:
+        """Convert UUID to string for JSON serialization."""
+        return str(value)
 
 
 class BudgetSummary(BaseModel):
