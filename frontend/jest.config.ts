@@ -18,6 +18,8 @@ const config: Config = {
     '<rootDir>/.next/',
     '<rootDir>/node_modules/',
     '<rootDir>/__tests__/mocks/',
+    '<rootDir>/src/lib/__tests__/manual-test.ts',
+    '<rootDir>/src/lib/__tests__/setup.ts',
   ],
   // Exclude test files from Next.js build
   testMatch: [

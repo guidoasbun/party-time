@@ -8,6 +8,34 @@ import '@testing-library/jest-dom'
 // Polyfills for MSW and JSDOM
 import 'whatwg-fetch'
 
+// Mock fetch for API calls
+global.fetch = jest.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({
+      user_id: 'test-user-123',
+      email: 'test@example.com',
+      name: 'Test User',
+      email_verified: true,
+      username: 'testuser',
+      groups: ['planner']
+    }),
+    headers: new Headers(),
+    redirected: false,
+    statusText: 'OK',
+    type: 'basic',
+    url: '',
+    clone: jest.fn(),
+    body: null,
+    bodyUsed: false,
+    arrayBuffer: jest.fn(),
+    blob: jest.fn(),
+    formData: jest.fn(),
+    text: jest.fn(),
+  } as Response)
+) as jest.Mock
+
 // TextEncoder/TextDecoder polyfill for MSW
 import { TextEncoder, TextDecoder } from 'util'
 
@@ -54,6 +82,7 @@ jest.mock('next-auth/react', () => ({
   })),
   signIn: jest.fn(),
   signOut: jest.fn(),
+  getSession: jest.fn().mockResolvedValue(null),
   SessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 

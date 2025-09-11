@@ -1,6 +1,12 @@
 import React from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Session } from 'next-auth'
+
+// Mock SessionProvider to avoid import issues in tests
+const MockSessionProvider = ({ children, session }: { children: React.ReactNode, session?: Session | null }) => {
+  return <>{children}</>
+}
 
 // Test-specific QueryClient with shorter retry delays
 function createTestQueryClient() {
@@ -21,15 +27,18 @@ function createTestQueryClient() {
 interface AllTheProvidersProps {
   children: React.ReactNode
   queryClient?: QueryClient
+  session?: Session | null
 }
 
-const AllTheProviders = ({ children, queryClient }: AllTheProvidersProps) => {
+const AllTheProviders = ({ children, queryClient, session = null }: AllTheProvidersProps) => {
   const testQueryClient = queryClient || createTestQueryClient()
 
   return (
-    <QueryClientProvider client={testQueryClient}>
-      {children}
-    </QueryClientProvider>
+    <MockSessionProvider session={session}>
+      <QueryClientProvider client={testQueryClient}>
+        {children}
+      </QueryClientProvider>
+    </MockSessionProvider>
   )
 }
 
@@ -37,12 +46,13 @@ const customRender = (
   ui: React.ReactElement,
   options?: Omit<RenderOptions, 'wrapper'> & {
     queryClient?: QueryClient
+    session?: Session | null
   }
 ) => {
-  const { queryClient, ...renderOptions } = options || {}
+  const { queryClient, session, ...renderOptions } = options || {}
 
   return render(ui, {
-    wrapper: (props) => <AllTheProviders {...props} queryClient={queryClient} />,
+    wrapper: (props) => <AllTheProviders {...props} queryClient={queryClient} session={session} />,
     ...renderOptions,
   })
 }
@@ -50,6 +60,9 @@ const customRender = (
 export * from '@testing-library/react'
 export { customRender as render }
 export { createTestQueryClient }
+
+// Re-export auth helpers for convenience
+export * from './auth-helpers'
 
 // Test to verify test utilities work correctly
 describe('Test Utils', () => {

@@ -192,7 +192,10 @@ describe('Authentication Flow Integration Tests', () => {
       await user.click(googleButton)
 
       await waitFor(() => {
-        expect(signIn).toHaveBeenCalledWith('google')
+        expect(signIn).toHaveBeenCalledWith('google', {
+          callbackUrl: '/dashboard',
+          redirect: true
+        })
       })
     })
 

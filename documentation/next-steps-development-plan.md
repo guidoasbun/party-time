@@ -57,12 +57,12 @@
 ### Phase 1.4: Testing & Error Handling
 **Priority**: HIGH | **Status**: 📋 PENDING | **Duration**: 0.5 day
 
-- [ ] Test email/password registration and login
-- [ ] Test Google OAuth flow
-- [ ] Add proper error messages and loading states
-- [ ] Handle token refresh logic
-- [ ] Test protected routes and API calls
-- [ ] End-to-end authentication testing
+- [x] Test email/password registration and login
+- [x] Test Google OAuth flow
+- [x] Add proper error messages and loading states
+- [x] Handle token refresh logic
+- [x] Test protected routes and API calls
+- [x] End-to-end authentication testing
 
 ---
 
@@ -80,12 +80,12 @@
 ### Phase 2.2: Backend API Development
 **Priority**: MEDIUM | **Status**: 📋 PENDING | **Duration**: 1.5 days
 
-- [ ] Create `/backend/app/api/v1/events.py` router
-- [ ] Implement event CRUD operations with proper validation
-- [ ] Add user-event relationship management
-- [ ] Create event filtering and search endpoints
-- [ ] Add event status management (draft/active/completed)
-- [ ] Include proper permissions and ownership checks
+- [x] Create `/backend/app/api/v1/events.py` router
+- [x] Implement event CRUD operations with proper validation
+- [x] Add user-event relationship management
+- [x] Create event filtering and search endpoints
+- [x] Add event status management (draft/active/completed)
+- [x] Include proper permissions and ownership checks
 
 ### Phase 2.3: Frontend Event Pages
 **Priority**: MEDIUM | **Status**: 📋 PENDING | **Duration**: 1.5 days

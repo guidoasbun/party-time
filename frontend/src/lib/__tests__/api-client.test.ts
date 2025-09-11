@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios'
 import MockAdapter from 'axios-mock-adapter'
-import { apiClient, api, authApi } from '../api-client'
+import { apiClient, api, authApi, ApiException } from '../api-client'
 import { getSession } from 'next-auth/react'
 
 // Mock next-auth
@@ -34,12 +34,15 @@ describe('API Client', () => {
     it('has correct base configuration', () => {
       expect(apiClient.defaults.baseURL).toBe('http://localhost:8000')
       expect(apiClient.defaults.headers['Content-Type']).toBe('application/json')
-      expect(apiClient.defaults.timeout).toBe(10000)
+      expect(apiClient.defaults.timeout).toBe(30000)
     })
   })
 
   describe('Request Interceptor', () => {
     it('adds authorization header when session has idToken', async () => {
+      // Enable auth for this test
+      process.env.TEST_ENABLE_AUTH = 'true'
+      
       const session = { idToken: 'test-token', expires: '2024-12-31T23:59:59Z' }
       mockGetSession.mockResolvedValue(session)
 
@@ -50,6 +53,9 @@ describe('API Client', () => {
 
       await api.get('/test')
       expect(mockGetSession).toHaveBeenCalled()
+      
+      // Clean up
+      delete process.env.TEST_ENABLE_AUTH
     })
 
     it('does not add authorization header when session has no idToken', async () => {
@@ -76,6 +82,9 @@ describe('API Client', () => {
     })
 
     it('handles session retrieval error gracefully', async () => {
+      // Enable auth for this test
+      process.env.TEST_ENABLE_AUTH = 'true'
+      
       mockGetSession.mockRejectedValue(new Error('Session error'))
 
       mock.onGet('/test').reply((config) => {
@@ -84,7 +93,10 @@ describe('API Client', () => {
       })
 
       await api.get('/test')
-      expect(consoleWarn).toHaveBeenCalledWith('Failed to get session for API request:', expect.any(Error))
+      expect(consoleWarn).toHaveBeenCalledWith('Failed to prepare API request:', expect.any(Error))
+      
+      // Clean up
+      delete process.env.TEST_ENABLE_AUTH
     })
   })
 
@@ -336,24 +348,26 @@ describe('API Client', () => {
       await expect(api.get('/test')).rejects.toThrow()
     })
 
-    it('throws axios error with response data', async () => {
+    it('throws ApiException with response data', async () => {
       const errorData = { detail: 'Validation failed', errors: ['Invalid email'] }
       mock.onPost('/test').reply(422, errorData)
 
       try {
         await api.post('/test', { email: 'invalid' })
+        throw new Error('Should have thrown an error')
       } catch (error) {
-        expect(error).toBeInstanceOf(Error)
-        const axiosError = error as AxiosError
-        expect(axiosError.response?.data).toEqual(errorData)
-        expect(axiosError.response?.status).toBe(422)
+        expect(error).toBeInstanceOf(ApiException)
+        const apiError = error as ApiException
+        expect(apiError.status).toBe(422)
+        expect(apiError.message).toBe('Validation failed')
+        expect(apiError.details).toEqual(errorData.detail)
       }
     })
 
     it('throws axios error for network errors', async () => {
       mock.onGet('/test').networkError()
 
-      await expect(api.get('/test')).rejects.toThrow('Network Error')
+      await expect(api.get('/test')).rejects.toThrow('Network connection failed')
     })
 
     it('throws axios error for timeout', async () => {

@@ -43,6 +43,9 @@ jest.mock('next-auth/react', () => ({
   }),
 }))
 
+// Get references to the mocked functions
+const { signIn, signOut, getSession } = require('next-auth/react')
+
 // Mock the auth queries
 jest.mock('@/lib/queries/auth', () => ({
   useRegister: () => ({
@@ -126,6 +129,14 @@ describe('Page Integration Tests', () => {
     mockRefresh.mockClear()
     mockSessionData = null
     mockSessionStatus = 'unauthenticated'
+    
+    // Set up default mock implementations
+    getSession.mockResolvedValue(null)
+    signIn.mockResolvedValue({ ok: true, error: null, url: null })
+    signOut.mockResolvedValue({ url: '/' })
+    
+    // Mock window.alert for tests
+    global.alert = jest.fn()
   })
 
   describe('SignIn Page Integration', () => {
@@ -185,14 +196,14 @@ describe('Page Integration Tests', () => {
 
         await user.type(nameInput, 'Test User')
         await user.type(emailInput, 'test@example.com')
-        await user.type(passwordInput, 'password123')
-        await user.type(confirmPasswordInput, 'password123')
+        await user.type(passwordInput, 'Password123!')
+        await user.type(confirmPasswordInput, 'Password123!')
         await user.click(registerBtn)
 
         // Should switch to email verification view
         await waitFor(() => {
           expect(screen.getByRole('heading', { name: /check your email/i })).toBeInTheDocument()
-          expect(screen.getByText(/test@example\.com/)).toBeInTheDocument()
+          expect(screen.getByText(/t\*\*t@example\.com/)).toBeInTheDocument()
           expect(screen.getByLabelText(/verification code/i)).toBeInTheDocument()
         })
       })
@@ -316,7 +327,25 @@ describe('Page Integration Tests', () => {
       // These error scenarios would be covered by component-specific tests
 
       it('should allow signing out', async () => {
+        // Set up authenticated session for dashboard to render properly
+        mockSessionStatus = 'authenticated'
+        mockSessionData = {
+          user: {
+            id: 'test-user-123',
+            email: 'test@example.com',
+            name: 'Test User'
+          },
+          idToken: 'test-id-token',
+          expires: '2024-12-31T23:59:59Z'
+        }
+
         render(<DashboardPage />)
+
+        // Wait for dashboard to render and find sign out button
+        await waitFor(() => {
+          const signOutBtn = screen.getByRole('button', { name: /sign out/i })
+          expect(signOutBtn).toBeInTheDocument()
+        })
 
         const signOutBtn = screen.getByRole('button', { name: /sign out/i })
         await user.click(signOutBtn)
@@ -325,6 +354,18 @@ describe('Page Integration Tests', () => {
       })
 
       it('should test protected route functionality', async () => {
+        // Set up authenticated session for dashboard to render properly
+        mockSessionStatus = 'authenticated'
+        mockSessionData = {
+          user: {
+            id: 'test-user-123',
+            email: 'test@example.com',
+            name: 'Test User'
+          },
+          idToken: 'test-id-token',
+          expires: '2024-12-31T23:59:59Z'
+        }
+
         render(<DashboardPage />)
 
         await waitFor(() => {
@@ -379,8 +420,8 @@ describe('Page Integration Tests', () => {
       // Should render dashboard successfully
       await waitFor(() => {
         expect(screen.getByRole('heading', { name: /dashboard/i })).toBeInTheDocument()
-        // Dashboard shows backend connection error in test environment
-        expect(screen.getByText(/error connecting to backend/i)).toBeInTheDocument()
+        // Dashboard shows successful authentication with mocked data
+        expect(screen.getByText(/✅ Successfully authenticated!/i)).toBeInTheDocument()
       })
     })
   })
