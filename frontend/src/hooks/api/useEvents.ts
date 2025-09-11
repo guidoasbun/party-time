@@ -1,28 +1,31 @@
 /**
  * React Query hooks for events API
  */
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
 
 import { 
   useQuery, 
   useMutation, 
   useQueryClient,
+  useInfiniteQuery,
   UseQueryOptions,
-  UseMutationOptions 
+  UseMutationOptions,
+  UseInfiniteQueryOptions
 } from '@tanstack/react-query'
 import { 
   Event, 
   EventCreate, 
   EventUpdate, 
-  // EventListResponse,
+  EventListResponse,
   EventSearchParams,
-  // EventStatsResponse,
+  EventStatsResponse,
   EventType,
-  EventStatus
+  EventStatus,
+  EventSummary,
+  EventAnalytics,
+  PaginatedResponse,
+  ApiResponse
 } from '@/types'
 import { eventsService } from '@/lib/api/services'
-import { ApiResponse } from '@/types/common.types'
 import { ApiException } from '@/lib/api-client'
 
 // Query keys
@@ -39,7 +42,7 @@ export const eventKeys = {
 // Query hooks
 export function useEvents(
   params?: EventSearchParams,
-  options?: UseQueryOptions<ApiResponse<EventListResponse>, ApiException>
+  options?: UseQueryOptions<PaginatedResponse<EventSummary>, ApiException>
 ) {
   return useQuery({
     queryKey: eventKeys.list(params),
@@ -49,9 +52,40 @@ export function useEvents(
   })
 }
 
+// Infinite query for pagination
+export function useInfiniteEvents(
+  params?: Omit<EventSearchParams, 'page' | 'offset'>,
+  options?: UseInfiniteQueryOptions<PaginatedResponse<EventSummary>, ApiException>
+) {
+  return useInfiniteQuery({
+    queryKey: [...eventKeys.lists(), 'infinite', params],
+    queryFn: ({ pageParam }) => {
+      const queryParams: EventSearchParams = {
+        page: pageParam as number,
+        limit: (params?.limit as number) || 20,
+        ...params
+      }
+      return eventsService.getEvents(queryParams)
+    },
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => {
+      return lastPage.has_next 
+        ? lastPage.page + 1 
+        : undefined
+    },
+    getPreviousPageParam: (firstPage) => {
+      return firstPage.has_previous 
+        ? firstPage.page - 1 
+        : undefined
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    ...options,
+  })
+}
+
 export function useEvent(
   id: string,
-  options?: UseQueryOptions<ApiResponse<Event>, ApiException>
+  options?: UseQueryOptions<Event, ApiException>
 ) {
   return useQuery({
     queryKey: eventKeys.detail(id),
@@ -62,35 +96,22 @@ export function useEvent(
   })
 }
 
-export function useEventStats(
+export function useEventAnalytics(
   eventId: string,
-  options?: UseQueryOptions<ApiResponse<EventStatsResponse>, ApiException>
+  options?: UseQueryOptions<EventAnalytics, ApiException>
 ) {
   return useQuery({
     queryKey: [...eventKeys.stats(), eventId],
-    queryFn: () => eventsService.getEventStats(eventId),
+    queryFn: () => eventsService.getEventAnalytics(eventId),
     enabled: !!eventId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     ...options,
   })
 }
 
-export function useUserEventStats(
-  userId: string,
-  options?: UseQueryOptions<ApiResponse<EventStatsResponse>, ApiException>
-) {
-  return useQuery({
-    queryKey: eventKeys.userStats(userId),
-    queryFn: () => eventsService.getUserEventStats(userId),
-    enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    ...options,
-  })
-}
-
 // Mutation hooks
 export function useCreateEvent(
-  options?: UseMutationOptions<ApiResponse<Event>, ApiException, EventCreate>
+  options?: UseMutationOptions<Event, ApiException, EventCreate>
 ) {
   const queryClient = useQueryClient()
 
@@ -102,14 +123,14 @@ export function useCreateEvent(
       
       // Add the new event to the cache
       queryClient.setQueryData(
-        eventKeys.detail(data.data.id),
+        eventKeys.detail(data.id),
         data
       )
 
       // Update user stats
-      if (data.data.planner_id) {
+      if (data.planner_id) {
         queryClient.invalidateQueries({
-          queryKey: eventKeys.userStats(data.data.planner_id)
+          queryKey: eventKeys.userStats(data.planner_id)
         })
       }
     },
@@ -118,7 +139,7 @@ export function useCreateEvent(
 }
 
 export function useUpdateEvent(
-  options?: UseMutationOptions<ApiResponse<Event>, ApiException, { id: string; data: EventUpdate }>
+  options?: UseMutationOptions<Event, ApiException, { id: string; data: EventUpdate }>
 ) {
   const queryClient = useQueryClient()
 
@@ -144,7 +165,7 @@ export function useUpdateEvent(
 }
 
 export function useDeleteEvent(
-  options?: UseMutationOptions<void, ApiException, string>
+  options?: UseMutationOptions<{ message: string }, ApiException, string>
 ) {
   const queryClient = useQueryClient()
 
@@ -165,7 +186,7 @@ export function useDeleteEvent(
 }
 
 export function useDuplicateEvent(
-  options?: UseMutationOptions<ApiResponse<Event>, ApiException, string>
+  options?: UseMutationOptions<Event, ApiException, string>
 ) {
   const queryClient = useQueryClient()
 
@@ -174,7 +195,7 @@ export function useDuplicateEvent(
     onSuccess: (data) => {
       // Add the duplicated event to cache
       queryClient.setQueryData(
-        eventKeys.detail(data.data.id),
+        eventKeys.detail(data.id),
         data
       )
 
@@ -182,9 +203,9 @@ export function useDuplicateEvent(
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() })
       
       // Update user stats
-      if (data.data.planner_id) {
+      if (data.planner_id) {
         queryClient.invalidateQueries({
-          queryKey: eventKeys.userStats(data.data.planner_id)
+          queryKey: eventKeys.userStats(data.planner_id)
         })
       }
     },
@@ -193,7 +214,7 @@ export function useDuplicateEvent(
 }
 
 export function useArchiveEvent(
-  options?: UseMutationOptions<ApiResponse<Event>, ApiException, string>
+  options?: UseMutationOptions<Event, ApiException, string>
 ) {
   const queryClient = useQueryClient()
 
@@ -216,7 +237,7 @@ export function useArchiveEvent(
 // Composite hooks
 export function useEventManagement(eventId: string) {
   const { data: event, isLoading: eventLoading, error: eventError } = useEvent(eventId)
-  const { data: stats, isLoading: statsLoading } = useEventStats(eventId)
+  const { data: stats, isLoading: statsLoading } = useEventAnalytics(eventId)
   
   const updateMutation = useUpdateEvent({
     onSuccess: () => {
@@ -243,8 +264,8 @@ export function useEventManagement(eventId: string) {
   })
 
   return {
-    event: event?.data,
-    stats: stats?.data,
+    event,
+    stats,
     isLoading: eventLoading || statsLoading,
     error: eventError,
     updateEvent: updateMutation.mutate,
@@ -279,26 +300,32 @@ export function useEventsOverview(params?: EventSearchParams) {
 
   // Helper functions
   const getEventsByStatus = (status: EventStatus) => {
-    return events?.data.events.filter(event => event.status === status) || []
+    return events?.items.filter(event => event.status === status) || []
   }
 
   const getEventsByType = (type: EventType) => {
-    return events?.data.events.filter(event => event.type === type) || []
+    return events?.items.filter(event => event.type === type) || []
   }
 
   const getUpcomingEvents = () => {
     const now = new Date()
-    return events?.data.events.filter(event => new Date(event.start_date) > now) || []
+    return events?.items.filter(event => new Date(event.start_date) > now) || []
   }
 
   const getPastEvents = () => {
     const now = new Date()
-    return events?.data.events.filter(event => new Date(event.start_date) <= now) || []
+    return events?.items.filter(event => new Date(event.start_date) <= now) || []
   }
 
   return {
-    events: events?.data.events || [],
-    pagination: events?.data.pagination,
+    events: events?.items || [],
+    pagination: events ? {
+      page: events.page,
+      limit: events.limit, 
+      total: events.total,
+      has_next: events.has_next,
+      has_previous: events.has_previous
+    } : undefined,
     isLoading,
     error,
     refetch,
@@ -316,7 +343,10 @@ export function useEventsOverview(params?: EventSearchParams) {
 
 // Form helpers
 export function useEventForm(eventId?: string) {
-  const { data: event } = useEvent(eventId || '', { enabled: !!eventId })
+  const eventQuery = useEvent(eventId || '', { 
+    enabled: !!eventId
+  } as UseQueryOptions<Event, ApiException>)
+  const { data: event } = eventQuery
   
   const createMutation = useCreateEvent()
   const updateMutation = useUpdateEvent()
@@ -330,7 +360,7 @@ export function useEventForm(eventId?: string) {
   }
 
   return {
-    event: event?.data,
+    event,
     submitEvent,
     isSubmitting: createMutation.isPending || updateMutation.isPending,
     error: createMutation.error || updateMutation.error,

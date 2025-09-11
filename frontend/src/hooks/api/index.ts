@@ -9,6 +9,9 @@ export * from './useAuth'
 // Events hooks  
 export * from './useEvents'
 
+// Event stats hooks
+export * from './useEventStats'
+
 // Guests hooks
 export * from './useGuests'
 
@@ -18,5 +21,6 @@ export * from './useBudget'
 // Re-export query keys for external use
 export { authKeys } from './useAuth'
 export { eventKeys } from './useEvents'
+export { eventStatsKeys } from './useEventStats'
 export { guestKeys } from './useGuests'
 export { budgetKeys } from './useBudget'

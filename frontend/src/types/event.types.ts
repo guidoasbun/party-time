@@ -262,6 +262,44 @@ export interface EventFilters {
   }
 }
 
+// API Response types for lists and statistics
+export interface EventListResponse {
+  events: EventSummary[]
+  pagination: {
+    page: number
+    limit: number
+    total: number
+    has_next: boolean
+    has_previous: boolean
+  }
+}
+
+export interface EventStatsResponse {
+  total_events: number
+  upcoming_events: number
+  completed_events: number
+  total_guests: number
+  avg_rsvp_rate: number
+  total_budget: number
+  events_by_status: Record<EventStatus, number>
+  events_by_type: Record<EventType, number>
+  events_this_month: number
+  events_this_year: number
+  average_guest_count: number
+  average_budget: number
+  completion_rate: number
+}
+
+// Dashboard statistics interface
+export interface DashboardStats {
+  totalEvents: number
+  upcomingEvents: number
+  completedEvents: number
+  totalGuests: number
+  avgRsvpRate: number
+  totalBudget: number
+}
+
 // Event statistics and analytics
 export interface EventStats {
   total_events: number
