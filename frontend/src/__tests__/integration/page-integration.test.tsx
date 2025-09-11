@@ -215,8 +215,8 @@ describe('Page Integration Tests', () => {
       it('should redirect to dashboard if already authenticated', async () => {
         // Mock authenticated session
         mockedGetSession.mockResolvedValue({
-          user: { id: 'test-user', email: 'test@example.com' },
-          idToken: 'test-token',
+          user: { name: 'Test User', email: 'test@example.com', image: null },
+          expires: '2030-01-01T00:00:00.000Z',
         })
 
         render(<SignInPage />)
@@ -231,6 +231,7 @@ describe('Page Integration Tests', () => {
           ok: true,
           status: 200,
           error: null,
+          url: null,
         })
 
         render(<SignInPage />)
@@ -254,6 +255,8 @@ describe('Page Integration Tests', () => {
         mockedSignIn.mockResolvedValue({
           ok: false,
           error: 'Invalid credentials',
+          status: 401,
+          url: null,
         })
 
         render(<SignInPage />)
