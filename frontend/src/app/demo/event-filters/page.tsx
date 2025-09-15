@@ -1,6 +1,7 @@
 'use client'
 
 import * as React from 'react'
+import { Suspense } from 'react'
 import { EventType, EventStatus, EventFilters as EventFiltersType, EventSummary } from '@/types/event.types'
 import { EventFilters } from '@/components/events/EventFilters'
 import { EventList } from '@/components/events/EventList'
@@ -92,6 +93,30 @@ const sampleEvents: EventSummary[] = [
     created_at: '2024-02-15T12:00:00Z'
   }
 ]
+
+// Wrapper component to handle Suspense boundary for useSearchParams
+function EventFiltersWrapper({
+  value,
+  onChange,
+  compact,
+  showAdvanced
+}: {
+  value: EventFiltersType
+  onChange: (filters: EventFiltersType) => void
+  compact: boolean
+  showAdvanced: boolean
+}) {
+  return (
+    <Suspense fallback={<div className="p-6 bg-background border rounded-lg">Loading filters...</div>}>
+      <EventFilters
+        value={value}
+        onChange={onChange}
+        compact={compact}
+        showAdvanced={showAdvanced}
+      />
+    </Suspense>
+  )
+}
 
 export default function EventFiltersDemo() {
   const [filters, setFilters] = React.useState<EventFiltersType>({
@@ -224,7 +249,7 @@ export default function EventFiltersDemo() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <EventFilters
+            <EventFiltersWrapper
               value={filters}
               onChange={setFilters}
               compact={showCompactFilters}
