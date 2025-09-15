@@ -1,4 +1,7 @@
+'use client'
+
 import { format } from 'date-fns'
+import { useState, useEffect } from 'react'
 import { 
   Calendar, 
   MapPin, 
@@ -83,9 +86,30 @@ function BudgetProgressBar({ budgetTotal, totalExpenses }: { budgetTotal?: numbe
 }
 
 export function EventCard({ event, onEdit, onDelete, onView, viewMode = 'grid' }: EventCardProps) {
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Use safe date formatting to prevent hydration mismatches
   const eventDate = new Date(event.start_date)
-  const formattedDate = format(eventDate, 'MMM dd, yyyy')
-  const formattedTime = format(eventDate, 'h:mm a')
+  const formattedDate = isClient
+    ? format(eventDate, 'MMM dd, yyyy')
+    : eventDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit',
+        timeZone: 'UTC'
+      })
+  const formattedTime = isClient
+    ? format(eventDate, 'h:mm a')
+    : eventDate.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'UTC'
+      })
   
   const rsvpRate = event.guest_count > 0 
     ? Math.round((event.confirmed_guests / event.guest_count) * 100)
