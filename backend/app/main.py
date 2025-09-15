@@ -37,15 +37,28 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 # Configure CORS
+import os
+environment = os.getenv("ENVIRONMENT", "development")
+
+# More permissive CORS for development
+if environment == "development":
+    cors_origins = ["*"]  # Allow all origins in development
+    allow_credentials = False  # Must be False when using "*"
+else:
+    cors_origins = settings.CORS_ORIGINS
+    allow_credentials = True
+
+print(f"Environment: {environment}, CORS Origins: {cors_origins}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allow_headers=[
         "Accept",
         "Accept-Language",
-        "Content-Language", 
+        "Content-Language",
         "Content-Type",
         "Authorization",
         "X-Requested-With",
