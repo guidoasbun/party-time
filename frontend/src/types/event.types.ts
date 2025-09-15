@@ -245,6 +245,7 @@ export interface EventSearchParams extends ListQueryParams {
 }
 
 export interface EventFilters {
+  search?: string
   types: EventType[]
   statuses: EventStatus[]
   date_range: {
