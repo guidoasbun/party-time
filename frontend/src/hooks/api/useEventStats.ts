@@ -50,19 +50,44 @@ export function useDashboardStats(
   return useQuery({
     queryKey: [...eventStatsKeys.dashboard(), 'transformed'],
     queryFn: async (): Promise<DashboardStats> => {
-      const stats = await eventsService.getEventsStats()
-      
-      // Transform EventStats to DashboardStats
-      // Calculate completed events as total - upcoming (approximation)
-      const completedEvents = Math.max(0, stats.total_events - stats.upcoming_events)
-      
-      return {
-        totalEvents: stats.total_events,
-        upcomingEvents: stats.upcoming_events,
-        completedEvents,
-        totalGuests: stats.total_guests,
-        avgRsvpRate: 85, // Mock value - would be calculated from actual RSVP data
-        totalBudget: stats.total_budget,
+      try {
+        const stats = await eventsService.getEventsStats()
+
+        if (!stats) {
+          // Return default stats when API fails
+          return {
+            totalEvents: 0,
+            upcomingEvents: 0,
+            completedEvents: 0,
+            totalGuests: 0,
+            avgRsvpRate: 0,
+            totalBudget: 0,
+          }
+        }
+
+        // Transform EventStats to DashboardStats
+        // Calculate completed events as total - upcoming (approximation)
+        const completedEvents = Math.max(0, stats.total_events - stats.upcoming_events)
+
+        return {
+          totalEvents: stats.total_events || 0,
+          upcomingEvents: stats.upcoming_events || 0,
+          completedEvents,
+          totalGuests: stats.total_guests || 0,
+          avgRsvpRate: 85, // Mock value - would be calculated from actual RSVP data
+          totalBudget: stats.total_budget || 0,
+        }
+      } catch (error) {
+        // Return default stats for demo purposes when API fails
+        console.warn('Failed to fetch dashboard stats:', error)
+        return {
+          totalEvents: 0,
+          upcomingEvents: 0,
+          completedEvents: 0,
+          totalGuests: 0,
+          avgRsvpRate: 0,
+          totalBudget: 0,
+        }
       }
     },
     staleTime: 2 * 60 * 1000, // 2 minutes
@@ -81,19 +106,29 @@ export function useRecentActivity(
   return useQuery({
     queryKey: eventStatsKeys.recentActivity(),
     queryFn: async (): Promise<EventActivity[]> => {
-      // Since there's no specific activity endpoint, we'll use recent events
-      // and transform them to activity format
-      const recentEvents = await eventsService.getRecentEvents(limit)
-      
-      return recentEvents.map((event): EventActivity => ({
-        id: `activity-${event.id}`,
-        event_id: event.id,
-        user_id: event.id, // Will be replaced with actual user ID when available
-        user_name: event.planner_name,
-        action_type: 'created',
-        description: `Created event "${event.name}"`,
-        created_at: event.created_at,
-      }))
+      try {
+        // Since there's no specific activity endpoint, we'll use recent events
+        // and transform them to activity format
+        const recentEvents = await eventsService.getRecentEvents(limit)
+
+        if (!recentEvents || recentEvents.length === 0) {
+          return []
+        }
+
+        return recentEvents.map((event): EventActivity => ({
+          id: `activity-${event.id}`,
+          event_id: event.id,
+          user_id: event.id, // Will be replaced with actual user ID when available
+          user_name: event.planner_name,
+          action_type: 'created',
+          description: `Created event "${event.name}"`,
+          created_at: event.created_at,
+        }))
+      } catch (error) {
+        // Return empty array for demo purposes when API fails
+        console.warn('Failed to fetch recent activity:', error)
+        return []
+      }
     },
     staleTime: 1 * 60 * 1000, // 1 minute
     ...options,
@@ -110,7 +145,16 @@ export function useUpcomingEvents(
 ) {
   return useQuery({
     queryKey: eventStatsKeys.upcomingEvents(limit),
-    queryFn: () => eventsService.getUpcomingEvents(limit),
+    queryFn: async (): Promise<EventSummary[]> => {
+      try {
+        const result = await eventsService.getUpcomingEvents(limit)
+        return result || []
+      } catch (error) {
+        // Return empty array for demo purposes when API fails
+        console.warn('Failed to fetch upcoming events:', error)
+        return []
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
   })
