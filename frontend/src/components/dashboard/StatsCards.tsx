@@ -80,7 +80,7 @@ export function StatsCards({
   return (
     <div className={cn(className)}>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card, index) => (
+        {cards.map((card) => (
           <StatCard
             key={card.testId}
             title={card.title}

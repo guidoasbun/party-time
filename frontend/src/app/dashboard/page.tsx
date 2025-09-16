@@ -32,11 +32,11 @@ export default function DashboardPage() {
   })
 
   // Convert EventFilters to backend API params
-  const searchParams: any = {
+  const searchParams: EventSearchParams = {
     skip: 0,
     limit: 100,
-    event_type: eventFilters.types.length > 0 ? eventFilters.types[0] : undefined,
-    status: eventFilters.statuses.length > 0 ? eventFilters.statuses[0] : undefined,
+    type: eventFilters.types.length > 0 ? eventFilters.types : undefined,
+    status: eventFilters.statuses.length > 0 ? eventFilters.statuses : undefined,
     include_relations: true,
     // Note: Backend doesn't support search, location, date range, budget, or guest count yet
     // These filters would need to be implemented backend-side or filtered client-side
