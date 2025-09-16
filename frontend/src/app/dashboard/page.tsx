@@ -164,7 +164,8 @@ export default function DashboardPage() {
         onSignOut={() => signOut({ callbackUrl: "/" })}
       />
 
-      <DashboardLayout>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <DashboardLayout>
         {/* Dashboard View Toggle */}
         <div className="mb-6">
           <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 w-fit">
@@ -249,6 +250,7 @@ export default function DashboardPage() {
           </>
         )}
       </DashboardLayout>
+      </div>
 
       {/* Floating Action Button */}
       <FAB
