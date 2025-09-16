@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardLayout, DashboardStatsSection, DashboardMainContent, DashboardFiltersSection, DashboardSection } from "@/components/dashboard/DashboardLayout"
+import { DashboardSections } from "@/components/dashboard/DashboardSections"
 import { StatsCards } from "@/components/dashboard/StatsCards"
 import { EventList } from "@/components/events/EventList"
 import { EventFilters } from "@/components/events/EventFilters"
@@ -21,6 +22,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [dashboardView, setDashboardView] = useState<'overview' | 'events'>('overview')
   const [eventFilters, setEventFilters] = useState<EventFiltersType>({
     search: '',
     types: [],
@@ -163,54 +165,89 @@ export default function DashboardPage() {
       />
 
       <DashboardLayout>
-        {/* Dashboard Statistics */}
-        <DashboardStatsSection>
-          <StatsCards />
-        </DashboardStatsSection>
+        {/* Dashboard View Toggle */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 w-fit">
+            <button
+              onClick={() => setDashboardView('overview')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                dashboardView === 'overview'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Dashboard Overview
+            </button>
+            <button
+              onClick={() => setDashboardView('events')}
+              className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                dashboardView === 'events'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Events Management
+            </button>
+          </div>
+        </div>
 
-        {/* Filters Section */}
-        <DashboardFiltersSection
-          isCollapsed={filtersCollapsed}
-          onToggle={() => setFiltersCollapsed(!filtersCollapsed)}
-        >
-          <EventFilters
-            value={eventFilters}
-            onChange={setEventFilters}
-            compact={filtersCollapsed}
-          />
-        </DashboardFiltersSection>
+        {/* Dashboard Content */}
+        {dashboardView === 'overview' ? (
+          /* New Dashboard Sections */
+          <DashboardSections />
+        ) : (
+          /* Original Events Management View */
+          <>
+            {/* Dashboard Statistics */}
+            <DashboardStatsSection>
+              <StatsCards />
+            </DashboardStatsSection>
 
-        {/* Main Events Section */}
-        <DashboardMainContent>
-          <DashboardSection
-            title="Your Events"
-            description="Manage and organize all your events"
-            fullWidth
-          >
-            <EventList
-              events={eventsData?.items || []}
-              onEdit={handleEditEvent}
-              onDelete={handleDeleteEvent}
-              onView={handleViewEvent}
-              onBulkDelete={handleBulkDelete}
-              onCreateEvent={handleCreateEvent}
-              viewMode={viewMode}
-              onViewModeChange={setViewMode}
-              isLoading={eventsLoading}
-              error={eventsError?.message || null}
-              pagination={{
-                page: eventsData?.page || 1,
-                limit: eventsData?.limit || 10,
-                total: eventsData?.total || 0,
-                has_next: eventsData?.has_next || false,
-                has_previous: eventsData?.has_previous || false,
-              }}
-              enableBulkSelection={true}
-              emptyStateTitle="No events found"
-              emptyStateMessage="Start planning your first event to see it here"
-            />
-          </DashboardSection>
-        </DashboardMainContent>
+            {/* Filters Section */}
+            <DashboardFiltersSection
+              isCollapsed={filtersCollapsed}
+              onToggle={() => setFiltersCollapsed(!filtersCollapsed)}
+            >
+              <EventFilters
+                value={eventFilters}
+                onChange={setEventFilters}
+                compact={filtersCollapsed}
+              />
+            </DashboardFiltersSection>
+
+            {/* Main Events Section */}
+            <DashboardMainContent>
+              <DashboardSection
+                title="Your Events"
+                description="Manage and organize all your events"
+                fullWidth
+              >
+                <EventList
+                  events={eventsData?.items || []}
+                  onEdit={handleEditEvent}
+                  onDelete={handleDeleteEvent}
+                  onView={handleViewEvent}
+                  onBulkDelete={handleBulkDelete}
+                  onCreateEvent={handleCreateEvent}
+                  viewMode={viewMode}
+                  onViewModeChange={setViewMode}
+                  isLoading={eventsLoading}
+                  error={eventsError?.message || null}
+                  pagination={{
+                    page: eventsData?.page || 1,
+                    limit: eventsData?.limit || 10,
+                    total: eventsData?.total || 0,
+                    has_next: eventsData?.has_next || false,
+                    has_previous: eventsData?.has_previous || false,
+                  }}
+                  enableBulkSelection={true}
+                  emptyStateTitle="No events found"
+                  emptyStateMessage="Start planning your first event to see it here"
+                />
+              </DashboardSection>
+            </DashboardMainContent>
+          </>
+        )}
       </DashboardLayout>
 
       {/* Floating Action Button */}

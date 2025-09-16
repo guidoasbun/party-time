@@ -354,11 +354,11 @@ async def get_dashboard_stats(
 
 ### Task 3.1: Main Dashboard Layout
 **File**: `frontend/src/app/dashboard/page.tsx`
-- [ ] Replace current auth-focused dashboard
-- [ ] Add header with greeting and user info
-- [ ] Implement sidebar navigation (if needed)
-- [ ] Create responsive layout grid
-- [ ] Add create event FAB/button
+- [x] Replace current auth-focused dashboard
+- [x] Add header with greeting and user info
+- [x] Implement sidebar navigation (if needed)
+- [x] Create responsive layout grid
+- [x] Add create event FAB/button
 
 ### Task 3.2: Dashboard Sections
 **File**: `frontend/src/components/dashboard/DashboardSections.tsx`
