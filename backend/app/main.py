@@ -1,5 +1,4 @@
 from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import get_settings
 from app.api.v1.auth import router as auth_router
 from app.api.v1.events import router as events_router
@@ -14,59 +13,45 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Security Headers Middleware
+# Complete CORS and OPTIONS handling middleware
 @app.middleware("http")
-async def add_security_headers(request: Request, call_next):
+async def handle_cors_and_security(request: Request, call_next):
+    # Handle OPTIONS requests for CORS preflight
+    if request.method == "OPTIONS":
+        from fastapi.responses import Response
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Accept, Accept-Language, Authorization, Cache-Control, Content-Language, Content-Type, X-CSRF-Token, X-Requested-With, X-Request-Timestamp"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Max-Age"] = "600"
+        return response
+
+    # Process the request
     response = await call_next(request)
-    
+
+    # Add CORS headers to all responses, including redirects
+    response.headers["Access-Control-Allow-Origin"] = "http://localhost:3000"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Accept, Accept-Language, Authorization, Cache-Control, Content-Language, Content-Type, X-CSRF-Token, X-Requested-With, X-Request-Timestamp"
+    response.headers["Vary"] = "Origin"
+
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    
+
     # HSTS header (only for HTTPS in production)
-    # Check for production environment via environment variable
     import os
     if os.getenv("ENVIRONMENT", "development") == "production":
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
-    
+
     # Content Security Policy (basic)
     response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
-    
+
     return response
-
-# Configure CORS
-import os
-environment = os.getenv("ENVIRONMENT", "development")
-
-# More permissive CORS for development
-if environment == "development":
-    cors_origins = ["*"]  # Allow all origins in development
-    allow_credentials = False  # Must be False when using "*"
-else:
-    cors_origins = settings.CORS_ORIGINS
-    allow_credentials = True
-
-print(f"Environment: {environment}, CORS Origins: {cors_origins}")
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=allow_credentials,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allow_headers=[
-        "Accept",
-        "Accept-Language",
-        "Content-Language",
-        "Content-Type",
-        "Authorization",
-        "X-Requested-With",
-        "X-CSRF-Token",
-        "Cache-Control"
-    ],
-    expose_headers=["*"]
-)
 
 # Include routers
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["authentication"])
