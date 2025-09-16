@@ -3,28 +3,56 @@
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback } from "react"
-import { Button } from "@/components/ui/Button"
-
-interface UserInfo {
-  user_id: string
-  email: string
-  name: string
-  email_verified: boolean
-  username: string
-  groups: string[]
-}
+import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
+import { DashboardLayout, DashboardStatsSection, DashboardMainContent, DashboardFiltersSection, DashboardSection } from "@/components/dashboard/DashboardLayout"
+import { StatsCards } from "@/components/dashboard/StatsCards"
+import { EventList } from "@/components/events/EventList"
+import { EventFilters } from "@/components/events/EventFilters"
+import { FAB } from "@/components/ui/FAB"
+import { useEvents } from "@/hooks/api/useEvents"
+import { UserProfileResponse } from "@/types/auth.types"
+import { EventFilters as EventFiltersType, EventSearchParams } from "@/types/event.types"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null)
+  const [userInfo, setUserInfo] = useState<UserProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [filtersCollapsed, setFiltersCollapsed] = useState(false)
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [eventFilters, setEventFilters] = useState<EventFiltersType>({
+    search: '',
+    types: [],
+    statuses: [],
+    date_range: {},
+    location: '',
+    budget_range: {},
+    guest_count_range: {}
+  })
+
+  // Convert EventFilters to backend API params
+  const searchParams: EventSearchParams = {
+    skip: 0,
+    limit: 100,
+    type: eventFilters.types.length > 0 ? eventFilters.types : undefined,
+    status: eventFilters.statuses.length > 0 ? eventFilters.statuses : undefined,
+    include_relations: true,
+    // Note: Backend doesn't support search, location, date range, budget, or guest count yet
+    // These filters would need to be implemented backend-side or filtered client-side
+  }
+
+  // Fetch events with current filters
+  const {
+    data: eventsData,
+    isLoading: eventsLoading,
+    error: eventsError
+  } = useEvents(searchParams)
 
   const fetchUserInfo = useCallback(async () => {
     try {
       if (!session?.idToken) return
-      
+
       const response = await fetch("http://localhost:8000/api/v1/auth/me", {
         headers: {
           "Authorization": `Bearer ${session.idToken}`,
@@ -53,40 +81,39 @@ export default function DashboardPage() {
     }
 
     if (status === "authenticated" && session?.idToken) {
-      // Fetch user info from backend using the ID token
       fetchUserInfo()
     }
   }, [status, session, router, fetchUserInfo])
 
-  const testProtectedRoute = async () => {
-    try {
-      if (!session?.idToken) return
-      
-      const response = await fetch("http://localhost:8000/api/v1/auth/protected", {
-        headers: {
-          "Authorization": `Bearer ${session.idToken}`,
-          "Content-Type": "application/json",
-        },
-      })
+  // Event action handlers
+  const handleCreateEvent = () => {
+    router.push('/events/new')
+  }
 
-      const data = await response.json()
-      if (response.ok) {
-        alert(`Protected route success: ${data.message}`)
-      } else {
-        alert(`Protected route error: ${data.detail}`)
-      }
-    } catch (error) {
-      alert("Error calling protected route")
-      console.error("Protected route error:", error)
-    }
+  const handleEditEvent = (eventId: string) => {
+    router.push(`/events/${eventId}/edit`)
+  }
+
+  const handleDeleteEvent = (eventId: string) => {
+    // TODO: Implement delete confirmation and API call
+    console.log('Delete event:', eventId)
+  }
+
+  const handleViewEvent = (eventId: string) => {
+    router.push(`/events/${eventId}`)
+  }
+
+  const handleBulkDelete = (eventIds: string[]) => {
+    // TODO: Implement bulk delete
+    console.log('Bulk delete events:', eventIds)
   }
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -96,73 +123,101 @@ export default function DashboardPage() {
     return null // Will redirect
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white overflow-hidden shadow rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                  <p className="mt-1 text-sm text-gray-600">
-                    Welcome to your Party-Time dashboard
-                  </p>
-                </div>
-                <Button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  variant="outline"
-                >
-                  Sign Out
-                </Button>
-              </div>
-
-              <div className="mt-6">
-                <h2 className="text-lg font-medium text-gray-900">Authentication Status</h2>
-                
-                {error ? (
-                  <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-800">Error: {error}</p>
-                    <p className="text-xs text-red-600 mt-2">
-                      Make sure your backend server is running on port 8000
-                    </p>
-                  </div>
-                ) : userInfo ? (
-                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-md">
-                    <p className="text-sm text-green-800">✅ Successfully authenticated!</p>
-                    <div className="mt-3 space-y-2">
-                      <div className="text-sm">
-                        <span className="font-medium">Name:</span> {userInfo.name}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Email:</span> {userInfo.email}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Email Verified:</span> {userInfo.email_verified ? "Yes" : "No"}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">User ID:</span> {userInfo.user_id}
-                      </div>
-                      <div className="text-sm">
-                        <span className="font-medium">Groups:</span> {userInfo.groups.join(", ") || "None"}
-                      </div>
-                    </div>
-                  </div>
-                ) : null}
-
-                <div className="mt-6">
-                  <Button
-                    onClick={testProtectedRoute}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    Test Protected Route
-                  </Button>
-                </div>
-              </div>
+  if (error) {
+    return (
+      <DashboardLayout>
+        <DashboardSection>
+          <div className="text-center py-12">
+            <div className="text-red-500 mb-4">
+              <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             </div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Error</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <p className="text-sm text-gray-500">Make sure your backend server is running on port 8000</p>
           </div>
-        </div>
-      </div>
-    </div>
+        </DashboardSection>
+      </DashboardLayout>
+    )
+  }
+
+  if (!userInfo) {
+    return (
+      <DashboardLayout>
+        <DashboardSection>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading user information...</p>
+          </div>
+        </DashboardSection>
+      </DashboardLayout>
+    )
+  }
+
+  return (
+    <>
+      <DashboardHeader
+        user={userInfo}
+        onSignOut={() => signOut({ callbackUrl: "/" })}
+      />
+
+      <DashboardLayout>
+        {/* Dashboard Statistics */}
+        <DashboardStatsSection>
+          <StatsCards />
+        </DashboardStatsSection>
+
+        {/* Filters Section */}
+        <DashboardFiltersSection
+          isCollapsed={filtersCollapsed}
+          onToggle={() => setFiltersCollapsed(!filtersCollapsed)}
+        >
+          <EventFilters
+            value={eventFilters}
+            onChange={setEventFilters}
+            compact={filtersCollapsed}
+          />
+        </DashboardFiltersSection>
+
+        {/* Main Events Section */}
+        <DashboardMainContent>
+          <DashboardSection
+            title="Your Events"
+            description="Manage and organize all your events"
+            fullWidth
+          >
+            <EventList
+              events={eventsData?.items || []}
+              onEdit={handleEditEvent}
+              onDelete={handleDeleteEvent}
+              onView={handleViewEvent}
+              onBulkDelete={handleBulkDelete}
+              onCreateEvent={handleCreateEvent}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+              isLoading={eventsLoading}
+              error={eventsError?.message || null}
+              pagination={{
+                page: eventsData?.page || 1,
+                limit: eventsData?.limit || 10,
+                total: eventsData?.total || 0,
+                has_next: eventsData?.has_next || false,
+                has_previous: eventsData?.has_previous || false,
+              }}
+              enableBulkSelection={true}
+              emptyStateTitle="No events found"
+              emptyStateMessage="Start planning your first event to see it here"
+            />
+          </DashboardSection>
+        </DashboardMainContent>
+      </DashboardLayout>
+
+      {/* Floating Action Button */}
+      <FAB
+        onClick={handleCreateEvent}
+        label="Create New Event"
+      />
+    </>
   )
 }

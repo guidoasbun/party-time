@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict, Any
 from app.services.cognito_service import cognito_service
@@ -15,12 +15,12 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+
+async def _verify_token(token: str) -> Dict[str, Any]:
     """
-    Dependency to get current authenticated user from JWT token.
+    Helper function to verify JWT token.
     Supports both AWS Cognito and Google OAuth tokens.
     """
-    token = credentials.credentials
     
     # Try Cognito verification first
     try:
@@ -64,6 +64,13 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         detail="Could not validate credentials - token verification failed",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+    """
+    Dependency to get current authenticated user from JWT token.
+    Supports both AWS Cognito and Google OAuth tokens.
+    """
+    return await _verify_token(credentials.credentials)
 
 
 async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:

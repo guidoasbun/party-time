@@ -92,6 +92,108 @@ async def get_public_events(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve public events: {str(e)}")
 
 
+@router.get("/stats")
+async def get_dashboard_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get dashboard statistics for all user events."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Get all events for the user with relationships
+        events = await crud_event.get_events_by_planner(db, user_id, 0, 1000, include_relations=True)
+
+        if not events:
+            # Return default stats if no events
+            return {
+                "total_events": 0,
+                "events_by_status": {},
+                "events_by_type": {},
+                "upcoming_events": 0,
+                "events_this_month": 0,
+                "events_this_year": 0,
+                "total_guests": 0,
+                "average_guest_count": 0,
+                "total_budget": 0,
+                "average_budget": 0,
+                "completion_rate": 0.0
+            }
+
+        # Calculate statistics
+        from datetime import datetime, timezone
+        from collections import defaultdict
+
+        now = datetime.now(timezone.utc)
+        current_month = now.month
+        current_year = now.year
+
+        # Initialize counters
+        total_events = len(events)
+        events_by_status = defaultdict(int)
+        events_by_type = defaultdict(int)
+        upcoming_events = 0
+        events_this_month = 0
+        events_this_year = 0
+        total_guests = 0
+        total_budget = 0.0
+        completed_events = 0
+
+        for event in events:
+            # Count by status
+            events_by_status[event.status.value] += 1
+
+            # Count by type
+            events_by_type[event.type.value] += 1
+
+            # Check if upcoming
+            event_date = event.start_date
+            if event_date > now:
+                upcoming_events += 1
+
+            # Check if this month/year
+            if event_date.month == current_month and event_date.year == current_year:
+                events_this_month += 1
+            if event_date.year == current_year:
+                events_this_year += 1
+
+            # Add guest count (count related guests)
+            guest_count = len(event.guests) if event.guests else 0
+            total_guests += guest_count
+
+            # Add budget
+            if event.budget_total:
+                total_budget += float(event.budget_total)
+
+            # Count completed events
+            if event.status.value in ['completed']:
+                completed_events += 1
+
+        # Calculate averages
+        average_guest_count = total_guests / total_events if total_events > 0 else 0
+        average_budget = total_budget / total_events if total_events > 0 else 0
+        completion_rate = (completed_events / total_events * 100) if total_events > 0 else 0.0
+
+        return {
+            "total_events": total_events,
+            "events_by_status": dict(events_by_status),
+            "events_by_type": dict(events_by_type),
+            "upcoming_events": upcoming_events,
+            "events_this_month": events_this_month,
+            "events_this_year": events_this_year,
+            "total_guests": total_guests,
+            "average_guest_count": round(average_guest_count, 1),
+            "total_budget": total_budget,
+            "average_budget": round(average_budget, 2),
+            "completion_rate": round(completion_rate, 1)
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve dashboard stats: {str(e)}")
+
+
 @router.get("/{event_id}", response_model=Event)
 async def get_event(
     event_id: UUID,
@@ -101,16 +203,16 @@ async def get_event(
 ):
     """Get a specific event by ID."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         event = await crud_event.get_event_by_id(db, event_id, include_relations)
         if not event:
             raise HTTPException(status_code=404, detail="Event not found")
-        
+
         # Check if user owns the event or if it's public
         if event.planner_id != user_id and not event.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         return event
     except HTTPException:
         raise
@@ -223,105 +325,3 @@ async def get_event_stats(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve event stats: {str(e)}")
-
-
-@router.get("/stats")
-async def get_dashboard_stats(
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Get dashboard statistics for all user events."""
-    user_id = UUID(current_user["user_id"])
-
-    try:
-        # Get all events for the user with relationships
-        events = await crud_event.get_events_by_planner(db, user_id, 0, 1000, include_relations=True)
-
-        if not events:
-            # Return default stats if no events
-            return {
-                "total_events": 0,
-                "events_by_status": {},
-                "events_by_type": {},
-                "upcoming_events": 0,
-                "events_this_month": 0,
-                "events_this_year": 0,
-                "total_guests": 0,
-                "average_guest_count": 0,
-                "total_budget": 0,
-                "average_budget": 0,
-                "completion_rate": 0.0
-            }
-
-        # Calculate statistics
-        from datetime import datetime, timezone
-        from collections import defaultdict
-
-        now = datetime.now(timezone.utc)
-        current_month = now.month
-        current_year = now.year
-
-        # Initialize counters
-        total_events = len(events)
-        events_by_status = defaultdict(int)
-        events_by_type = defaultdict(int)
-        upcoming_events = 0
-        events_this_month = 0
-        events_this_year = 0
-        total_guests = 0
-        total_budget = 0.0
-        completed_events = 0
-
-        for event in events:
-            # Count by status
-            events_by_status[event.status.value] += 1
-
-            # Count by type
-            events_by_type[event.type.value] += 1
-
-            # Check if upcoming
-            event_date = event.start_date
-            if event_date > now:
-                upcoming_events += 1
-
-            # Check if this month/year
-            if event_date.month == current_month and event_date.year == current_year:
-                events_this_month += 1
-            if event_date.year == current_year:
-                events_this_year += 1
-
-            # Add guest count (count related guests)
-            guest_count = len(event.guests) if event.guests else 0
-            total_guests += guest_count
-
-            # Add budget
-            if event.budget_total:
-                total_budget += float(event.budget_total)
-
-            # Count completed events
-            if event.status.value in ['completed']:
-                completed_events += 1
-
-        # Calculate averages
-        average_guest_count = total_guests / total_events if total_events > 0 else 0
-        average_budget = total_budget / total_events if total_events > 0 else 0
-        completion_rate = (completed_events / total_events * 100) if total_events > 0 else 0.0
-
-        return {
-            "total_events": total_events,
-            "events_by_status": dict(events_by_status),
-            "events_by_type": dict(events_by_type),
-            "upcoming_events": upcoming_events,
-            "events_this_month": events_this_month,
-            "events_this_year": events_this_year,
-            "total_guests": total_guests,
-            "average_guest_count": round(average_guest_count, 1),
-            "total_budget": total_budget,
-            "average_budget": round(average_budget, 2),
-            "completion_rate": round(completion_rate, 1)
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve dashboard stats: {str(e)}")

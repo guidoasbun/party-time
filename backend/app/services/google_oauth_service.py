@@ -4,6 +4,8 @@ from typing import Dict, Any, Optional
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 import logging
+import uuid
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +16,19 @@ class GoogleOAuthService:
         
         if not self.client_id or not self.client_secret:
             logger.warning("Google OAuth credentials not found in environment variables")
+
+    def _generate_uuid_from_google_sub(self, google_sub: str) -> str:
+        """
+        Generate a deterministic UUID from Google's sub (subject) ID.
+        This ensures the same Google user always gets the same UUID.
+        """
+        # Create a namespace UUID for Google OAuth users
+        namespace = uuid.UUID('550e8400-e29b-41d4-a716-446655440000')
+
+        # Generate UUID5 (deterministic) from namespace and Google sub
+        user_uuid = uuid.uuid5(namespace, f"google:{google_sub}")
+
+        return str(user_uuid)
     
     async def verify_google_token(self, token: str) -> Optional[Dict[str, Any]]:
         """
@@ -34,7 +49,8 @@ class GoogleOAuthService:
             
             # Extract user information
             user_info = {
-                'user_id': idinfo['sub'],
+                'user_id': self._generate_uuid_from_google_sub(idinfo['sub']),
+                'google_sub': idinfo['sub'],  # Keep original Google sub for reference
                 'email': idinfo['email'],
                 'name': idinfo.get('name', ''),
                 'given_name': idinfo.get('given_name', ''),
@@ -76,7 +92,8 @@ class GoogleOAuthService:
             
             # Transform to our expected format
             user_info = {
-                'user_id': userinfo['id'],
+                'user_id': self._generate_uuid_from_google_sub(userinfo['id']),
+                'google_sub': userinfo['id'],  # Keep original Google ID for reference
                 'email': userinfo['email'],
                 'name': userinfo.get('name', ''),
                 'given_name': userinfo.get('given_name', ''),
