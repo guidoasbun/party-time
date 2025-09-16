@@ -21,8 +21,15 @@ This is a full-stack application with three main components:
 
 ### Database (PostgreSQL via Docker)
 ```bash
+# IMPORTANT: Ensure Docker Desktop is running first!
+# Start Docker Desktop application if not running:
+open -a Docker
+
 # Start development database
 docker-compose up -d postgres
+
+# Verify database container is running
+docker ps
 
 # Test database connection
 export PGPASSWORD=party_secure_2024
@@ -45,12 +52,24 @@ npm run lint         # Run ESLint with Next.js TypeScript config
 ```bash
 cd backend
 source .venv/bin/activate  # Activate virtual environment (Python 3.13.5)
-python -m uvicorn app.main:app --reload  # Start FastAPI development server
-pytest                                    # Run backend tests
-black .                                   # Format code
-flake8 .                                  # Lint code
-alembic revision --autogenerate -m "msg"  # Create database migration
-alembic upgrade head                      # Apply database migrations
+
+# Start FastAPI development server (requires PostgreSQL running)
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# Run backend tests
+pytest
+
+# Format code
+black .
+
+# Lint code
+flake8 .
+
+# Create database migration
+alembic revision --autogenerate -m "msg"
+
+# Apply database migrations
+alembic upgrade head
 ```
 
 ## Architecture Notes
@@ -193,6 +212,116 @@ alembic upgrade head                      # Apply database migrations
 ```
 
 **Next Steps**: Restart Claude Desktop to load MCP servers, then test connections in a new conversation.
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### 1. Database Connection Issues
+**Symptoms**:
+- Dashboard shows "Loading..." indefinitely
+- Console errors: "Failed to retrieve events: [Errno 61] Connection refused"
+- Backend logs: 500 Internal Server Error on API calls
+
+**Solution**:
+```bash
+# Check if Docker is running
+docker ps
+
+# If Docker not running, start it
+open -a Docker
+
+# Wait for Docker to start (check status in Docker Desktop)
+# Then verify PostgreSQL container is running
+docker ps | grep party-time-db
+
+# Test database connection
+export PGPASSWORD=party_secure_2024
+psql -h localhost -U party_admin -d party_time -c "SELECT version();"
+```
+
+#### 2. Frontend Not Loading
+**Symptoms**:
+- Browser shows connection errors
+- Frontend server not responding on localhost:3000
+
+**Solution**:
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies if needed
+npm install
+
+# Start development server
+npm run dev
+```
+
+#### 3. Backend API Errors
+**Symptoms**:
+- 500 Internal Server Error responses
+- Backend server not responding on localhost:8000
+
+**Solution**:
+```bash
+# Navigate to backend directory
+cd backend
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Ensure PostgreSQL is running first!
+docker ps | grep party-time-db
+
+# Start FastAPI server
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### 4. JWT Authentication Warnings
+**Symptoms**:
+- Backend logs show: "Key not found for kid: ..."
+- "Google OAuth credentials not found in environment variables"
+
+**Status**: These are non-critical warnings that don't prevent functionality. The application works despite these warnings.
+
+### Complete Setup Verification
+
+To verify your entire development environment is working:
+
+```bash
+# 1. Check Docker and database
+docker ps | grep party-time-db
+export PGPASSWORD=party_secure_2024
+psql -h localhost -U party_admin -d party_time -c "SELECT version();"
+
+# 2. Start backend server (in background or separate terminal)
+cd backend && source .venv/bin/activate
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 &
+
+# 3. Start frontend server (in background or separate terminal)
+cd frontend && npm run dev &
+
+# 4. Test API endpoint
+curl http://localhost:8000/api/v1/auth/health
+
+# 5. Open browser to verify dashboard
+open http://localhost:3000/dashboard
+```
+
+### Development Workflow
+
+**Daily Startup Procedure**:
+1. Start Docker Desktop (if not already running)
+2. Verify PostgreSQL container: `docker ps | grep party-time-db`
+3. Start backend server: `cd backend && source .venv/bin/activate && python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+4. Start frontend server: `cd frontend && npm run dev`
+5. Open browser to `http://localhost:3000`
+
+**Development URLs**:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+- Database: localhost:5432 (PostgreSQL)
 
 ## 13-Week Development Timeline
 
