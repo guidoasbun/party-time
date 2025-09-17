@@ -31,14 +31,14 @@ export function StatsCards({
   if (error) {
     return (
       <div className={cn(
-        "rounded-lg border border-red-200 bg-red-50 p-6",
+        "rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-4 sm:p-6",
         className
       )}>
-        <div className="flex items-center gap-2 text-red-800">
+        <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
           <Calendar className="h-5 w-5" />
           <p className="font-medium">Failed to load dashboard statistics</p>
         </div>
-        <p className="mt-2 text-sm text-red-600">
+        <p className="mt-2 text-sm text-red-600 dark:text-red-300">
           {error.message || 'An error occurred while fetching data.'}
         </p>
       </div>
@@ -79,7 +79,7 @@ export function StatsCards({
 
   return (
     <div className={cn(className)}>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
         {cards.map((card) => (
           <StatCard
             key={card.testId}
@@ -89,7 +89,7 @@ export function StatsCards({
             icon={card.icon}
             prefix={card.prefix}
             loading={isLoading}
-            className="min-h-[120px]"
+            className="min-h-[120px] sm:min-h-[140px]"
             data-testid={card.testId}
           />
         ))}
@@ -102,7 +102,7 @@ export function StatsCards({
 export function StatsCardsLoading({ className }: { className?: string }) {
   return (
     <div className={cn(className)}>
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
           <StatCard
             key={i}
@@ -110,7 +110,7 @@ export function StatsCardsLoading({ className }: { className?: string }) {
             value={0}
             icon={Calendar}
             loading={true}
-            className="min-h-[120px]"
+            className="min-h-[120px] sm:min-h-[140px]"
           />
         ))}
       </div>
@@ -130,20 +130,20 @@ export function StatsCardsError({
 }) {
   return (
     <div className={cn(
-      "rounded-lg border border-red-200 bg-red-50 p-8 text-center",
+      "rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-6 sm:p-8 text-center",
       className
     )}>
-      <Calendar className="mx-auto h-12 w-12 text-red-400 mb-4" />
-      <h3 className="text-lg font-semibold text-red-800 mb-2">
+      <Calendar className="mx-auto h-12 w-12 text-red-400 dark:text-red-500 mb-4" />
+      <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
         Failed to Load Statistics
       </h3>
-      <p className="text-red-600 mb-4">
+      <p className="text-red-600 dark:text-red-300 mb-4">
         {error.message || 'An error occurred while fetching dashboard data.'}
       </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 min-h-[44px] transition-colors duration-200"
         >
           Try Again
         </button>
