@@ -89,21 +89,31 @@ function EventListSkeleton({ viewMode = 'grid', count = 6 }: { viewMode?: 'grid'
   const skeletons = Array.from({ length: count }, (_, i) => (
     <div key={i} className={cn(
       'animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg',
-      viewMode === 'grid' ? 'h-64 p-6' : 'h-24 p-4'
+      viewMode === 'grid' ? 'h-64 sm:h-72 p-4 sm:p-6' : 'h-24 sm:h-28 p-3 sm:p-4'
     )}>
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
         <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
         <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-2/3"></div>
+        {viewMode === 'grid' && (
+          <>
+            <div className="h-2 bg-gray-300 dark:bg-gray-600 rounded w-full mt-4"></div>
+            <div className="flex gap-2 mt-3">
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+              <div className="h-8 w-8 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   ))
 
   return (
     <div className={cn(
-      'grid gap-4',
+      'grid gap-3 sm:gap-4',
       viewMode === 'grid'
-        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+        ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
         : 'grid-cols-1'
     )}>
       {skeletons}
@@ -125,7 +135,8 @@ function ViewToggle({
         variant={viewMode === 'grid' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onChange('grid')}
-        className="gap-1"
+        className="gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3"
+        title="Grid view"
       >
         <Grid className="w-4 h-4" />
         <span className="hidden sm:inline">Grid</span>
@@ -134,7 +145,8 @@ function ViewToggle({
         variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onChange('list')}
-        className="gap-1"
+        className="gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3"
+        title="List view"
       >
         <List className="w-4 h-4" />
         <span className="hidden sm:inline">List</span>
@@ -157,38 +169,61 @@ function PaginationControls({
   if (totalPages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between pt-6">
-      <div className="text-sm text-gray-500 dark:text-gray-400">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6">
+      <div className="text-sm text-gray-500 dark:text-gray-400 order-2 sm:order-1">
         Showing {((page - 1) * limit) + 1} to {Math.min(page * limit, total)} of {total} events
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 order-1 sm:order-2">
         <Button
           variant="outline"
           size="sm"
           onClick={() => onPageChange(page - 1)}
           disabled={!has_previous}
-          className="gap-1"
+          className="gap-1 min-h-[44px] px-3"
         >
           <ChevronLeft className="w-4 h-4" />
-          Previous
+          <span className="hidden sm:inline">Previous</span>
         </Button>
 
+        {/* Page numbers - show fewer on mobile */}
         <div className="flex items-center gap-1">
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const pageNum = i + 1
-            return (
-              <Button
-                key={pageNum}
-                variant={page === pageNum ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => onPageChange(pageNum)}
-                className="w-8 h-8"
-              >
-                {pageNum}
-              </Button>
-            )
-          })}
+          {/* Show 3 pages on mobile, 5 on desktop */}
+          <div className="flex items-center gap-1 sm:hidden">
+            {Array.from({ length: Math.min(totalPages, 3) }, (_, i) => {
+              const start = Math.max(1, Math.min(page - 1, totalPages - 2))
+              const pageNum = start + i
+              if (pageNum > totalPages) return null
+
+              return (
+                <Button
+                  key={pageNum}
+                  variant={page === pageNum ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPageChange(pageNum)}
+                  className="min-w-[44px] min-h-[44px]"
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+          </div>
+          <div className="hidden sm:flex items-center gap-1">
+            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+              const pageNum = i + 1
+              return (
+                <Button
+                  key={pageNum}
+                  variant={page === pageNum ? 'default' : 'ghost'}
+                  size="sm"
+                  onClick={() => onPageChange(pageNum)}
+                  className="min-w-[44px] min-h-[44px]"
+                >
+                  {pageNum}
+                </Button>
+              )
+            })}
+          </div>
         </div>
 
         <Button
@@ -196,9 +231,9 @@ function PaginationControls({
           size="sm"
           onClick={() => onPageChange(page + 1)}
           disabled={!has_next}
-          className="gap-1"
+          className="gap-1 min-h-[44px] px-3"
         >
-          Next
+          <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
@@ -227,9 +262,9 @@ function BulkSelectionBar({
   if (selectedCount === 0) return null
 
   return (
-    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 sm:p-4 mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
           <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
             {selectedCount} event{selectedCount !== 1 ? 's' : ''} selected
           </span>
@@ -239,7 +274,7 @@ function BulkSelectionBar({
               variant="ghost"
               size="sm"
               onClick={selectedCount === totalCount ? onClearSelection : onSelectAll}
-              className="text-blue-700 dark:text-blue-300"
+              className="text-blue-700 dark:text-blue-300 min-h-[44px] px-3"
               disabled={isLoading}
             >
               {selectedCount === totalCount ? 'Clear all' : 'Select all'}
@@ -247,16 +282,16 @@ function BulkSelectionBar({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-end">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBulkArchive}
             disabled={isLoading}
-            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-1"
+            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-1 min-h-[44px] px-2 sm:px-3"
           >
             <Archive className="w-4 h-4" />
-            Archive
+            <span className="hidden sm:inline">Archive</span>
           </Button>
 
           <Button
@@ -264,10 +299,10 @@ function BulkSelectionBar({
             size="sm"
             onClick={onBulkDelete}
             disabled={isLoading}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1 min-h-[44px] px-2 sm:px-3"
           >
             <Trash2 className="w-4 h-4" />
-            Delete
+            <span className="hidden sm:inline">Delete</span>
           </Button>
 
           <Button
@@ -275,7 +310,7 @@ function BulkSelectionBar({
             size="sm"
             onClick={onClearSelection}
             disabled={isLoading}
-            className="text-gray-600 dark:text-gray-400"
+            className="text-gray-600 dark:text-gray-400 min-h-[44px] px-3"
           >
             Cancel
           </Button>
@@ -439,11 +474,11 @@ export function EventList({
   }
 
   return (
-    <div className={cn('space-y-4', className)}>
+    <div className={cn('space-y-3 sm:space-y-4', className)}>
       {/* Header with view toggle */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
             Events
           </h2>
           {!isLoading && events.length > 0 && (
@@ -483,22 +518,24 @@ export function EventList({
         />
       ) : (
         <>
-          {/* Events grid/list */}
+          {/* Events grid/list - Mobile-first responsive */}
           <div className={cn(
-            'grid gap-4',
+            'grid gap-3 sm:gap-4',
             viewMode === 'grid'
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
               : 'grid-cols-1'
           )}>
             {events.map((event) => (
               <div key={event.id} className="relative">
                 {enableBulkSelection && enableEventActions && (
-                  <div className="absolute top-2 left-2 z-10">
+                  <div className="absolute top-3 left-3 z-10">
                     <input
                       type="checkbox"
                       checked={eventActions.state.bulkSelection.isSelectAll || eventActions.state.bulkSelection.selectedIds.has(event.id)}
                       onChange={() => eventActions.toggleEventSelection(event.id)}
-                      className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      className="w-5 h-5 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+                      style={{ minWidth: '20px', minHeight: '20px' }}
+                      title="Select event"
                     />
                   </div>
                 )}

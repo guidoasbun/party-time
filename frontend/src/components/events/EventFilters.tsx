@@ -172,10 +172,11 @@ export function EventFilters({
 
   if (compact) {
     return (
-      <div className={cn("space-y-4", className)}>
-        {/* Search and basic filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="flex-1">
+      <div className={cn("space-y-3 sm:space-y-4", className)}>
+        {/* Search and basic filters - Mobile responsive */}
+        <div className="flex flex-col gap-3">
+          {/* Search - full width on mobile */}
+          <div className="w-full">
             <Input
               placeholder="Search events..."
               value={currentFilters.search || ''}
@@ -186,7 +187,8 @@ export function EventFilters({
                   <button
                     type="button"
                     onClick={() => value ? onChange?.({ ...value, search: '' }) : clearSearch()}
-                    className="hover:bg-accent rounded p-1"
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    title="Clear search"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -194,55 +196,64 @@ export function EventFilters({
               }
             />
           </div>
-          <Select
-            options={eventTypeOptions}
-            value={currentFilters.types}
-            onValueChange={handleTypesChange}
-            placeholder="Event types"
-            multiple
-            className="sm:w-48"
-          />
-          {hasActiveFiltersCheck && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleClearFilters}
-              className="sm:w-auto"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Clear
-            </Button>
-          )}
+
+          {/* Type selector and clear button */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex-1">
+              <Select
+                options={eventTypeOptions}
+                value={currentFilters.types}
+                onValueChange={handleTypesChange}
+                placeholder="Event types"
+                multiple
+                className="w-full"
+              />
+            </div>
+            {hasActiveFiltersCheck && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearFilters}
+                className="w-full sm:w-auto min-h-[44px] gap-2"
+              >
+                <X className="h-4 w-4" />
+                Clear Filters
+              </Button>
+            )}
+          </div>
         </div>
 
-        {/* Status chips */}
+        {/* Status chips - wrap on mobile */}
         {currentFilters.statuses.length > 0 && (
-          <ChipGroup>
-            {statusChips.filter(chip => chip.selected).map(chip => (
-              <Chip
-                key={chip.value}
-                variant="filter"
-                selected={chip.selected}
-                onToggle={() => handleStatusToggle(chip.value)}
-              >
-                {chip.label}
-              </Chip>
-            ))}
-          </ChipGroup>
+          <div className="overflow-x-auto">
+            <ChipGroup className="flex flex-wrap gap-2">
+              {statusChips.filter(chip => chip.selected).map(chip => (
+                <Chip
+                  key={chip.value}
+                  variant="filter"
+                  selected={chip.selected}
+                  onToggle={() => handleStatusToggle(chip.value)}
+                  className="flex-shrink-0"
+                >
+                  {chip.label}
+                </Chip>
+              ))}
+            </ChipGroup>
+          </div>
         )}
       </div>
     )
   }
 
   return (
-    <div className={cn("space-y-6 p-6 bg-background border rounded-lg", className)}>
+    <div className={cn("space-y-4 sm:space-y-6 p-4 sm:p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200", className)}>
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Filters</h3>
+          <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
           {isFiltering && (
-            <div className="text-xs text-muted-foreground">Filtering...</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Filtering...</div>
           )}
         </div>
         {hasActiveFiltersCheck && (
@@ -250,8 +261,9 @@ export function EventFilters({
             variant="outline"
             size="sm"
             onClick={handleClearFilters}
+            className="w-full sm:w-auto min-h-[44px] gap-2"
           >
-            <X className="h-4 w-4 mr-1" />
+            <X className="h-4 w-4" />
             Clear All
           </Button>
         )}
@@ -270,7 +282,8 @@ export function EventFilters({
               <button
                 type="button"
                 onClick={() => value ? onChange?.({ ...value, search: '' }) : clearSearch()}
-                className="hover:bg-accent rounded p-1"
+                className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                title="Clear search"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -293,16 +306,17 @@ export function EventFilters({
 
       {/* Status Filters */}
       <div>
-        <label className="text-sm font-medium leading-none mb-3 block">
+        <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
           Status
         </label>
-        <ChipGroup>
+        <ChipGroup className="flex flex-wrap gap-2">
           {statusChips.map(chip => (
             <Chip
               key={chip.value}
               variant="status"
               selected={chip.selected}
               onToggle={() => handleStatusToggle(chip.value)}
+              className="min-h-[44px] px-3 touch-manipulation"
             >
               {chip.label}
             </Chip>
@@ -340,10 +354,10 @@ export function EventFilters({
         <>
           {/* Budget Range */}
           <div>
-            <label className="text-sm font-medium leading-none mb-3 block">
+            <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
               Budget Range
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 placeholder="Min budget"
                 type="number"
@@ -363,10 +377,10 @@ export function EventFilters({
 
           {/* Guest Count Range */}
           <div>
-            <label className="text-sm font-medium leading-none mb-3 block">
+            <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
               Guest Count Range
             </label>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Input
                 placeholder="Min guests"
                 type="number"
@@ -388,8 +402,8 @@ export function EventFilters({
 
       {/* Filter Summary */}
       {hasActiveFiltersCheck && (
-        <div className="pt-4 border-t">
-          <div className="text-sm text-muted-foreground">
+        <div className="pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             {getFilterSummary(currentFilters)}
           </div>
         </div>
