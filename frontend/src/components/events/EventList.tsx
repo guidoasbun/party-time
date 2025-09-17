@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import {
   Grid,
   List,
@@ -9,11 +9,14 @@ import {
   Trash2,
   AlertCircle,
   Plus,
-  PartyPopper
+  PartyPopper,
+  Archive
 } from 'lucide-react'
 import { EventSummary } from '@/types/event.types'
 import { EventCard } from './EventCard'
 import { Button } from '@/components/ui/Button'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { useEventActions } from '@/hooks/useEventActions'
 import { cn } from '@/lib/utils'
 
 // Supporting Types
@@ -27,10 +30,11 @@ interface PaginationInfo {
 
 interface EventListProps {
   events: EventSummary[]
-  onEdit: (eventId: string) => void
-  onDelete: (eventId: string) => void
-  onView: (eventId: string) => void
-  onBulkDelete?: (eventIds: string[]) => void
+  onEdit?: (eventId: string) => void
+  onDelete?: (eventId: string) => void
+  onView?: (eventId: string) => void
+  onDuplicate?: (eventId: string) => void
+  onArchive?: (eventId: string) => void
   onCreateEvent?: () => void
   viewMode?: 'grid' | 'list'
   onViewModeChange?: (mode: 'grid' | 'list') => void
@@ -43,6 +47,7 @@ interface EventListProps {
   hasMore?: boolean
   isLoadingMore?: boolean
   enableBulkSelection?: boolean
+  enableEventActions?: boolean
   emptyStateTitle?: string
   emptyStateMessage?: string
   className?: string
@@ -207,13 +212,17 @@ function BulkSelectionBar({
   onSelectAll,
   onClearSelection,
   onBulkDelete,
-  totalCount
+  onBulkArchive,
+  totalCount,
+  isLoading = false
 }: {
   selectedCount: number
   onSelectAll: () => void
   onClearSelection: () => void
   onBulkDelete: () => void
+  onBulkArchive: () => void
   totalCount: number
+  isLoading?: boolean
 }) {
   if (selectedCount === 0) return null
 
@@ -231,6 +240,7 @@ function BulkSelectionBar({
               size="sm"
               onClick={selectedCount === totalCount ? onClearSelection : onSelectAll}
               className="text-blue-700 dark:text-blue-300"
+              disabled={isLoading}
             >
               {selectedCount === totalCount ? 'Clear all' : 'Select all'}
             </Button>
@@ -241,7 +251,19 @@ function BulkSelectionBar({
           <Button
             variant="ghost"
             size="sm"
+            onClick={onBulkArchive}
+            disabled={isLoading}
+            className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 gap-1"
+          >
+            <Archive className="w-4 h-4" />
+            Archive
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onBulkDelete}
+            disabled={isLoading}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1"
           >
             <Trash2 className="w-4 h-4" />
@@ -252,6 +274,7 @@ function BulkSelectionBar({
             variant="ghost"
             size="sm"
             onClick={onClearSelection}
+            disabled={isLoading}
             className="text-gray-600 dark:text-gray-400"
           >
             Cancel
@@ -268,7 +291,8 @@ export function EventList({
   onEdit,
   onDelete,
   onView,
-  onBulkDelete,
+  onDuplicate,
+  onArchive,
   onCreateEvent,
   viewMode = 'grid',
   onViewModeChange,
@@ -281,42 +305,96 @@ export function EventList({
   hasMore = false,
   isLoadingMore = false,
   enableBulkSelection = false,
+  enableEventActions = true,
   emptyStateTitle,
   emptyStateMessage,
   className
 }: EventListProps) {
-  const [selectedEvents, setSelectedEvents] = useState<Set<string>>(new Set())
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  // Handle bulk selection
-  const isEventSelected = useCallback((eventId: string) => {
-    return selectedEvents.has(eventId)
-  }, [selectedEvents])
+  // Initialize event actions if enabled
+  const eventActions = useEventActions({
+    enableToasts: true,
+    enableOptimisticUpdates: true,
+    enableUndo: true
+  })
 
-  const toggleEventSelection = useCallback((eventId: string) => {
-    const newSelected = new Set(selectedEvents)
-    if (newSelected.has(eventId)) {
-      newSelected.delete(eventId)
-    } else {
-      newSelected.add(eventId)
+  // Set total count for bulk actions
+  React.useEffect(() => {
+    if (enableEventActions) {
+      eventActions.setTotalCount(events.length)
     }
-    setSelectedEvents(newSelected)
-  }, [selectedEvents])
+  }, [events.length, enableEventActions, eventActions])
 
-  const selectAllEvents = useCallback(() => {
-    setSelectedEvents(new Set(events.map(event => event.id)))
-  }, [events])
-
-  const clearSelection = useCallback(() => {
-    setSelectedEvents(new Set())
-  }, [])
-
-  const handleBulkDelete = useCallback(() => {
-    if (onBulkDelete && selectedEvents.size > 0) {
-      onBulkDelete(Array.from(selectedEvents))
-      clearSelection()
+  // Event action handlers
+  const handleEdit = useCallback((eventId: string) => {
+    if (onEdit) {
+      onEdit(eventId)
     }
-  }, [onBulkDelete, selectedEvents, clearSelection])
+  }, [onEdit])
+
+  const handleDelete = useCallback(async (eventId: string) => {
+    if (enableEventActions) {
+      try {
+        await eventActions.deleteEvent(eventId)
+      } catch (error) {
+        console.error('Failed to delete event:', error)
+      }
+    } else if (onDelete) {
+      onDelete(eventId)
+    }
+  }, [enableEventActions, eventActions, onDelete])
+
+  const handleView = useCallback((eventId: string) => {
+    if (onView) {
+      onView(eventId)
+    }
+  }, [onView])
+
+  const handleDuplicate = useCallback(async (eventId: string) => {
+    if (enableEventActions) {
+      try {
+        await eventActions.duplicateEvent(eventId)
+      } catch (error) {
+        console.error('Failed to duplicate event:', error)
+      }
+    } else if (onDuplicate) {
+      onDuplicate(eventId)
+    }
+  }, [enableEventActions, eventActions, onDuplicate])
+
+  const handleArchive = useCallback(async (eventId: string) => {
+    if (enableEventActions) {
+      try {
+        await eventActions.archiveEvent(eventId)
+      } catch (error) {
+        console.error('Failed to archive event:', error)
+      }
+    } else if (onArchive) {
+      onArchive(eventId)
+    }
+  }, [enableEventActions, eventActions, onArchive])
+
+  // Bulk action handlers
+  const handleBulkDelete = useCallback(async () => {
+    if (enableEventActions && eventActions.hasSelection) {
+      try {
+        await eventActions.bulkDeleteEvents(eventActions.getSelectedEvents())
+      } catch (error) {
+        console.error('Failed to delete events:', error)
+      }
+    }
+  }, [enableEventActions, eventActions])
+
+  const handleBulkArchive = useCallback(async () => {
+    if (enableEventActions && eventActions.hasSelection) {
+      try {
+        await eventActions.bulkArchiveEvents(eventActions.getSelectedEvents())
+      } catch (error) {
+        console.error('Failed to archive events:', error)
+      }
+    }
+  }, [enableEventActions, eventActions])
 
   // Infinite scroll implementation
   useEffect(() => {
@@ -381,13 +459,15 @@ export function EventList({
       </div>
 
       {/* Bulk selection bar */}
-      {enableBulkSelection && onBulkDelete && (
+      {enableBulkSelection && enableEventActions && (
         <BulkSelectionBar
-          selectedCount={selectedEvents.size}
-          onSelectAll={selectAllEvents}
-          onClearSelection={clearSelection}
+          selectedCount={eventActions.state.bulkSelection.selectedIds.size}
+          onSelectAll={eventActions.selectAllEvents}
+          onClearSelection={eventActions.deselectAllEvents}
           onBulkDelete={handleBulkDelete}
+          onBulkArchive={handleBulkArchive}
           totalCount={events.length}
+          isLoading={eventActions.state.isBulkOperating}
         />
       )}
 
@@ -412,21 +492,23 @@ export function EventList({
           )}>
             {events.map((event) => (
               <div key={event.id} className="relative">
-                {enableBulkSelection && (
+                {enableBulkSelection && enableEventActions && (
                   <div className="absolute top-2 left-2 z-10">
                     <input
                       type="checkbox"
-                      checked={isEventSelected(event.id)}
-                      onChange={() => toggleEventSelection(event.id)}
+                      checked={eventActions.state.bulkSelection.isSelectAll || eventActions.state.bulkSelection.selectedIds.has(event.id)}
+                      onChange={() => eventActions.toggleEventSelection(event.id)}
                       className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                     />
                   </div>
                 )}
                 <EventCard
                   event={event}
-                  onEdit={onEdit}
-                  onDelete={onDelete}
-                  onView={onView}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                  onView={handleView}
+                  onDuplicate={handleDuplicate}
+                  onArchive={handleArchive}
                   viewMode={viewMode}
                 />
               </div>
@@ -450,6 +532,22 @@ export function EventList({
             />
           )}
         </>
+      )}
+
+      {/* Confirmation Dialog */}
+      {enableEventActions && eventActions.state.pendingConfirmation && (
+        <ConfirmDialog
+          open={true}
+          onClose={eventActions.hideConfirmation}
+          onConfirm={eventActions.confirmAction}
+          title={eventActions.state.pendingConfirmation.config.title}
+          description={eventActions.state.pendingConfirmation.config.description}
+          confirmText={eventActions.state.pendingConfirmation.config.confirmText}
+          cancelText={eventActions.state.pendingConfirmation.config.cancelText}
+          variant={eventActions.state.pendingConfirmation.config.variant}
+          icon={eventActions.state.pendingConfirmation.config.icon}
+          isLoading={eventActions.state.isDeleting || eventActions.state.isArchiving || eventActions.state.isBulkOperating}
+        />
       )}
     </div>
   )

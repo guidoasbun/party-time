@@ -228,7 +228,6 @@ export default function DashboardPage() {
                   onEdit={handleEditEvent}
                   onDelete={handleDeleteEvent}
                   onView={handleViewEvent}
-                  onBulkDelete={handleBulkDelete}
                   onCreateEvent={handleCreateEvent}
                   viewMode={viewMode}
                   onViewModeChange={setViewMode}
@@ -242,6 +241,7 @@ export default function DashboardPage() {
                     has_previous: eventsData?.has_previous || false,
                   }}
                   enableBulkSelection={true}
+                  enableEventActions={true}
                   emptyStateTitle="No events found"
                   emptyStateMessage="Start planning your first event to see it here"
                 />

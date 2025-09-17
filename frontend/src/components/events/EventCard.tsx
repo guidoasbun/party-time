@@ -2,15 +2,17 @@
 
 import { format } from 'date-fns'
 import { useState, useEffect } from 'react'
-import { 
-  Calendar, 
-  MapPin, 
-  Users, 
-  DollarSign, 
-  Edit, 
-  Trash2, 
+import {
+  Calendar,
+  MapPin,
+  Users,
+  DollarSign,
+  Edit,
+  Trash2,
   Eye,
-  Clock
+  Clock,
+  Copy,
+  Archive
 } from 'lucide-react'
 import { EventSummary, EventType } from '@/types/event.types'
 import { cn } from '@/lib/utils'
@@ -19,10 +21,13 @@ import { EventStatusBadge } from './EventStatusBadge'
 
 interface EventCardProps {
   event: EventSummary
-  onEdit: (eventId: string) => void
-  onDelete: (eventId: string) => void
-  onView: (eventId: string) => void
+  onEdit?: (eventId: string) => void
+  onDelete?: (eventId: string) => void
+  onView?: (eventId: string) => void
+  onDuplicate?: (eventId: string) => void
+  onArchive?: (eventId: string) => void
   viewMode?: 'grid' | 'list'
+  showActions?: boolean
 }
 
 const eventTypeLabels: Record<EventType, string> = {
@@ -85,7 +90,16 @@ function BudgetProgressBar({ budgetTotal, totalExpenses }: { budgetTotal?: numbe
   )
 }
 
-export function EventCard({ event, onEdit, onDelete, onView, viewMode = 'grid' }: EventCardProps) {
+export function EventCard({
+  event,
+  onEdit,
+  onDelete,
+  onView,
+  onDuplicate,
+  onArchive,
+  viewMode = 'grid',
+  showActions = true
+}: EventCardProps) {
   const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
@@ -159,33 +173,62 @@ export function EventCard({ event, onEdit, onDelete, onView, viewMode = 'grid' }
           </div>
           
           {/* Actions */}
-          <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onView(event.id)}
-              title="View event"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onEdit(event.id)}
-              title="Edit event"
-            >
-              <Edit className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(event.id)}
-              title="Delete event"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          {showActions && (
+            <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              {onView && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onView(event.id)}
+                  title="View event"
+                >
+                  <Eye className="h-4 w-4" />
+                </Button>
+              )}
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(event.id)}
+                  title="Edit event"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+              {onDuplicate && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDuplicate(event.id)}
+                  title="Duplicate event"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              )}
+              {onArchive && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onArchive(event.id)}
+                  title="Archive event"
+                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                >
+                  <Archive className="h-4 w-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onDelete(event.id)}
+                  title="Delete event"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     )
@@ -241,33 +284,62 @@ export function EventCard({ event, onEdit, onDelete, onView, viewMode = 'grid' }
       </div>
 
       {/* Actions */}
-      <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onView(event.id)}
-          title="View event"
-        >
-          <Eye className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onEdit(event.id)}
-          title="Edit event"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onDelete(event.id)}
-          title="Delete event"
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
+      {showActions && (
+        <div className="flex justify-end gap-2 pt-4 border-t border-gray-100 dark:border-gray-700 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          {onView && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onView(event.id)}
+              title="View event"
+            >
+              <Eye className="h-4 w-4" />
+            </Button>
+          )}
+          {onEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onEdit(event.id)}
+              title="Edit event"
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+          )}
+          {onDuplicate && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDuplicate(event.id)}
+              title="Duplicate event"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+          )}
+          {onArchive && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onArchive(event.id)}
+              title="Archive event"
+              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20"
+            >
+              <Archive className="h-4 w-4" />
+            </Button>
+          )}
+          {onDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onDelete(event.id)}
+              title="Delete event"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

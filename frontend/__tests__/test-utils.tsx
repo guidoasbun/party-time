@@ -3,6 +3,11 @@ import { render, RenderOptions } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Session } from 'next-auth'
 
+// Simple mock provider for most tests
+const MockNavigationProvider = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>
+}
+
 // Mock SessionProvider to avoid import issues in tests
 const MockSessionProvider = ({ children, session }: { children: React.ReactNode, session?: Session | null }) => {
   return <>{children}</>
@@ -36,7 +41,9 @@ const AllTheProviders = ({ children, queryClient, session = null }: AllTheProvid
   return (
     <MockSessionProvider session={session}>
       <QueryClientProvider client={testQueryClient}>
-        {children}
+        <MockNavigationProvider>
+          {children}
+        </MockNavigationProvider>
       </QueryClientProvider>
     </MockSessionProvider>
   )
@@ -47,9 +54,10 @@ const customRender = (
   options?: Omit<RenderOptions, 'wrapper'> & {
     queryClient?: QueryClient
     session?: Session | null
+    isAuthenticated?: boolean
   }
 ) => {
-  const { queryClient, session, ...renderOptions } = options || {}
+  const { queryClient, session, isAuthenticated = false, ...renderOptions } = options || {}
 
   return render(ui, {
     wrapper: (props) => <AllTheProviders {...props} queryClient={queryClient} session={session} />,
