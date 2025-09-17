@@ -20,6 +20,12 @@ export * from './guest.types'
 // Budget types
 export * from './budget.types'
 
+// Preferences types
+export * from './preferences.types'
+
+// Actions types
+export * from './actions.types'
+
 // Re-export commonly used type aliases for convenience
 export type {
   UUID,

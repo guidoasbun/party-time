@@ -312,7 +312,6 @@ export default function EventListDemoPage() {
             onEdit={handleEdit}
             onDelete={handleDelete}
             onView={handleView}
-            onBulkDelete={enableBulkSelection ? handleBulkDelete : undefined}
             onCreateEvent={handleCreateEvent}
             viewMode={viewMode}
             onViewModeChange={setViewMode}
@@ -325,6 +324,7 @@ export default function EventListDemoPage() {
             hasMore={scenario === 'large-dataset' && enableInfiniteScroll}
             isLoadingMore={isLoadingMore}
             enableBulkSelection={enableBulkSelection}
+            enableEventActions={false}
             emptyStateTitle={scenario === 'empty' ? 'No events found' : undefined}
             emptyStateMessage={scenario === 'empty' ? 'Try adjusting your filters or create a new event to get started.' : undefined}
           />
