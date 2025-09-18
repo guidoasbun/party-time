@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { EventType, EventStatus, EventFilters } from '@/types/event.types'
 
@@ -46,6 +46,7 @@ export function useEventFilters({
 }: UseEventFiltersOptions = {}): UseEventFiltersReturn {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const isUpdatingUrlRef = useRef(false)
 
   // Initialize filters from URL, localStorage, or defaults
   const initializeFilters = useCallback((): EventFilters => {
@@ -70,10 +71,10 @@ export function useEventFilters({
     }
 
     return { ...DEFAULT_FILTERS, ...defaultFilters }
-  }, [defaultFilters, persistToLocalStorage, syncWithUrl, storageKey, searchParams])
+  }, [defaultFilters, persistToLocalStorage, syncWithUrl, storageKey])
 
-  const [filters, setFilters] = useState<EventFilters>(initializeFilters)
-  const [debouncedFilters, setDebouncedFilters] = useState<EventFilters>(filters)
+  const [filters, setFilters] = useState<EventFilters>(() => initializeFilters())
+  const [debouncedFilters, setDebouncedFilters] = useState<EventFilters>(() => initializeFilters())
   const [isFiltering, setIsFiltering] = useState(false)
 
   // Debounce filter changes
@@ -100,10 +101,10 @@ export function useEventFilters({
     }
   }, [filters, persistToLocalStorage, storageKey])
 
-  // Sync with URL
+  // Sync with URL (use debouncedFilters to avoid too many URL updates)
   useEffect(() => {
-    if (syncWithUrl) {
-      const urlParams = serializeFiltersToUrl(filters)
+    if (syncWithUrl && typeof window !== 'undefined' && !isUpdatingUrlRef.current) {
+      const urlParams = serializeFiltersToUrl(debouncedFilters)
       const currentUrl = new URL(window.location.href)
 
       // Update search params
@@ -121,11 +122,18 @@ export function useEventFilters({
       })
 
       const newUrl = `${currentUrl.pathname}?${newSearchParams.toString()}`
-      if (newUrl !== window.location.href) {
+      const currentUrlString = `${currentUrl.pathname}?${currentUrl.searchParams.toString()}`
+
+      if (newUrl !== currentUrlString) {
+        isUpdatingUrlRef.current = true
         router.replace(newUrl, { scroll: false })
+        // Reset the flag after a short delay
+        setTimeout(() => {
+          isUpdatingUrlRef.current = false
+        }, 100)
       }
     }
-  }, [filters, syncWithUrl, router])
+  }, [debouncedFilters, syncWithUrl, router])
 
   // Filter update functions
   const setSearch = useCallback((search: string) => {

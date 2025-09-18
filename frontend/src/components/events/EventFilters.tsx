@@ -187,7 +187,7 @@ export function EventFilters({
                   <button
                     type="button"
                     onClick={() => value ? onChange?.({ ...value, search: '' }) : clearSearch()}
-                    className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                    className="hover:bg-muted rounded p-1 transition-colors duration-[var(--duration-normal)] min-h-[44px] min-w-[44px] flex items-center justify-center"
                     title="Clear search"
                   >
                     <X className="h-3 w-3" />
@@ -246,14 +246,14 @@ export function EventFilters({
   }
 
   return (
-    <div className={cn("space-y-4 sm:space-y-6 p-4 sm:p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg transition-colors duration-200", className)}>
+    <div className={cn("space-y-4 sm:space-y-6 p-4 sm:p-6 bg-card border border-border rounded-lg transition-colors duration-[var(--duration-normal)]", className)}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
+          <Filter className="h-5 w-5 text-muted-foreground" />
+          <h3 className="text-lg font-semibold text-card-foreground">Filters</h3>
           {isFiltering && (
-            <div className="text-xs text-gray-500 dark:text-gray-400">Filtering...</div>
+            <div className="text-xs text-muted-foreground">Filtering...</div>
           )}
         </div>
         {hasActiveFiltersCheck && (
@@ -282,7 +282,7 @@ export function EventFilters({
               <button
                 type="button"
                 onClick={() => value ? onChange?.({ ...value, search: '' }) : clearSearch()}
-                className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="hover:bg-muted rounded p-1 transition-colors duration-[var(--duration-normal)] min-h-[44px] min-w-[44px] flex items-center justify-center"
                 title="Clear search"
               >
                 <X className="h-3 w-3" />
@@ -306,7 +306,7 @@ export function EventFilters({
 
       {/* Status Filters */}
       <div>
-        <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
+        <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
           Status
         </label>
         <ChipGroup className="flex flex-wrap gap-2">
@@ -354,7 +354,7 @@ export function EventFilters({
         <>
           {/* Budget Range */}
           <div>
-            <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
+            <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
               Budget Range
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -377,7 +377,7 @@ export function EventFilters({
 
           {/* Guest Count Range */}
           <div>
-            <label className="text-sm font-medium leading-none mb-3 block text-gray-900 dark:text-white">
+            <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
               Guest Count Range
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -402,8 +402,8 @@ export function EventFilters({
 
       {/* Filter Summary */}
       {hasActiveFiltersCheck && (
-        <div className="pt-3 sm:pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="pt-3 sm:pt-4 border-t border-border">
+          <div className="text-sm text-muted-foreground">
             {getFilterSummary(currentFilters)}
           </div>
         </div>
