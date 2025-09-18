@@ -60,7 +60,7 @@ function getStatusBadge(status: EventStatus): { text: string; className: string 
     [EventStatus.CANCELLED]: { text: 'Cancelled', className: 'bg-red-100 text-red-700' },
     [EventStatus.POSTPONED]: { text: 'Postponed', className: 'bg-orange-100 text-orange-700' }
   }
-  return statusMap[status] || { text: status, className: 'bg-gray-100 text-gray-700' }
+  return statusMap[status] || { text: status, className: 'bg-muted text-muted-foreground' }
 }
 
 function formatEventDate(dateString: string): string {
@@ -93,7 +93,7 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
 
   return (
     <div
-      className="group flex items-center justify-between p-4 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 cursor-pointer transition-colors"
+      className="group flex items-center justify-between p-4 hover:bg-muted border-b border-border/50 last:border-b-0 cursor-pointer transition-colors"
       onClick={() => onEventClick?.(event.id)}
     >
       {/* Event info */}
@@ -106,7 +106,7 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
         {/* Event details */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center space-x-3 mb-1">
-            <h3 className="font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+            <h3 className="font-medium text-card-foreground truncate group-hover:text-primary transition-colors">
               {event.name}
             </h3>
             <span className={cn(
@@ -118,7 +118,7 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
           </div>
 
           {/* Meta information */}
-          <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
             <div className="flex items-center space-x-1">
               <Clock className="w-3 h-3" />
               <span>{formattedDate}</span>
@@ -135,7 +135,7 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
               <Users className="w-3 h-3" />
               <span>{event.confirmed_guests}/{event.guest_count}</span>
               {event.guest_count > 0 && (
-                <span className="text-xs text-gray-500">({rsvpRate}%)</span>
+                <span className="text-xs text-muted-foreground/80">({rsvpRate}%)</span>
               )}
             </div>
           </div>
@@ -146,14 +146,14 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
       <div className="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={handleViewClick}
-          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+          className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
           title="View event"
         >
           <Eye className="w-4 h-4" />
         </button>
         <button
           onClick={handleEditClick}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+          className="p-1.5 text-muted-foreground hover:text-card-foreground hover:bg-muted rounded transition-colors"
           title="Edit event"
         >
           <Edit className="w-4 h-4" />
@@ -163,7 +163,7 @@ function EventRow({ event, onEventClick, onEditEvent }: EventRowProps) {
             e.stopPropagation()
             // TODO: Show dropdown menu
           }}
-          className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+          className="p-1.5 text-muted-foreground hover:text-card-foreground hover:bg-muted rounded transition-colors"
           title="More options"
         >
           <MoreHorizontal className="w-4 h-4" />
@@ -177,25 +177,25 @@ function EventsSkeleton() {
   return (
     <div className="space-y-0">
       {[1, 2, 3, 4, 5].map((i) => (
-        <div key={i} className="flex items-center justify-between p-4 border-b border-gray-100 last:border-b-0 animate-pulse">
+        <div key={i} className="flex items-center justify-between p-4 border-b border-border/50 last:border-b-0 animate-pulse">
           <div className="flex items-center space-x-4 flex-1">
-            <div className="w-6 h-6 bg-gray-200 rounded" />
+            <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
             <div className="flex-1 space-y-2">
               <div className="flex items-center space-x-3">
-                <div className="h-4 bg-gray-200 rounded w-48" />
-                <div className="h-4 bg-gray-200 rounded w-16" />
+                <div className="h-4 bg-muted-foreground/20 rounded w-48" />
+                <div className="h-4 bg-muted-foreground/20 rounded w-16" />
               </div>
               <div className="flex items-center space-x-4">
-                <div className="h-3 bg-gray-200 rounded w-20" />
-                <div className="h-3 bg-gray-200 rounded w-24" />
-                <div className="h-3 bg-gray-200 rounded w-16" />
+                <div className="h-3 bg-muted-foreground/20 rounded w-20" />
+                <div className="h-3 bg-muted-foreground/20 rounded w-24" />
+                <div className="h-3 bg-muted-foreground/20 rounded w-16" />
               </div>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 bg-gray-200 rounded" />
-            <div className="w-6 h-6 bg-gray-200 rounded" />
-            <div className="w-6 h-6 bg-gray-200 rounded" />
+            <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
+            <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
+            <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
           </div>
         </div>
       ))}
@@ -206,13 +206,13 @@ function EventsSkeleton() {
 function EmptyState() {
   return (
     <div className="text-center py-12">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <History className="w-8 h-8 text-gray-400" />
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+        <History className="w-8 h-8 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-1">
+      <h3 className="text-sm font-medium text-card-foreground mb-1">
         No recent events
       </h3>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Your recently created events will appear here
       </p>
     </div>
@@ -222,19 +222,19 @@ function EmptyState() {
 function ErrorState({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className="text-center py-12">
-      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <AlertCircle className="w-8 h-8 text-red-400" />
+      <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        <AlertCircle className="w-8 h-8 text-destructive" />
       </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-1">
+      <h3 className="text-sm font-medium text-card-foreground mb-1">
         Unable to load events
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         There was an error loading your recent events
       </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-sm text-primary hover:text-primary/80 font-medium"
         >
           Try again
         </button>
@@ -269,29 +269,29 @@ export function RecentEventsSection({
 
   return (
     <div className={cn(
-      'bg-white rounded-lg shadow-sm border border-gray-200',
+      'bg-card rounded-lg shadow-sm border border-border',
       className
     )}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <History className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
+            <History className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-card-foreground">
               Recent Events
             </h2>
           </div>
           {onViewAll && events.length > 0 && (
             <button
               onClick={onViewAll}
-              className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
             >
               <span>View all</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Your most recently created events
         </p>
       </div>
@@ -320,14 +320,14 @@ export function RecentEventsSection({
 
       {/* Footer */}
       {events.length > 0 && !isLoading && (
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+        <div className="px-6 py-3 bg-muted border-t border-border rounded-b-lg">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
+            <span className="text-muted-foreground">
               Showing {events.length} recent {events.length === 1 ? 'event' : 'events'}
             </span>
             <button
               onClick={handleRetry}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
               Refresh
             </button>
