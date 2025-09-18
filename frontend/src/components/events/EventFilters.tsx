@@ -52,12 +52,20 @@ export function EventFilters({
   const currentFilters = value || filters
 
   // Notify parent of filter changes
+  const onChangeRef = React.useRef(onChange)
+  const onFiltersChangeRef = React.useRef(onFiltersChange)
+
+  React.useEffect(() => {
+    onChangeRef.current = onChange
+    onFiltersChangeRef.current = onFiltersChange
+  })
+
   React.useEffect(() => {
     if (!value) {
-      onChange?.(debouncedFilters)
-      onFiltersChange?.(debouncedFilters)
+      onChangeRef.current?.(debouncedFilters)
+      onFiltersChangeRef.current?.(debouncedFilters)
     }
-  }, [debouncedFilters, onChange, onFiltersChange, value])
+  }, [debouncedFilters, value])
 
   // Event type options
   const eventTypeOptions = Object.values(EventType).map(type => ({

@@ -51,31 +51,6 @@ export default function DashboardPage() {
     error: eventsError
   } = useEvents(searchParams)
 
-  const fetchUserInfo = useCallback(async () => {
-    try {
-      if (!session?.idToken) return
-
-      const response = await fetch("http://localhost:8000/api/v1/auth/me", {
-        headers: {
-          "Authorization": `Bearer ${session.idToken}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setUserInfo(data)
-      } else {
-        setError("Failed to fetch user information")
-      }
-    } catch (error) {
-      setError("Error connecting to backend")
-      console.error("Error fetching user info:", error)
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.idToken])
-
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin")
@@ -83,9 +58,32 @@ export default function DashboardPage() {
     }
 
     if (status === "authenticated" && session?.idToken) {
+      const fetchUserInfo = async () => {
+        try {
+          const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+            headers: {
+              "Authorization": `Bearer ${session.idToken}`,
+              "Content-Type": "application/json",
+            },
+          })
+
+          if (response.ok) {
+            const data = await response.json()
+            setUserInfo(data)
+          } else {
+            setError("Failed to fetch user information")
+          }
+        } catch (error) {
+          setError("Error connecting to backend")
+          console.error("Error fetching user info:", error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
       fetchUserInfo()
     }
-  }, [status, session, router, fetchUserInfo])
+  }, [status, session?.idToken, router])
 
   // Event action handlers
   const handleCreateEvent = () => {

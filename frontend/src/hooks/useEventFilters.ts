@@ -110,8 +110,21 @@ export function useEventFilters({
       // Update search params
       const newSearchParams = new URLSearchParams(currentUrl.search)
 
-      // Clear existing filter params
+      // Get current filter params to compare
+      const currentFilterParams: Record<string, string> = {}
       const filterKeys = ['search', 'types', 'statuses', 'date_start', 'date_end', 'location', 'budget_min', 'budget_max', 'guests_min', 'guests_max']
+      filterKeys.forEach(key => {
+        const value = newSearchParams.get(key)
+        if (value) currentFilterParams[key] = value
+      })
+
+      // Check if filters have actually changed
+      const hasChanged = Object.keys(urlParams).length !== Object.keys(currentFilterParams).length ||
+        Object.entries(urlParams).some(([key, value]) => currentFilterParams[key] !== value)
+
+      if (!hasChanged) return
+
+      // Clear existing filter params
       filterKeys.forEach(key => newSearchParams.delete(key))
 
       // Add new filter params
@@ -122,16 +135,13 @@ export function useEventFilters({
       })
 
       const newUrl = `${currentUrl.pathname}?${newSearchParams.toString()}`
-      const currentUrlString = `${currentUrl.pathname}?${currentUrl.searchParams.toString()}`
 
-      if (newUrl !== currentUrlString) {
-        isUpdatingUrlRef.current = true
-        router.replace(newUrl, { scroll: false })
-        // Reset the flag after a short delay
-        setTimeout(() => {
-          isUpdatingUrlRef.current = false
-        }, 100)
-      }
+      isUpdatingUrlRef.current = true
+      router.replace(newUrl, { scroll: false })
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        isUpdatingUrlRef.current = false
+      }, 100)
     }
   }, [debouncedFilters, syncWithUrl, router])
 
