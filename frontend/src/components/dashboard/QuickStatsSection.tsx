@@ -29,7 +29,7 @@ function TrendItem({ label, value, trend, icon: Icon, color }: TrendItemProps) {
   }
 
   return (
-    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+    <div className="flex items-center space-x-3 p-3 bg-muted rounded-lg">
       <div className={cn(
         'flex items-center justify-center w-8 h-8 rounded-full',
         colorClasses[color]
@@ -38,7 +38,7 @@ function TrendItem({ label, value, trend, icon: Icon, color }: TrendItemProps) {
       </div>
       <div className="flex-1">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-900">{label}</span>
+          <span className="text-sm font-medium text-foreground">{label}</span>
           <div className="flex items-center space-x-1">
             {isPositive ? (
               <TrendingUp className="w-3 h-3 text-green-500" />
@@ -53,7 +53,7 @@ function TrendItem({ label, value, trend, icon: Icon, color }: TrendItemProps) {
             </span>
           </div>
         </div>
-        <span className="text-lg font-semibold text-gray-900">{value}</span>
+        <span className="text-lg font-semibold text-foreground">{value}</span>
       </div>
     </div>
   )
@@ -66,11 +66,11 @@ function QuickInsights() {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg animate-pulse">
-            <div className="w-8 h-8 bg-gray-200 rounded-full" />
+          <div key={i} className="flex items-center space-x-3 p-3 bg-muted rounded-lg animate-pulse">
+            <div className="w-8 h-8 bg-muted-foreground/20 rounded-full" />
             <div className="flex-1">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2" />
-              <div className="h-5 bg-gray-200 rounded w-1/2" />
+              <div className="h-4 bg-muted-foreground/20 rounded w-3/4 mb-2" />
+              <div className="h-5 bg-muted-foreground/20 rounded w-1/2" />
             </div>
           </div>
         ))}
@@ -130,9 +130,9 @@ function StatsSummary() {
       <div className="grid grid-cols-2 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="text-center py-4 animate-pulse">
-            <div className="w-8 h-8 bg-gray-200 rounded mx-auto mb-2" />
-            <div className="h-4 bg-gray-200 rounded w-3/4 mx-auto mb-1" />
-            <div className="h-3 bg-gray-200 rounded w-1/2 mx-auto" />
+            <div className="w-8 h-8 bg-muted-foreground/20 rounded mx-auto mb-2" />
+            <div className="h-4 bg-muted-foreground/20 rounded w-3/4 mx-auto mb-1" />
+            <div className="h-3 bg-muted-foreground/20 rounded w-1/2 mx-auto" />
           </div>
         ))}
       </div>
@@ -171,10 +171,10 @@ function StatsSummary() {
       {summaryItems.map((item, index) => (
         <div key={index} className="text-center py-4">
           <item.icon className={cn('w-8 h-8 mx-auto mb-2', item.color)} />
-          <div className="text-2xl font-bold text-gray-900">
+          <div className="text-2xl font-bold text-foreground">
             {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
           </div>
-          <div className="text-sm text-gray-600">{item.label}</div>
+          <div className="text-sm text-muted-foreground">{item.label}</div>
         </div>
       ))}
     </div>
@@ -186,7 +186,7 @@ export function QuickStatsSection({ className }: QuickStatsSectionProps) {
     <div className={cn('space-y-6', className)}>
       {/* Main Stats Cards */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-foreground mb-4">
           Dashboard Overview
         </h2>
         <StatsCards />
@@ -195,9 +195,9 @@ export function QuickStatsSection({ className }: QuickStatsSectionProps) {
       {/* Quick Insights and Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Insights */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-card-foreground">
               Quick Insights
             </h3>
             <TrendingUp className="w-5 h-5 text-green-500" />
@@ -206,9 +206,9 @@ export function QuickStatsSection({ className }: QuickStatsSectionProps) {
         </div>
 
         {/* Summary Stats */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-card rounded-lg shadow-sm border border-border p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-base font-semibold text-gray-900">
+            <h3 className="text-base font-semibold text-card-foreground">
               At a Glance
             </h3>
             <PartyPopper className="w-5 h-5 text-purple-500" />

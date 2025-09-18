@@ -34,7 +34,7 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
 
   return (
     <div className={cn(
-      "bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 transition-colors duration-200",
+      "bg-card border-b border-border transition-colors duration-200",
       className
     )}>
       <div className="max-w-7xl mx-auto">
@@ -47,7 +47,7 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
 
             {/* Title on mobile/compact view */}
             <div className="lg:hidden">
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h1 className="text-lg font-semibold text-foreground">
                 {greeting}, {(user.name || user.email || 'User').split(' ')[0]}!
               </h1>
             </div>
@@ -59,15 +59,15 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
             <ThemeToggle variant="dropdown" className="hidden sm:block" />
 
             {/* User Badge */}
-            <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-gray-50 dark:bg-gray-800 rounded-lg transition-colors duration-200">
-              <div className="w-7 h-7 bg-blue-600 dark:bg-blue-500 rounded-full flex items-center justify-center">
-                <span className="text-white text-xs font-medium">
+            <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-muted rounded-lg transition-colors duration-200">
+              <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
+                <span className="text-primary-foreground text-xs font-medium">
                   {user.name ? user.name.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : '?'}
                 </span>
               </div>
               <div className="text-sm">
-                <p className="font-medium text-gray-900 dark:text-white">{user.name || user.email || 'User'}</p>
-                <p className="text-gray-500 dark:text-gray-400 hidden md:block">{user.email}</p>
+                <p className="font-medium text-foreground">{user.name || user.email || 'User'}</p>
+                <p className="text-muted-foreground hidden md:block">{user.email}</p>
               </div>
             </div>
 
@@ -99,10 +99,10 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
 
             {/* Greeting and Date - Desktop */}
             <div className="hidden lg:block order-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-foreground">
                 {greeting}, {user.name || user.email || 'User'}!
               </h1>
-              <div className="flex items-center gap-2 mt-1 text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <p className="text-sm">{currentDate}</p>
               </div>
