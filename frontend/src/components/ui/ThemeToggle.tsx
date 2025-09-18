@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Sun, Moon, Monitor } from 'lucide-react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { Button } from './Button'
@@ -18,14 +18,42 @@ export function ThemeToggle({
   showLabel = false
 }: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme()
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isOpen])
 
   if (variant === 'dropdown') {
     return (
-      <div className={cn('relative group', className)}>
+      <div ref={dropdownRef} className={cn('relative', className)}>
         <Button
           variant="ghost"
           size="sm"
           className="h-9 w-9 px-0"
+          onClick={() => setIsOpen(!isOpen)}
           title={`Current theme: ${theme} (${resolvedTheme})`}
         >
           {resolvedTheme === 'dark' ? (
@@ -35,10 +63,16 @@ export function ThemeToggle({
           )}
         </Button>
 
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+        <div className={cn(
+          "absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg transition-all duration-200 z-50",
+          isOpen ? "opacity-100 visible" : "opacity-0 invisible"
+        )}>
           <div className="p-1">
             <button
-              onClick={() => setTheme('light')}
+              onClick={() => {
+                setTheme('light')
+                setIsOpen(false)
+              }}
               className={cn(
                 'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
                 theme === 'light' && 'bg-gray-100 dark:bg-gray-700'
@@ -52,7 +86,10 @@ export function ThemeToggle({
             </button>
 
             <button
-              onClick={() => setTheme('dark')}
+              onClick={() => {
+                setTheme('dark')
+                setIsOpen(false)
+              }}
               className={cn(
                 'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
                 theme === 'dark' && 'bg-gray-100 dark:bg-gray-700'
@@ -66,7 +103,10 @@ export function ThemeToggle({
             </button>
 
             <button
-              onClick={() => setTheme('system')}
+              onClick={() => {
+                setTheme('system')
+                setIsOpen(false)
+              }}
               className={cn(
                 'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
                 theme === 'system' && 'bg-gray-100 dark:bg-gray-700'
