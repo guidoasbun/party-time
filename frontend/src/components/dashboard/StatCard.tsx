@@ -21,16 +21,16 @@ interface StatCardSkeletonProps {
 function StatCardSkeleton({ className }: StatCardSkeletonProps) {
   return (
     <div className={cn(
-      "bg-white rounded-lg border border-gray-200 p-6 shadow-sm",
+      "bg-card rounded-lg border border-border p-6 shadow-sm",
       className
     )}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
-          <div className="h-8 bg-gray-200 rounded animate-pulse w-16"></div>
-          <div className="h-4 bg-gray-200 rounded animate-pulse w-20"></div>
+          <div className="h-4 bg-muted-foreground/20 rounded animate-pulse w-24"></div>
+          <div className="h-8 bg-muted-foreground/20 rounded animate-pulse w-16"></div>
+          <div className="h-4 bg-muted-foreground/20 rounded animate-pulse w-20"></div>
         </div>
-        <div className="h-10 w-10 bg-gray-200 rounded-lg animate-pulse"></div>
+        <div className="h-10 w-10 bg-muted-foreground/20 rounded-lg animate-pulse"></div>
       </div>
     </div>
   )
@@ -81,16 +81,16 @@ export function StatCard({
 
   return (
     <div className={cn(
-      "bg-white rounded-lg border border-gray-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-200",
+      "bg-card rounded-lg border border-border p-6 shadow-sm hover:shadow-md transition-shadow duration-200",
       className
     )}>
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-600">
+          <p className="text-sm font-medium text-muted-foreground">
             {title}
           </p>
 
-          <p className="text-2xl font-bold text-gray-900">
+          <p className="text-2xl font-bold text-card-foreground">
             {prefix}{formattedValue}{suffix}
           </p>
 
@@ -115,19 +115,19 @@ export function StatCard({
               )}
 
               {!isPositive && !isNegative && (
-                <span className="text-sm font-medium text-gray-500">
+                <span className="text-sm font-medium text-muted-foreground">
                   {formatPercentageChange(percentageChange)}
                 </span>
               )}
 
-              <span className="text-sm text-gray-500">vs last period</span>
+              <span className="text-sm text-muted-foreground">vs last period</span>
             </div>
           )}
         </div>
 
         <div className={cn(
           "rounded-lg p-3",
-          "bg-blue-50 text-blue-600"
+          "bg-primary/10 text-primary"
         )}>
           <Icon className="h-6 w-6" />
         </div>

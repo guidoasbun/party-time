@@ -65,8 +65,8 @@ function ActionButton({
     <button
       onClick={onClick}
       className={cn(
-        'group relative p-4 text-left border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200 w-full',
-        featured ? 'ring-2 ring-blue-500 ring-opacity-20' : '',
+        'group relative p-4 text-left border border-border rounded-lg hover:shadow-md transition-all duration-200 w-full',
+        featured ? 'ring-2 ring-primary ring-opacity-20' : '',
         borderColors[color]
       )}
     >
@@ -79,25 +79,25 @@ function ActionButton({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">
+            <h3 className="text-sm font-semibold text-card-foreground group-hover:text-card-foreground/80 transition-colors">
               {title}
             </h3>
             {featured && (
-              <div className="flex items-center space-x-1 text-xs text-blue-600 font-medium">
+              <div className="flex items-center space-x-1 text-xs text-primary font-medium">
                 <Zap className="w-3 h-3" />
                 <span>Popular</span>
               </div>
             )}
           </div>
-          <p className="text-sm text-gray-600 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             {description}
           </p>
         </div>
-        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 transition-colors flex-shrink-0 mt-2" />
+        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-card-foreground transition-colors flex-shrink-0 mt-2" />
       </div>
 
       {featured && (
-        <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full animate-pulse" />
+        <div className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
       )}
     </button>
   )
@@ -192,18 +192,18 @@ function RecentActions() {
   ]
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+    <div className="bg-muted rounded-lg p-4 space-y-3">
       <div className="flex items-center space-x-2 mb-3">
-        <FileText className="w-4 h-4 text-gray-500" />
-        <h4 className="text-sm font-medium text-gray-700">Recent Actions</h4>
+        <FileText className="w-4 h-4 text-muted-foreground" />
+        <h4 className="text-sm font-medium text-card-foreground">Recent Actions</h4>
       </div>
       <div className="space-y-2">
         {recentActions.map((item, index) => (
           <div key={index} className="flex items-center space-x-3 text-sm">
-            <item.icon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <item.icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
             <div className="flex-1 min-w-0">
-              <span className="text-gray-700">{item.action}</span>
-              <span className="text-gray-500 ml-2">{item.time}</span>
+              <span className="text-card-foreground">{item.action}</span>
+              <span className="text-muted-foreground ml-2">{item.time}</span>
             </div>
           </div>
         ))}
@@ -264,18 +264,18 @@ export function QuickActionsPanel({
 
   return (
     <div className={cn(
-      'bg-white rounded-lg shadow-sm border border-gray-200',
+      'bg-card rounded-lg shadow-sm border border-border',
       className
     )}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center space-x-2">
-          <Zap className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">
+          <Zap className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-lg font-semibold text-card-foreground">
             Quick Actions
           </h2>
         </div>
-        <p className="text-sm text-gray-600 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           Common tasks to help you manage your events efficiently
         </p>
       </div>
@@ -297,14 +297,14 @@ export function QuickActionsPanel({
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+      <div className="px-6 py-3 bg-muted border-t border-border rounded-b-lg">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted-foreground">
             Need help? Check our guides
           </span>
           <button
             onClick={handleManageSettings}
-            className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            className="flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
           >
             <Settings className="w-4 h-4" />
             <span>Settings</span>

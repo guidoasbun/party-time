@@ -63,7 +63,7 @@ export function useEventActions(
     isDuplicating: false,
     isArchiving: false,
     isBulkOperating: false,
-    bulkSelection: bulkActions.selection,
+    bulkSelection: { selectedIds: new Set(), isSelectAll: false, totalCount: 0 },
     undoHistory: [],
     canUndo: false,
     pendingConfirmation: null,
@@ -79,23 +79,22 @@ export function useEventActions(
   const duplicateMutation = useDuplicateEvent()
   const archiveMutation = useArchiveEvent()
 
-  // Update state when bulk selection changes
-  useEffect(() => {
-    setActionState(prev => ({
-      ...prev,
-      bulkSelection: bulkActions.selection
-    }))
-  }, [bulkActions.selection])
-
   // Cleanup expired undo operations
   useEffect(() => {
     const cleanup = () => {
       const now = Date.now()
-      setActionState(prev => ({
-        ...prev,
-        undoHistory: prev.undoHistory.filter(op => op.expiresAt > now),
-        canUndo: prev.undoHistory.some(op => op.expiresAt > now)
-      }))
+      setActionState(prev => {
+        const expiredCount = prev.undoHistory.filter(op => op.expiresAt <= now).length
+        // Only update state if there are actually expired operations
+        if (expiredCount === 0) return prev
+
+        const filteredHistory = prev.undoHistory.filter(op => op.expiresAt > now)
+        return {
+          ...prev,
+          undoHistory: filteredHistory,
+          canUndo: filteredHistory.length > 0
+        }
+      })
     }
 
     const interval = setInterval(cleanup, 1000)
@@ -531,7 +530,7 @@ export function useEventActions(
       isDuplicating: false,
       isArchiving: false,
       isBulkOperating: false,
-      bulkSelection: bulkActions.selection,
+      bulkSelection: { selectedIds: new Set(), isSelectAll: false, totalCount: 0 },
       undoHistory: [],
       canUndo: false,
       pendingConfirmation: null,
@@ -545,8 +544,11 @@ export function useEventActions(
   }, [bulkActions.selectedIds])
 
   return {
-    // State
-    state: actionState,
+    // State - merge action state with current bulk selection
+    state: {
+      ...actionState,
+      bulkSelection: bulkActions.selection
+    },
 
     // Single event actions
     createEvent,

@@ -60,7 +60,7 @@ function getStatusColor(status: EventStatus): string {
     [EventStatus.CANCELLED]: 'bg-red-100 text-red-700',
     [EventStatus.POSTPONED]: 'bg-orange-100 text-orange-700'
   }
-  return colorMap[status] || 'bg-gray-100 text-gray-700'
+  return colorMap[status] || 'bg-muted text-muted-foreground'
 }
 
 function formatEventDate(dateString: string): { display: string; relative: string } {
@@ -101,7 +101,7 @@ function EventCard({ event, onEventClick, onEditEvent }: EventCardProps) {
 
   return (
     <div
-      className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer group"
+      className="p-4 border border-border rounded-lg hover:border-border/80 hover:shadow-sm transition-all cursor-pointer group"
       onClick={() => onEventClick?.(event.id)}
     >
       {/* Header */}
@@ -109,7 +109,7 @@ function EventCard({ event, onEventClick, onEditEvent }: EventCardProps) {
         <div className="flex items-center space-x-2 min-w-0 flex-1">
           <span className="text-lg">{typeEmoji}</span>
           <div className="min-w-0 flex-1">
-            <h3 className="font-medium text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+            <h3 className="font-medium text-card-foreground truncate group-hover:text-primary transition-colors">
               {event.name}
             </h3>
             <span className={cn(
@@ -125,14 +125,14 @@ function EventCard({ event, onEventClick, onEditEvent }: EventCardProps) {
         <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={handleViewClick}
-            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded transition-colors"
             title="View event"
           >
             <Eye className="w-4 h-4" />
           </button>
           <button
             onClick={handleEditClick}
-            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded transition-colors"
+            className="p-1.5 text-muted-foreground hover:text-card-foreground hover:bg-muted rounded transition-colors"
             title="Edit event"
           >
             <Edit className="w-4 h-4" />
@@ -144,25 +144,25 @@ function EventCard({ event, onEventClick, onEditEvent }: EventCardProps) {
       <div className="space-y-2">
         {/* Date and time */}
         <div className="flex items-center space-x-2 text-sm">
-          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="text-gray-900 font-medium">{dateDisplay}</span>
+          <Clock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-card-foreground font-medium">{dateDisplay}</span>
           {dateRelative && (
-            <span className="text-gray-500">({dateRelative})</span>
+            <span className="text-muted-foreground">({dateRelative})</span>
           )}
         </div>
 
         {/* Location */}
         {event.venue_name && (
           <div className="flex items-center space-x-2 text-sm">
-            <MapPin className="w-4 h-4 text-gray-400 flex-shrink-0" />
-            <span className="text-gray-600 truncate">{event.venue_name}</span>
+            <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+            <span className="text-muted-foreground truncate">{event.venue_name}</span>
           </div>
         )}
 
         {/* Guest count */}
         <div className="flex items-center space-x-2 text-sm">
-          <Users className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span className="text-gray-600">
+          <Users className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+          <span className="text-muted-foreground">
             {event.confirmed_guests} of {event.guest_count} confirmed
           </span>
         </div>
@@ -175,24 +175,24 @@ function EventsSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="p-4 border border-gray-200 rounded-lg animate-pulse">
+        <div key={i} className="p-4 border border-border rounded-lg animate-pulse">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-2 flex-1">
-              <div className="w-6 h-6 bg-gray-200 rounded" />
+              <div className="w-6 h-6 bg-muted-foreground/20 rounded" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-gray-200 rounded w-3/4" />
-                <div className="h-3 bg-gray-200 rounded w-16" />
+                <div className="h-4 bg-muted-foreground/20 rounded w-3/4" />
+                <div className="h-3 bg-muted-foreground/20 rounded w-16" />
               </div>
             </div>
           </div>
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-gray-200 rounded" />
-              <div className="h-3 bg-gray-200 rounded w-24" />
+              <div className="w-4 h-4 bg-muted-foreground/20 rounded" />
+              <div className="h-3 bg-muted-foreground/20 rounded w-24" />
             </div>
             <div className="flex items-center space-x-2">
-              <div className="w-4 h-4 bg-gray-200 rounded" />
-              <div className="h-3 bg-gray-200 rounded w-32" />
+              <div className="w-4 h-4 bg-muted-foreground/20 rounded" />
+              <div className="h-3 bg-muted-foreground/20 rounded w-32" />
             </div>
           </div>
         </div>
@@ -204,13 +204,13 @@ function EventsSkeleton() {
 function EmptyState() {
   return (
     <div className="text-center py-8">
-      <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <CalendarDays className="w-8 h-8 text-gray-400" />
+      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+        <CalendarDays className="w-8 h-8 text-muted-foreground" />
       </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-1">
+      <h3 className="text-sm font-medium text-card-foreground mb-1">
         No upcoming events
       </h3>
-      <p className="text-sm text-gray-500">
+      <p className="text-sm text-muted-foreground">
         Create your first event to see it here
       </p>
     </div>
@@ -220,19 +220,19 @@ function EmptyState() {
 function ErrorState({ onRetry }: { onRetry?: () => void }) {
   return (
     <div className="text-center py-8">
-      <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <AlertCircle className="w-8 h-8 text-red-400" />
+      <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+        <AlertCircle className="w-8 h-8 text-destructive" />
       </div>
-      <h3 className="text-sm font-medium text-gray-900 mb-1">
+      <h3 className="text-sm font-medium text-card-foreground mb-1">
         Unable to load events
       </h3>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-muted-foreground mb-4">
         There was an error loading your upcoming events
       </p>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+          className="text-sm text-primary hover:text-primary/80 font-medium"
         >
           Try again
         </button>
@@ -261,22 +261,22 @@ export function UpcomingEventsWidget({
 
   return (
     <div className={cn(
-      'bg-white rounded-lg shadow-sm border border-gray-200',
+      'bg-card rounded-lg shadow-sm border border-border',
       className
     )}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">
+            <Calendar className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-card-foreground">
               Upcoming Events
             </h2>
           </div>
           {onViewAll && events && events.length > 0 && (
             <button
               onClick={onViewAll}
-              className="flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="flex items-center space-x-1 text-sm text-primary hover:text-primary/80 font-medium transition-colors"
             >
               <span>View all</span>
               <ArrowRight className="w-4 h-4" />
@@ -309,14 +309,14 @@ export function UpcomingEventsWidget({
 
       {/* Footer */}
       {events && events.length > 0 && !isLoading && (
-        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 rounded-b-lg">
+        <div className="px-6 py-3 bg-muted border-t border-border rounded-b-lg">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-500">
+            <span className="text-muted-foreground">
               {events.length} upcoming {events.length === 1 ? 'event' : 'events'}
             </span>
             <button
               onClick={handleRetry}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+              className="text-primary hover:text-primary/80 font-medium transition-colors"
             >
               Refresh
             </button>

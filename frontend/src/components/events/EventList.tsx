@@ -359,7 +359,7 @@ export function EventList({
     if (enableEventActions) {
       eventActions.setTotalCount(events.length)
     }
-  }, [events.length, enableEventActions, eventActions])
+  }, [events.length, enableEventActions])
 
   // Event action handlers
   const handleEdit = useCallback((eventId: string) => {

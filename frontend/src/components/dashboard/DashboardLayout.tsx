@@ -26,7 +26,7 @@ interface DashboardGridProps {
 export function DashboardLayout({ children, className }: DashboardLayoutProps) {
   return (
     <div className={cn(
-      "min-h-screen bg-gray-50",
+      "min-h-screen bg-background transition-colors duration-200",
       className
     )}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -48,19 +48,19 @@ export function DashboardSection({
 }: DashboardSectionProps) {
   return (
     <section className={cn(
-      "bg-white rounded-lg shadow-sm border border-gray-200",
+      "bg-card rounded-lg shadow-sm border border-border transition-colors duration-200",
       fullWidth ? "col-span-full" : "",
       className
     )}>
       {(title || description) && (
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="px-6 py-4 border-b border-border">
           {title && (
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-card-foreground">
               {title}
             </h2>
           )}
           {description && (
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-muted-foreground">
               {description}
             </p>
           )}
@@ -103,7 +103,7 @@ export function DashboardGrid({
 export function DashboardStatsSection({ children, className }: DashboardLayoutProps) {
   return (
     <section className={cn("space-y-4", className)}>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <div className="bg-card rounded-lg shadow-sm border border-border p-6 transition-colors duration-200">
         {children}
       </div>
     </section>
@@ -133,20 +133,20 @@ export function DashboardFiltersSection({
 }) {
   return (
     <section className={cn(
-      "bg-white rounded-lg shadow-sm border border-gray-200 transition-all duration-200",
+      "bg-card rounded-lg shadow-sm border border-border transition-all duration-200",
       isCollapsed ? "pb-0" : "",
       className
     )}>
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-border">
         <button
           onClick={onToggle}
           className="flex items-center justify-between w-full text-left"
         >
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-card-foreground">
               Filters
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-muted-foreground">
               Search and filter your events
             </p>
           </div>
@@ -154,7 +154,7 @@ export function DashboardFiltersSection({
             "transform transition-transform duration-200",
             isCollapsed ? "rotate-180" : ""
           )}>
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </div>
