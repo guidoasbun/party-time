@@ -112,10 +112,10 @@ export default function DashboardPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading your dashboard...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading your dashboard...</p>
         </div>
       </div>
     )
@@ -130,14 +130,14 @@ export default function DashboardPage() {
       <DashboardLayout>
         <DashboardSection>
           <div className="text-center py-12">
-            <div className="text-red-500 mb-4">
+            <div className="text-destructive mb-4">
               <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Connection Error</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <p className="text-sm text-gray-500">Make sure your backend server is running on port 8000</p>
+            <h2 className="text-xl font-semibold text-card-foreground mb-2">Connection Error</h2>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <p className="text-sm text-muted-foreground">Make sure your backend server is running on port 8000</p>
           </div>
         </DashboardSection>
       </DashboardLayout>
@@ -149,8 +149,8 @@ export default function DashboardPage() {
       <DashboardLayout>
         <DashboardSection>
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading user information...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading user information...</p>
           </div>
         </DashboardSection>
       </DashboardLayout>
@@ -164,17 +164,16 @@ export default function DashboardPage() {
         onSignOut={() => signOut({ callbackUrl: "/" })}
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <DashboardLayout>
+      <DashboardLayout>
         {/* Dashboard View Toggle - Mobile responsive */}
         <div className="mb-4 sm:mb-6">
-          <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
+          <div className="flex items-center bg-muted rounded-lg p-1 w-full sm:w-fit overflow-x-auto">
             <button
               onClick={() => setDashboardView('overview')}
               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                 dashboardView === 'overview'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-card text-card-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-card-foreground'
               }`}
             >
               <span className="whitespace-nowrap">Dashboard Overview</span>
@@ -183,8 +182,8 @@ export default function DashboardPage() {
               onClick={() => setDashboardView('events')}
               className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-colors min-h-[44px] ${
                 dashboardView === 'events'
-                  ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'bg-card text-card-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-card-foreground'
               }`}
             >
               <span className="whitespace-nowrap">Events Management</span>
@@ -250,7 +249,6 @@ export default function DashboardPage() {
           </>
         )}
       </DashboardLayout>
-      </div>
 
       {/* Floating Action Button */}
       <FAB

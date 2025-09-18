@@ -46,18 +46,18 @@ export function Navigation({
           className
         )}
       >
-        <div className="flex flex-col bg-white border-r border-gray-200 flex-1 min-h-0">
+        <div className="flex flex-col bg-card border-r border-border flex-1 min-h-0">
           {/* Brand */}
           {showBrand && (
-            <div className="flex items-center h-16 px-4 border-b border-gray-200">
+            <div className="flex items-center h-16 px-4 border-b border-border">
               <Link
                 href={brandHref}
                 className={cn(
-                  "flex items-center space-x-3 text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors",
+                  "flex items-center space-x-3 text-xl font-bold text-card-foreground hover:text-primary transition-colors",
                   collapsed && "justify-center"
                 )}
               >
-                <Home className="h-8 w-8 text-blue-600 flex-shrink-0" />
+                <Home className="h-8 w-8 text-primary flex-shrink-0" />
                 {!collapsed && <span>{brandText}</span>}
               </Link>
             </div>
@@ -89,7 +89,7 @@ export function Navigation({
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-gray-900/80" />
+            <div className="fixed inset-0 bg-background/80" />
           </Transition.Child>
 
           <div className="fixed inset-0 flex">
@@ -124,16 +124,16 @@ export function Navigation({
                   </div>
                 </Transition.Child>
 
-                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-4">
+                <div className="flex grow flex-col gap-y-5 overflow-y-auto bg-card px-6 pb-4">
                   {/* Mobile Brand */}
                   {showBrand && (
                     <div className="flex h-16 shrink-0 items-center">
                       <Link
                         href={brandHref}
-                        className="flex items-center space-x-3 text-xl font-bold text-gray-900"
+                        className="flex items-center space-x-3 text-xl font-bold text-card-foreground"
                         onClick={closeMobile}
                       >
-                        <Home className="h-8 w-8 text-blue-600" />
+                        <Home className="h-8 w-8 text-primary" />
                         <span>{brandText}</span>
                       </Link>
                     </div>
@@ -205,18 +205,18 @@ function NavigationItemComponent({
 
   const itemClasses = cn(
     "group flex items-center rounded-md text-sm font-medium transition-all duration-200",
-    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2",
+    "focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2",
     depth === 0 ? "px-3 py-2" : "px-3 py-1.5 ml-6",
     isActive
-      ? "bg-blue-50 text-blue-700 border-r-2 border-blue-700"
-      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900",
+      ? "bg-primary/10 text-primary border-r-2 border-primary"
+      : "text-muted-foreground hover:bg-muted hover:text-card-foreground",
     collapsed && depth === 0 && "justify-center px-2"
   )
 
   const iconClasses = cn(
     "flex-shrink-0 transition-colors duration-200",
     depth === 0 ? "h-5 w-5" : "h-4 w-4",
-    isActive ? "text-blue-700" : "text-gray-400 group-hover:text-gray-600",
+    isActive ? "text-primary" : "text-muted-foreground group-hover:text-card-foreground",
     !collapsed && "mr-3"
   )
 
@@ -234,9 +234,9 @@ function NavigationItemComponent({
             <span className="truncate">{item.label}</span>
           </div>
           {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
           )}
         </button>
 
@@ -273,7 +273,7 @@ function NavigationItemComponent({
         <span className="truncate">{item.label}</span>
       )}
       {item.badge && !collapsed && (
-        <span className="ml-auto bg-blue-100 text-blue-600 text-xs px-2 py-0.5 rounded-full">
+        <span className="ml-auto bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
           {item.badge}
         </span>
       )}
@@ -295,7 +295,7 @@ export function MobileNavToggle({ className }: MobileNavToggleProps) {
     <button
       type="button"
       className={cn(
-        "-m-2.5 p-2.5 text-gray-700 lg:hidden focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md",
+        "-m-2.5 p-2.5 text-muted-foreground lg:hidden focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md",
         className
       )}
       onClick={toggleMobile}
@@ -320,7 +320,7 @@ export function SidebarToggle({ className }: SidebarToggleProps) {
     <button
       type="button"
       className={cn(
-        "hidden lg:flex -m-2.5 p-2.5 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md transition-colors",
+        "hidden lg:flex -m-2.5 p-2.5 text-muted-foreground hover:text-card-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-md transition-colors",
         className
       )}
       onClick={toggle}

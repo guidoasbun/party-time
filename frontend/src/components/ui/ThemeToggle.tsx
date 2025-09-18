@@ -64,7 +64,7 @@ export function ThemeToggle({
         </Button>
 
         <div className={cn(
-          "absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg transition-all duration-200 z-50",
+          "absolute right-0 top-full mt-2 w-48 bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-50",
           isOpen ? "opacity-100 visible" : "opacity-0 invisible"
         )}>
           <div className="p-1">
@@ -74,14 +74,14 @@ export function ThemeToggle({
                 setIsOpen(false)
               }}
               className={cn(
-                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                theme === 'light' && 'bg-gray-100 dark:bg-gray-700'
+                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+                theme === 'light' && 'bg-accent text-accent-foreground'
               )}
             >
               <Sun className="h-4 w-4" />
               <span>Light</span>
               {theme === 'light' && (
-                <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
               )}
             </button>
 
@@ -91,14 +91,14 @@ export function ThemeToggle({
                 setIsOpen(false)
               }}
               className={cn(
-                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                theme === 'dark' && 'bg-gray-100 dark:bg-gray-700'
+                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+                theme === 'dark' && 'bg-accent text-accent-foreground'
               )}
             >
               <Moon className="h-4 w-4" />
               <span>Dark</span>
               {theme === 'dark' && (
-                <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
               )}
             </button>
 
@@ -108,14 +108,14 @@ export function ThemeToggle({
                 setIsOpen(false)
               }}
               className={cn(
-                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors',
-                theme === 'system' && 'bg-gray-100 dark:bg-gray-700'
+                'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+                theme === 'system' && 'bg-accent text-accent-foreground'
               )}
             >
               <Monitor className="h-4 w-4" />
               <span>System</span>
               {theme === 'system' && (
-                <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />
+                <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
               )}
             </button>
           </div>
