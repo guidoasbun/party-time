@@ -9,6 +9,8 @@ import { Select } from '@/components/ui/Select'
 import { Chip, ChipGroup } from '@/components/ui/Chip'
 import { DateRangePicker, QuickDateFilters } from '@/components/ui/DatePicker'
 import { Button } from '@/components/ui/Button'
+import { EventFiltersSkeleton, FilterLoadingOverlay } from './EventFiltersSkeleton'
+import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { cn } from '@/lib/utils'
 
 interface EventFiltersProps {
@@ -18,6 +20,10 @@ interface EventFiltersProps {
   className?: string
   compact?: boolean
   showAdvanced?: boolean
+  isLoading?: boolean
+  error?: string | Error | null
+  onRetry?: () => void
+  disabled?: boolean
 }
 
 export function EventFilters({
@@ -26,7 +32,11 @@ export function EventFilters({
   onFiltersChange,
   className,
   compact = false,
-  showAdvanced = true
+  showAdvanced = true,
+  isLoading = false,
+  error = null,
+  onRetry,
+  disabled = false
 }: EventFiltersProps) {
   const {
     filters,
@@ -178,9 +188,40 @@ export function EventFilters({
          value.guest_count_range?.min || value.guest_count_range?.max)
     : hasActiveFilters
 
+  // Handle loading state
+  if (isLoading) {
+    return (
+      <EventFiltersSkeleton
+        className={className}
+        layout={compact ? 'compact' : 'full'}
+        showAdvanced={showAdvanced}
+      />
+    )
+  }
+
+  // Handle error state
+  if (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    return (
+      <div className={cn('space-y-4', className)}>
+        <ErrorMessage
+          title="Failed to load filters"
+          message={errorMessage}
+          type="server"
+          severity="error"
+          onRetry={onRetry}
+          showDetails={process.env.NODE_ENV === 'development'}
+        />
+      </div>
+    )
+  }
+
   if (compact) {
     return (
-      <div className={cn("space-y-3 sm:space-y-4", className)}>
+      <div className={cn("space-y-3 sm:space-y-4 relative", className)}>
+        {/* Loading overlay when filtering */}
+        {isFiltering && <FilterLoadingOverlay />}
+
         {/* Search and basic filters - Mobile responsive */}
         <div className="flex flex-col gap-3">
           {/* Search - full width on mobile */}
@@ -190,6 +231,7 @@ export function EventFilters({
               value={currentFilters.search || ''}
               onChange={handleSearchChange}
               leftIcon={<Search className="h-4 w-4" />}
+              disabled={disabled || isFiltering}
               rightIcon={
                 currentFilters.search && (
                   <button
@@ -215,6 +257,7 @@ export function EventFilters({
                 placeholder="Event types"
                 multiple
                 className="w-full"
+                disabled={disabled || isFiltering}
               />
             </div>
             {hasActiveFiltersCheck && (
