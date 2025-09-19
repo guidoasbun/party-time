@@ -53,6 +53,11 @@
   --duration-normal: 200ms;
   --duration-slow: 300ms;
 
+  /* Skeleton animations */
+  --shimmer-start: rgba(255, 255, 255, 0);
+  --shimmer-middle: rgba(255, 255, 255, 0.5);
+  --shimmer-end: rgba(255, 255, 255, 0);
+
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
@@ -85,6 +90,11 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+
+  /* Dark theme skeleton animations */
+  --shimmer-start: rgba(255, 255, 255, 0);
+  --shimmer-middle: rgba(255, 255, 255, 0.1);
+  --shimmer-end: rgba(255, 255, 255, 0);
 }
 
 @theme inline {
@@ -233,5 +243,54 @@ html {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Skeleton Loading Animations */
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+  100% {
+    background-position: calc(200px + 100%) 0;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Animation utility classes */
+.animate-shimmer {
+  background: linear-gradient(90deg,
+    var(--shimmer-start) 0%,
+    var(--shimmer-middle) 50%,
+    var(--shimmer-end) 100%);
+  background-size: 200px 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Skeleton specific animations that respect reduced motion */
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton-shimmer {
+    background: linear-gradient(90deg,
+      var(--shimmer-start) 0%,
+      var(--shimmer-middle) 50%,
+      var(--shimmer-end) 100%);
+    background-size: 200px 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  .skeleton-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
