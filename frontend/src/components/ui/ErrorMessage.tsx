@@ -40,29 +40,29 @@ const severityConfig = {
   error: {
     bgColor: 'bg-red-50 dark:bg-red-900/20',
     borderColor: 'border-red-200 dark:border-red-800',
-    textColor: 'text-gray-900 dark:text-red-100',
-    iconColor: 'text-red-600 dark:text-red-300',
+    textColor: 'error-text-red',
+    iconColor: 'error-text-red',
     icon: XCircle
   },
   warning: {
-    bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
-    borderColor: 'border-yellow-200 dark:border-yellow-800',
-    textColor: 'text-gray-900 dark:text-yellow-100',
-    iconColor: 'text-yellow-600 dark:text-yellow-300',
+    bgColor: 'bg-amber-50 dark:bg-amber-900/20',
+    borderColor: 'border-amber-200 dark:border-amber-800',
+    textColor: 'error-text-amber',
+    iconColor: 'error-text-amber',
     icon: AlertTriangle
   },
   info: {
     bgColor: 'bg-blue-50 dark:bg-blue-900/20',
     borderColor: 'border-blue-200 dark:border-blue-800',
-    textColor: 'text-gray-900 dark:text-blue-100',
-    iconColor: 'text-blue-600 dark:text-blue-300',
+    textColor: 'error-text-blue',
+    iconColor: 'error-text-blue',
     icon: Info
   },
   critical: {
     bgColor: 'bg-red-100 dark:bg-red-900/40',
     borderColor: 'border-red-300 dark:border-red-700',
-    textColor: 'text-black dark:text-red-100',
-    iconColor: 'text-red-700 dark:text-red-300',
+    textColor: 'error-text-red',
+    iconColor: 'error-text-red',
     icon: AlertCircle
   }
 }

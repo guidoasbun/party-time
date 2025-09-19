@@ -135,11 +135,36 @@
 }
 
 body {
-  background: var(--background) !important;
-  color: var(--foreground) !important;
+  background: var(--background);
+  color: var(--foreground);
   font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   line-height: 1.6;
   transition: background-color var(--duration-normal) ease, color var(--duration-normal) ease;
+}
+
+/* Error Message Color Classes */
+.error-text-red {
+  color: #991b1b;
+}
+
+.error-text-amber {
+  color: #92400e;
+}
+
+.error-text-blue {
+  color: #1e3a8a;
+}
+
+.dark .error-text-red {
+  color: #fecaca;
+}
+
+.dark .error-text-amber {
+  color: #fbbf24;
+}
+
+.dark .error-text-blue {
+  color: #93c5fd;
 }
 
 /* Force theme updates */
