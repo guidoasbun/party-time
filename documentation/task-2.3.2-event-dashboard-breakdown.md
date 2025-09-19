@@ -959,10 +959,10 @@ npm run test:watch
 - [x] Dark mode compatibility
 
 ### Task 6.2: Loading & Error States
-- [ ] Skeleton loading components
-- [ ] Error boundary implementation
-- [ ] Retry mechanisms for failed requests
-- [ ] Empty state illustrations/messages
+- [x] Skeleton loading components
+- [x] Error boundary implementation
+- [x] Retry mechanisms for failed requests
+- [x] Empty state illustrations/messages
 
 ### Task 6.3: Animations & Transitions
 - [ ] Smooth view mode transitions
