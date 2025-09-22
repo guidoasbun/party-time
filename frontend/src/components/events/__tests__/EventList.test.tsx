@@ -70,6 +70,7 @@ const mockEventActions = {
   selectAllEvents: jest.fn(),
   deselectAllEvents: jest.fn(),
   toggleEventSelection: jest.fn(),
+  setTotalCount: jest.fn(),
   hasSelection: false,
   bulkDeleteEvents: jest.fn(),
   state: {
@@ -92,7 +93,7 @@ jest.mock('@/hooks/useEventActions', () => ({
 
 // Mock useStaggeredAnimation
 jest.mock('@/hooks/useAnimatedMount', () => ({
-  useStaggeredAnimation: () => [],
+  useStaggeredAnimation: (count: number) => new Array(count).fill('entered'),
 }))
 
 describe('EventList Component Tests', () => {
