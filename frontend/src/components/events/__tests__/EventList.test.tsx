@@ -93,6 +93,7 @@ const mockEventActions = {
   deselectAllEvents: jest.fn(),
   toggleEventSelection: jest.fn(),
   setTotalCount: jest.fn(),
+  deleteEvent: jest.fn(),
   hasSelection: false,
   bulkDeleteEvents: jest.fn(),
   state: {
@@ -115,7 +116,10 @@ jest.mock('@/hooks/useEventActions', () => ({
 
 // Mock useStaggeredAnimation
 jest.mock('@/hooks/useAnimatedMount', () => ({
-  useStaggeredAnimation: (count: number) => new Array(count).fill('entered'),
+  useStaggeredAnimation: ({ items }: { items: unknown[] }) => ({
+    itemStates: new Array(items.length).fill('entered'),
+    startAnimation: jest.fn(),
+  }),
 }))
 
 describe('EventList Component Tests', () => {
@@ -305,11 +309,12 @@ describe('EventList Component Tests', () => {
     it('should render error message when error is provided', () => {
       render(<EventList events={[]} error="Failed to load events" />)
 
-      expect(screen.getByText(/failed to load events/i)).toBeInTheDocument()
+      // There might be multiple elements with this text (h3 and p), so use getAllByText
+      expect(screen.getAllByText(/failed to load events/i)).toHaveLength(2)
     })
 
     it('should render retry button on error', () => {
-      render(<EventList events={[]} error="Network error" />)
+      render(<EventList events={[]} error="Network error" onRetry={jest.fn()} />)
 
       expect(screen.getByText(/retry/i)).toBeInTheDocument()
     })
@@ -515,6 +520,12 @@ describe('EventList Component Tests', () => {
         />
       )
 
+      // First select some events to enable bulk actions
+      const checkboxes = screen.getAllByTitle('Select event')
+      await user.click(checkboxes[0])
+      await user.click(checkboxes[1])
+
+      // Now the bulk delete button should be available
       const bulkDeleteButton = screen.getByTitle('Delete selected events')
       await user.click(bulkDeleteButton)
 
