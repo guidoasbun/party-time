@@ -18,6 +18,7 @@ import { EventSummary, EventType } from '@/types/event.types'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { EventStatusBadge } from './EventStatusBadge'
+import { ANIMATION_CLASSES, PRESET_ANIMATIONS, getAnimationClass } from '@/lib/animations'
 
 interface EventCardProps {
   event: EventSummary
@@ -28,6 +29,12 @@ interface EventCardProps {
   onArchive?: (eventId: string) => void
   viewMode?: 'grid' | 'list'
   showActions?: boolean
+  /** Enable enhanced animations */
+  animated?: boolean
+  /** Animation delay for staggered effects (in ms) */
+  animationDelay?: number
+  /** Whether to animate on mount */
+  animateOnMount?: boolean
 }
 
 const eventTypeLabels: Record<EventType, string> = {
@@ -73,17 +80,22 @@ function BudgetProgressBar({ budgetTotal, totalExpenses }: { budgetTotal?: numbe
           ${totalExpenses.toLocaleString()} / ${budgetTotal.toLocaleString()}
         </span>
       </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
         <div
           className={cn(
-            'h-2 rounded-full transition-all duration-300',
+            'h-2 rounded-full progress-fill transition-all duration-500 ease-out',
             isOverBudget
-              ? 'bg-red-500 dark:bg-red-400'
+              ? 'bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500'
               : percentage > 80
-                ? 'bg-yellow-500 dark:bg-yellow-400'
-                : 'bg-green-500 dark:bg-green-400'
+                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 dark:from-yellow-400 dark:to-yellow-500'
+                : 'bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500',
+            percentage > 0 && 'shadow-sm'
           )}
-          style={{ width: `${percentage}%` }}
+          style={{
+            width: `${percentage}%`,
+            transform: `translateX(-100%)`,
+            animation: 'slideInRight 800ms ease-out forwards'
+          }}
         />
       </div>
     </div>
@@ -98,7 +110,10 @@ export function EventCard({
   onDuplicate,
   onArchive,
   viewMode = 'grid',
-  showActions = true
+  showActions = true,
+  animated = true,
+  animationDelay = 0,
+  animateOnMount = true
 }: EventCardProps) {
   const [isClient, setIsClient] = useState(false)
 
@@ -129,9 +144,24 @@ export function EventCard({
     ? Math.round((event.confirmed_guests / event.guest_count) * 100)
     : 0
 
+  // Animation classes for list view
+  const listCardClasses = cn(
+    'group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4',
+    'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600',
+    animated ? [
+      PRESET_ANIMATIONS.CARD_HOVER,
+      'hover:shadow-lg hover:-translate-y-0.5',
+      'will-change-transform',
+      animateOnMount && getAnimationClass('animate-slideInUp')
+    ] : 'transition-all duration-200'
+  )
+
   if (viewMode === 'list') {
     return (
-      <div className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4 hover:shadow-md transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600">
+      <div
+        className={listCardClasses}
+        style={animationDelay > 0 ? { animationDelay: `${animationDelay}ms` } : undefined}
+      >
         {/* Mobile: Stack layout, Desktop: Horizontal layout */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
           {/* Main content */}
@@ -179,14 +209,23 @@ export function EventCard({
 
           {/* Actions - Always visible on mobile, hover on desktop */}
           {showActions && (
-            <div className="flex items-center gap-1 sm:ml-4 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200 dark:border-gray-700">
+            <div className={cn(
+              'flex items-center gap-1 sm:ml-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200 dark:border-gray-700',
+              animated ? [
+                'sm:opacity-0 sm:group-hover:opacity-100 sm:group-hover:translate-x-0',
+                'sm:translate-x-2 transition-all duration-300 ease-out'
+              ] : 'sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
+            )}>
               {onView && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => onView(event.id)}
                   title="View event"
-                  className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+                  className={cn(
+                    "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    animated && "button-press hover:scale-110 transition-transform duration-150"
+                  )}
                 >
                   <Eye className="h-4 w-4" />
                 </Button>
@@ -197,7 +236,10 @@ export function EventCard({
                   size="sm"
                   onClick={() => onEdit(event.id)}
                   title="Edit event"
-                  className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+                  className={cn(
+                    "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    animated && "button-press hover:scale-110 transition-transform duration-150"
+                  )}
                 >
                   <Edit className="h-4 w-4" />
                 </Button>
@@ -208,7 +250,10 @@ export function EventCard({
                   size="sm"
                   onClick={() => onDuplicate(event.id)}
                   title="Duplicate event"
-                  className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+                  className={cn(
+                    "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    animated && "button-press hover:scale-110 transition-transform duration-150"
+                  )}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -219,7 +264,10 @@ export function EventCard({
                   size="sm"
                   onClick={() => onArchive(event.id)}
                   title="Archive event"
-                  className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1"
+                  className={cn(
+                    "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    animated && "button-press hover:scale-110 transition-all duration-150"
+                  )}
                 >
                   <Archive className="h-4 w-4" />
                 </Button>
@@ -230,7 +278,10 @@ export function EventCard({
                   size="sm"
                   onClick={() => onDelete(event.id)}
                   title="Delete event"
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1"
+                  className={cn(
+                    "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    animated && "button-press hover:scale-110 transition-all duration-150"
+                  )}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -242,9 +293,25 @@ export function EventCard({
     )
   }
 
+  // Animation classes for grid view
+  const gridCardClasses = cn(
+    'group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6',
+    'hover:border-gray-300 dark:hover:border-gray-600',
+    animated ? [
+      PRESET_ANIMATIONS.CARD_HOVER,
+      'hover:shadow-xl hover:-translate-y-2 hover:scale-102',
+      'will-change-transform',
+      'backdrop-blur-sm',
+      animateOnMount && getAnimationClass('animate-scaleIn')
+    ] : 'hover:shadow-lg transition-all duration-200 hover:-translate-y-1'
+  )
+
   // Grid view - Mobile responsive
   return (
-    <div className="group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6 hover:shadow-lg transition-all duration-200 hover:border-gray-300 dark:hover:border-gray-600 hover:-translate-y-1">
+    <div
+      className={gridCardClasses}
+      style={animationDelay > 0 ? { animationDelay: `${animationDelay}ms` } : undefined}
+    >
       {/* Header */}
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div className="flex-1 min-w-0">
@@ -302,14 +369,23 @@ export function EventCard({
 
       {/* Actions - Always visible on mobile, hover on desktop */}
       {showActions && (
-        <div className="flex justify-end gap-1 sm:gap-2 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+        <div className={cn(
+          'flex justify-end gap-1 sm:gap-2 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700',
+          animated ? [
+            'sm:opacity-0 sm:group-hover:opacity-100 sm:group-hover:translate-y-0',
+            'sm:translate-y-2 transition-all duration-300 ease-out'
+          ] : 'sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
+        )}>
           {onView && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onView(event.id)}
               title="View event"
-              className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+              className={cn(
+                "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                animated && "button-press hover:scale-110 transition-transform duration-150"
+              )}
             >
               <Eye className="h-4 w-4" />
             </Button>
@@ -320,7 +396,10 @@ export function EventCard({
               size="sm"
               onClick={() => onEdit(event.id)}
               title="Edit event"
-              className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+              className={cn(
+                "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                animated && "button-press hover:scale-110 transition-transform duration-150"
+              )}
             >
               <Edit className="h-4 w-4" />
             </Button>
@@ -331,7 +410,10 @@ export function EventCard({
               size="sm"
               onClick={() => onDuplicate(event.id)}
               title="Duplicate event"
-              className="min-h-[44px] min-w-[44px] p-2 sm:p-1"
+              className={cn(
+                "min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                animated && "button-press hover:scale-110 transition-transform duration-150"
+              )}
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -342,7 +424,10 @@ export function EventCard({
               size="sm"
               onClick={() => onArchive(event.id)}
               title="Archive event"
-              className="text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1"
+              className={cn(
+                "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                animated && "button-press hover:scale-110 transition-all duration-150"
+              )}
             >
               <Archive className="h-4 w-4" />
             </Button>
@@ -353,7 +438,10 @@ export function EventCard({
               size="sm"
               onClick={() => onDelete(event.id)}
               title="Delete event"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1"
+              className={cn(
+                "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                animated && "button-press hover:scale-110 transition-all duration-150"
+              )}
             >
               <Trash2 className="h-4 w-4" />
             </Button>

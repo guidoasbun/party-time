@@ -18,6 +18,8 @@ import { Button } from '@/components/ui/Button'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { useEventActions } from '@/hooks/useEventActions'
 import { cn } from '@/lib/utils'
+import { ANIMATION_CLASSES, PRESET_ANIMATIONS, getAnimationClass } from '@/lib/animations'
+import { useStaggeredAnimation } from '@/hooks/useAnimatedMount'
 
 // Supporting Types
 interface PaginationInfo {
@@ -51,31 +53,60 @@ interface EventListProps {
   emptyStateTitle?: string
   emptyStateMessage?: string
   className?: string
+  /** Enable enhanced animations */
+  enableAnimations?: boolean
+  /** Enable staggered card animations */
+  enableStaggeredAnimations?: boolean
+  /** Animation duration for view mode transitions */
+  viewTransitionDuration?: number
 }
 
 // Empty State Component
 function EventEmptyState({
   title = "No events found",
   message = "Get started by creating your first event",
-  onCreateEvent
+  onCreateEvent,
+  animated = true
 }: {
   title?: string
   message?: string
   onCreateEvent?: () => void
+  animated?: boolean
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-      <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6">
+    <div className={cn(
+      "flex flex-col items-center justify-center py-16 px-6 text-center",
+      animated && getAnimationClass('animate-fadeIn')
+    )}>
+      <div className={cn(
+        "w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-6",
+        animated && getAnimationClass('animate-bounceIn animate-delay-200')
+      )}>
         <PartyPopper className="w-8 h-8 text-gray-400" />
       </div>
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+      <h3 className={cn(
+        "text-lg font-semibold text-gray-900 dark:text-white mb-2",
+        animated && getAnimationClass('animate-slideInUp animate-delay-300')
+      )}>
         {title}
       </h3>
-      <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
+      <p className={cn(
+        "text-gray-500 dark:text-gray-400 mb-6 max-w-sm",
+        animated && getAnimationClass('animate-slideInUp animate-delay-500')
+      )}>
         {message}
       </p>
       {onCreateEvent && (
-        <Button onClick={onCreateEvent} className="gap-2">
+        <Button
+          onClick={onCreateEvent}
+          className={cn(
+            "gap-2",
+            animated && [
+              getAnimationClass('animate-slideInUp animate-delay-700'),
+              'hover:scale-105 transition-transform duration-200'
+            ]
+          )}
+        >
           <Plus className="w-4 h-4" />
           Create Event
         </Button>
@@ -85,12 +116,29 @@ function EventEmptyState({
 }
 
 // Loading Skeleton Component
-function EventListSkeleton({ viewMode = 'grid', count = 6 }: { viewMode?: 'grid' | 'list', count?: number }) {
+function EventListSkeleton({
+  viewMode = 'grid',
+  count = 6,
+  animated = true
+}: {
+  viewMode?: 'grid' | 'list'
+  count?: number
+  animated?: boolean
+}) {
   const skeletons = Array.from({ length: count }, (_, i) => (
-    <div key={i} className={cn(
-      'animate-pulse bg-gray-200 dark:bg-gray-700 rounded-lg',
-      viewMode === 'grid' ? 'h-64 sm:h-72 p-4 sm:p-6' : 'h-24 sm:h-28 p-3 sm:p-4'
-    )}>
+    <div
+      key={i}
+      className={cn(
+        'bg-gray-200 dark:bg-gray-700 rounded-lg',
+        viewMode === 'grid' ? 'h-64 sm:h-72 p-4 sm:p-6' : 'h-24 sm:h-28 p-3 sm:p-4',
+        animated && [
+          'skeleton-enhanced',
+          getAnimationClass('animate-fadeIn'),
+          `animate-delay-${Math.min(i * 100, 500)}`
+        ]
+      )}
+      style={animated ? { animationDelay: `${i * 50}ms` } : undefined}
+    >
       <div className="space-y-2 sm:space-y-3">
         <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-3/4"></div>
         <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
@@ -124,31 +172,58 @@ function EventListSkeleton({ viewMode = 'grid', count = 6 }: { viewMode?: 'grid'
 // View Toggle Component
 function ViewToggle({
   viewMode,
-  onChange
+  onChange,
+  animated = true
 }: {
   viewMode: 'grid' | 'list'
   onChange: (mode: 'grid' | 'list') => void
+  animated?: boolean
 }) {
   return (
-    <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+    <div className={cn(
+      "flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1",
+      animated && "transition-all duration-300 ease-in-out"
+    )}>
       <Button
         variant={viewMode === 'grid' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onChange('grid')}
-        className="gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3"
+        className={cn(
+          "gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3",
+          animated && [
+            "transition-all duration-200 ease-in-out",
+            "hover:scale-105 active:scale-95",
+            viewMode === 'grid' && "shadow-sm"
+          ]
+        )}
         title="Grid view"
       >
-        <Grid className="w-4 h-4" />
+        <Grid className={cn(
+          "w-4 h-4",
+          animated && "transition-transform duration-200",
+          viewMode === 'grid' && animated && "scale-110"
+        )} />
         <span className="hidden sm:inline">Grid</span>
       </Button>
       <Button
         variant={viewMode === 'list' ? 'default' : 'ghost'}
         size="sm"
         onClick={() => onChange('list')}
-        className="gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3"
+        className={cn(
+          "gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3",
+          animated && [
+            "transition-all duration-200 ease-in-out",
+            "hover:scale-105 active:scale-95",
+            viewMode === 'list' && "shadow-sm"
+          ]
+        )}
         title="List view"
       >
-        <List className="w-4 h-4" />
+        <List className={cn(
+          "w-4 h-4",
+          animated && "transition-transform duration-200",
+          viewMode === 'list' && animated && "scale-110"
+        )} />
         <span className="hidden sm:inline">List</span>
       </Button>
     </div>
@@ -343,7 +418,10 @@ export function EventList({
   enableEventActions = true,
   emptyStateTitle,
   emptyStateMessage,
-  className
+  className,
+  enableAnimations = true,
+  enableStaggeredAnimations = true,
+  viewTransitionDuration = 400
 }: EventListProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
@@ -360,6 +438,29 @@ export function EventList({
       eventActions.setTotalCount(events.length)
     }
   }, [events.length, enableEventActions])
+
+  // Staggered animations for events
+  const { itemStates, startAnimation } = useStaggeredAnimation({
+    items: events,
+    animation: {
+      type: 'slide',
+      direction: 'up',
+      duration: 300,
+      stagger: enableStaggeredAnimations,
+      staggerDelay: 50
+    },
+    autoStart: enableAnimations && enableStaggeredAnimations && !isLoading
+  })
+
+  // Trigger animations when view mode changes
+  const [prevViewMode, setPrevViewMode] = React.useState(viewMode)
+  React.useEffect(() => {
+    if (prevViewMode !== viewMode && enableAnimations) {
+      // Small delay to allow DOM to update
+      setTimeout(startAnimation, 50)
+    }
+    setPrevViewMode(viewMode)
+  }, [viewMode, prevViewMode, enableAnimations, startAnimation])
 
   // Event action handlers
   const handleEdit = useCallback((eventId: string) => {
@@ -489,7 +590,11 @@ export function EventList({
         </div>
 
         {onViewModeChange && !isLoading && events.length > 0 && (
-          <ViewToggle viewMode={viewMode} onChange={onViewModeChange} />
+          <ViewToggle
+            viewMode={viewMode}
+            onChange={onViewModeChange}
+            animated={enableAnimations}
+          />
         )}
       </div>
 
@@ -508,48 +613,86 @@ export function EventList({
 
       {/* Loading state */}
       {isLoading ? (
-        <EventListSkeleton viewMode={viewMode} />
+        <EventListSkeleton
+          viewMode={viewMode}
+          animated={enableAnimations}
+        />
       ) : events.length === 0 ? (
         /* Empty state */
         <EventEmptyState
           title={emptyStateTitle}
           message={emptyStateMessage}
           onCreateEvent={onCreateEvent}
+          animated={enableAnimations}
         />
       ) : (
         <>
           {/* Events grid/list - Mobile-first responsive */}
-          <div className={cn(
-            'grid gap-3 sm:gap-4',
-            viewMode === 'grid'
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-              : 'grid-cols-1'
-          )}>
-            {events.map((event) => (
-              <div key={event.id} className="relative">
-                {enableBulkSelection && enableEventActions && (
-                  <div className="absolute top-3 left-3 z-10">
-                    <input
-                      type="checkbox"
-                      checked={eventActions.state.bulkSelection.isSelectAll || eventActions.state.bulkSelection.selectedIds.has(event.id)}
-                      onChange={() => eventActions.toggleEventSelection(event.id)}
-                      className="w-5 h-5 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
-                      style={{ minWidth: '20px', minHeight: '20px' }}
-                      title="Select event"
-                    />
-                  </div>
-                )}
-                <EventCard
-                  event={event}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onView={handleView}
-                  onDuplicate={handleDuplicate}
-                  onArchive={handleArchive}
-                  viewMode={viewMode}
-                />
-              </div>
-            ))}
+          <div
+            className={cn(
+              'grid gap-3 sm:gap-4',
+              viewMode === 'grid'
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+                : 'grid-cols-1',
+              enableAnimations && [
+                'view-transition',
+                'will-change-transform'
+              ]
+            )}
+            style={enableAnimations ? {
+              transitionDuration: `${viewTransitionDuration}ms`
+            } : undefined}
+          >
+            {events.map((event, index) => {
+              const animationState = enableStaggeredAnimations ? itemStates[index] : 'entered'
+              const animationDelay = enableStaggeredAnimations ? index * 50 : 0
+
+              return (
+                <div
+                  key={event.id}
+                  className={cn(
+                    "relative",
+                    enableAnimations && animationState === 'entering' && getAnimationClass('animate-slideInUp'),
+                    enableAnimations && animationState === 'exiting' && getAnimationClass('animate-slideOutDown')
+                  )}
+                  style={enableAnimations && animationDelay > 0 ? {
+                    animationDelay: `${animationDelay}ms`
+                  } : undefined}
+                >
+                  {enableBulkSelection && enableEventActions && (
+                    <div className={cn(
+                      "absolute top-3 left-3 z-10",
+                      enableAnimations && "transition-opacity duration-200",
+                      enableAnimations && "hover:scale-110"
+                    )}>
+                      <input
+                        type="checkbox"
+                        checked={eventActions.state.bulkSelection.isSelectAll || eventActions.state.bulkSelection.selectedIds.has(event.id)}
+                        onChange={() => eventActions.toggleEventSelection(event.id)}
+                        className={cn(
+                          "w-5 h-5 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer",
+                          enableAnimations && "transition-all duration-150 hover:shadow-md"
+                        )}
+                        style={{ minWidth: '20px', minHeight: '20px' }}
+                        title="Select event"
+                      />
+                    </div>
+                  )}
+                  <EventCard
+                    event={event}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    onView={handleView}
+                    onDuplicate={handleDuplicate}
+                    onArchive={handleArchive}
+                    viewMode={viewMode}
+                    animated={enableAnimations}
+                    animationDelay={animationDelay}
+                    animateOnMount={enableStaggeredAnimations}
+                  />
+                </div>
+              )
+            })}
           </div>
 
           {/* Infinite scroll loading indicator */}
