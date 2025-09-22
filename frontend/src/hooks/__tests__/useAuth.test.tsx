@@ -1,4 +1,4 @@
-import { renderHook } from '../../../__tests__/test-utils'
+import { renderHook } from "../../../../test-utils/test-utils"
 import { useAuth } from '../useAuth'
 import { signIn, signOut, useSession } from 'next-auth/react'
 

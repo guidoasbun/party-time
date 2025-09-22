@@ -1,4 +1,4 @@
-import { renderHook, act, waitFor } from '../../../__tests__/test-utils'
+import { renderHook, act, waitFor } from "../../../../test-utils/test-utils"
 import { useToast, ToastOptions } from '../useToast'
 
 // Mock setTimeout and clearTimeout for deterministic timing tests

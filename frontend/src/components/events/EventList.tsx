@@ -42,6 +42,7 @@ interface EventListProps {
   onViewModeChange?: (mode: 'grid' | 'list') => void
   isLoading?: boolean
   error?: string | null
+  onRetry?: () => void
   pagination?: PaginationInfo
   onPageChange?: (page: number) => void
   enableInfiniteScroll?: boolean
@@ -256,6 +257,7 @@ function PaginationControls({
           onClick={() => onPageChange(page - 1)}
           disabled={!has_previous}
           className="gap-1 min-h-[44px] px-3"
+          title="Previous page"
         >
           <ChevronLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Previous</span>
@@ -307,6 +309,7 @@ function PaginationControls({
           onClick={() => onPageChange(page + 1)}
           disabled={!has_next}
           className="gap-1 min-h-[44px] px-3"
+          title="Next page"
         >
           <span className="hidden sm:inline">Next</span>
           <ChevronRight className="w-4 h-4" />
@@ -375,6 +378,7 @@ function BulkSelectionBar({
             onClick={onBulkDelete}
             disabled={isLoading}
             className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 gap-1 min-h-[44px] px-2 sm:px-3"
+            title="Delete selected events"
           >
             <Trash2 className="w-4 h-4" />
             <span className="hidden sm:inline">Delete</span>
@@ -408,6 +412,7 @@ export function EventList({
   onViewModeChange,
   isLoading = false,
   error = null,
+  onRetry,
   pagination,
   onPageChange,
   enableInfiniteScroll = false,
@@ -570,6 +575,11 @@ export function EventList({
         <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm">
           {error}
         </p>
+        {onRetry && (
+          <Button onClick={onRetry} variant="outline">
+            Retry
+          </Button>
+        )}
       </div>
     )
   }
