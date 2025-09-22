@@ -1,8 +1,11 @@
 import { http, HttpResponse } from 'msw'
+import { eventHandlers } from './eventHandlers'
 
 const API_BASE_URL = 'http://localhost:8000'
 
 export const handlers = [
+  // Include event handlers
+  ...eventHandlers,
   // Auth endpoints
   http.post(`${API_BASE_URL}/api/v1/auth/register`, async ({ request }) => {
     const body = await request.json() as {

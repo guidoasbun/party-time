@@ -9,33 +9,7 @@ import '@testing-library/jest-dom'
 import 'whatwg-fetch'
 
 // Mock fetch for API calls
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({
-      user_id: 'test-user-123',
-      email: 'test@example.com',
-      name: 'Test User',
-      email_verified: true,
-      username: 'testuser',
-      groups: ['planner']
-    }),
-    headers: new Headers(),
-    redirected: false,
-    statusText: 'OK',
-    type: 'basic' as ResponseType,
-    url: '',
-    clone: jest.fn(),
-    body: null,
-    bodyUsed: false,
-    arrayBuffer: jest.fn(),
-    blob: jest.fn(),
-    formData: jest.fn(),
-    text: jest.fn(),
-    bytes: jest.fn(),
-  } as Response)
-) as jest.Mock
+global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // TextEncoder/TextDecoder polyfill for MSW
 import { TextEncoder, TextDecoder } from 'util'
@@ -87,17 +61,29 @@ jest.mock('next-auth/react', () => ({
   SessionProvider: ({ children }: { children: React.ReactNode }) => children,
 }))
 
-// Setup MSW - Commented out for now due to Node.js compatibility issues
-// We'll enable this when we write actual API tests
+// Setup MSW for API testing - Temporarily disabled
 // import { beforeAll, afterEach, afterAll } from '@jest/globals'
-// import { server } from './__tests__/mocks/server'
 
-// Establish API mocking before all tests.
-// beforeAll(() => server.listen())
+// Setup MSW server after polyfills are in place
+// let server: any
+
+// beforeAll(async () => {
+//   const { server: mswServer } = await import('./__tests__/mocks/server')
+//   server = mswServer
+//   server.listen({ onUnhandledRequest: 'warn' })
+// })
 
 // Reset any request handlers that we may add during the tests,
 // so they don't affect other tests.
-// afterEach(() => server.resetHandlers())
+// afterEach(() => {
+//   if (server) {
+//     server.resetHandlers()
+//   }
+// })
 
 // Clean up after the tests are finished.
-// afterAll(() => server.close())
+// afterAll(() => {
+//   if (server) {
+//     server.close()
+//   }
+// })
