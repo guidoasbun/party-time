@@ -12,6 +12,8 @@ import { Button } from '@/components/ui/Button'
 import { EventFiltersSkeleton, FilterLoadingOverlay } from './EventFiltersSkeleton'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { cn } from '@/lib/utils'
+import { ANIMATION_CLASSES, PRESET_ANIMATIONS, getAnimationClass } from '@/lib/animations'
+import { useAnimatedMount } from '@/hooks/useAnimatedMount'
 
 interface EventFiltersProps {
   value?: EventFiltersType
@@ -24,6 +26,12 @@ interface EventFiltersProps {
   error?: string | Error | null
   onRetry?: () => void
   disabled?: boolean
+  /** Enable enhanced animations */
+  enableAnimations?: boolean
+  /** Animate advanced filters toggle */
+  animateAdvancedToggle?: boolean
+  /** Enable staggered filter section animations */
+  enableStaggeredSections?: boolean
 }
 
 export function EventFilters({
@@ -36,7 +44,10 @@ export function EventFilters({
   isLoading = false,
   error = null,
   onRetry,
-  disabled = false
+  disabled = false,
+  enableAnimations = true,
+  animateAdvancedToggle = true,
+  enableStaggeredSections = true
 }: EventFiltersProps) {
   const {
     filters,
@@ -188,6 +199,33 @@ export function EventFilters({
          value.guest_count_range?.min || value.guest_count_range?.max)
     : hasActiveFilters
 
+  // Animation states
+  const [showAdvancedInternal, setShowAdvancedInternal] = React.useState(showAdvanced)
+  const [isAdvancedToggling, setIsAdvancedToggling] = React.useState(false)
+  const previousShowAdvanced = React.useRef(showAdvanced)
+
+  // Update internal state when prop changes
+  React.useEffect(() => {
+    if (showAdvanced !== previousShowAdvanced.current) {
+      setIsAdvancedToggling(true)
+      setShowAdvancedInternal(showAdvanced)
+      previousShowAdvanced.current = showAdvanced
+      setTimeout(() => setIsAdvancedToggling(false), 300)
+    }
+  }, [showAdvanced])
+
+  // Animated mount for advanced filters
+  const advancedFiltersAnimation = useAnimatedMount({
+    show: showAdvancedInternal,
+    animation: {
+      type: 'slide',
+      direction: 'down',
+      duration: 300,
+      easing: 'ease-out'
+    },
+    animateInitial: animateAdvancedToggle
+  })
+
   // Handle loading state
   if (isLoading) {
     return (
@@ -218,7 +256,11 @@ export function EventFilters({
 
   if (compact) {
     return (
-      <div className={cn("space-y-3 sm:space-y-4 relative", className)}>
+      <div className={cn(
+        "space-y-3 sm:space-y-4 relative",
+        enableAnimations && getAnimationClass('animate-fadeIn'),
+        className
+      )}>
         {/* Loading overlay when filtering */}
         {isFiltering && <FilterLoadingOverlay />}
 
@@ -265,7 +307,14 @@ export function EventFilters({
                 variant="outline"
                 size="sm"
                 onClick={handleClearFilters}
-                className="w-full sm:w-auto min-h-[44px] gap-2"
+                className={cn(
+                  "w-full sm:w-auto min-h-[44px] gap-2",
+                  enableAnimations && [
+                    getAnimationClass('animate-slideInRight'),
+                    PRESET_ANIMATIONS.BUTTON_HOVER,
+                    "hover:shadow-md"
+                  ]
+                )}
               >
                 <X className="h-4 w-4" />
                 Clear Filters
@@ -276,15 +325,24 @@ export function EventFilters({
 
         {/* Status chips - wrap on mobile */}
         {currentFilters.statuses.length > 0 && (
-          <div className="overflow-x-auto">
+          <div className={cn(
+            "overflow-x-auto",
+            enableAnimations && getAnimationClass('animate-slideInUp animate-delay-200')
+          )}>
             <ChipGroup className="flex flex-wrap gap-2">
-              {statusChips.filter(chip => chip.selected).map(chip => (
+              {statusChips.filter(chip => chip.selected).map((chip, index) => (
                 <Chip
                   key={chip.value}
                   variant="filter"
                   selected={chip.selected}
                   onToggle={() => handleStatusToggle(chip.value)}
-                  className="flex-shrink-0"
+                  className={cn(
+                    "flex-shrink-0",
+                    enableAnimations && enableStaggeredSections && [
+                      getAnimationClass('animate-scaleIn'),
+                      `animate-delay-${Math.min(index * 100 + 300, 800)}`
+                    ]
+                  )}
                 >
                   {chip.label}
                 </Chip>
@@ -297,14 +355,33 @@ export function EventFilters({
   }
 
   return (
-    <div className={cn("space-y-4 sm:space-y-6 p-4 sm:p-6 bg-card border border-border rounded-lg transition-colors duration-[var(--duration-normal)]", className)}>
+    <div className={cn(
+      "space-y-4 sm:space-y-6 p-4 sm:p-6 bg-card border border-border rounded-lg",
+      enableAnimations ? [
+        "transition-all duration-300 ease-out",
+        getAnimationClass('animate-fadeIn'),
+        "hover:shadow-lg hover:-translate-y-1"
+      ] : "transition-colors duration-[var(--duration-normal)]",
+      className
+    )}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
+      <div className={cn(
+        "flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0",
+        enableAnimations && getAnimationClass('animate-slideInDown')
+      )}>
         <div className="flex items-center gap-2">
-          <Filter className="h-5 w-5 text-muted-foreground" />
+          <Filter className={cn(
+            "h-5 w-5 text-muted-foreground",
+            enableAnimations && "transition-transform duration-200 hover:rotate-12"
+          )} />
           <h3 className="text-lg font-semibold text-card-foreground">Filters</h3>
           {isFiltering && (
-            <div className="text-xs text-muted-foreground">Filtering...</div>
+            <div className={cn(
+              "text-xs text-muted-foreground",
+              enableAnimations && getAnimationClass('animate-pulse')
+            )}>
+              Filtering...
+            </div>
           )}
         </div>
         {hasActiveFiltersCheck && (
@@ -312,7 +389,14 @@ export function EventFilters({
             variant="outline"
             size="sm"
             onClick={handleClearFilters}
-            className="w-full sm:w-auto min-h-[44px] gap-2"
+            className={cn(
+              "w-full sm:w-auto min-h-[44px] gap-2",
+              enableAnimations && [
+                getAnimationClass('animate-slideInRight'),
+                PRESET_ANIMATIONS.BUTTON_HOVER,
+                "hover:shadow-md"
+              ]
+            )}
           >
             <X className="h-4 w-4" />
             Clear All
@@ -321,7 +405,12 @@ export function EventFilters({
       </div>
 
       {/* Search */}
-      <div>
+      <div className={cn(
+        enableAnimations && enableStaggeredSections && [
+          getAnimationClass('animate-slideInUp'),
+          'animate-delay-100'
+        ]
+      )}>
         <Input
           label="Search"
           placeholder="Search events by name, description, or venue..."
@@ -333,7 +422,13 @@ export function EventFilters({
               <button
                 type="button"
                 onClick={() => value ? onChange?.({ ...value, search: '' }) : clearSearch()}
-                className="hover:bg-muted rounded p-1 transition-colors duration-[var(--duration-normal)] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className={cn(
+                  "hover:bg-muted rounded p-1 min-h-[44px] min-w-[44px] flex items-center justify-center",
+                  enableAnimations ? [
+                    "transition-all duration-200 hover:scale-110 active:scale-95",
+                    PRESET_ANIMATIONS.BUTTON_HOVER
+                  ] : "transition-colors duration-[var(--duration-normal)]"
+                )}
                 title="Clear search"
               >
                 <X className="h-3 w-3" />
@@ -344,7 +439,12 @@ export function EventFilters({
       </div>
 
       {/* Event Types */}
-      <div>
+      <div className={cn(
+        enableAnimations && enableStaggeredSections && [
+          getAnimationClass('animate-slideInUp'),
+          'animate-delay-200'
+        ]
+      )}>
         <Select
           label="Event Types"
           options={eventTypeOptions}
@@ -356,18 +456,33 @@ export function EventFilters({
       </div>
 
       {/* Status Filters */}
-      <div>
+      <div className={cn(
+        enableAnimations && enableStaggeredSections && [
+          getAnimationClass('animate-slideInUp'),
+          'animate-delay-300'
+        ]
+      )}>
         <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
           Status
         </label>
         <ChipGroup className="flex flex-wrap gap-2">
-          {statusChips.map(chip => (
+          {statusChips.map((chip, index) => (
             <Chip
               key={chip.value}
               variant="status"
               selected={chip.selected}
               onToggle={() => handleStatusToggle(chip.value)}
-              className="min-h-[44px] px-3 touch-manipulation"
+              className={cn(
+                "min-h-[44px] px-3 touch-manipulation",
+                enableAnimations && [
+                  PRESET_ANIMATIONS.FILTER_TOGGLE,
+                  "hover:scale-105 transition-all duration-200"
+                ],
+                enableAnimations && enableStaggeredSections && [
+                  getAnimationClass('animate-scaleIn'),
+                  `animate-delay-${Math.min(index * 50 + 400, 800)}`
+                ]
+              )}
             >
               {chip.label}
             </Chip>
@@ -376,7 +491,12 @@ export function EventFilters({
       </div>
 
       {/* Date Range */}
-      <div>
+      <div className={cn(
+        enableAnimations && enableStaggeredSections && [
+          getAnimationClass('animate-slideInUp'),
+          'animate-delay-400'
+        ]
+      )}>
         <DateRangePicker
           label="Date Range"
           value={currentFilters.date_range}
@@ -391,7 +511,12 @@ export function EventFilters({
       </div>
 
       {/* Location */}
-      <div>
+      <div className={cn(
+        enableAnimations && enableStaggeredSections && [
+          getAnimationClass('animate-slideInUp'),
+          'animate-delay-500'
+        ]
+      )}>
         <Input
           label="Location"
           placeholder="Filter by venue or location..."
@@ -401,10 +526,22 @@ export function EventFilters({
         />
       </div>
 
-      {showAdvanced && (
-        <>
+      {/* Advanced Filters with Animation */}
+      {advancedFiltersAnimation.shouldRender && (
+        <div
+          className={cn(
+            "space-y-4 sm:space-y-6",
+            enableAnimations && animateAdvancedToggle && advancedFiltersAnimation.animationClass
+          )}
+          style={enableAnimations && animateAdvancedToggle ? advancedFiltersAnimation.animationStyle : undefined}
+        >
           {/* Budget Range */}
-          <div>
+          <div className={cn(
+            enableAnimations && enableStaggeredSections && [
+              getAnimationClass('animate-slideInUp'),
+              'animate-delay-600'
+            ]
+          )}>
             <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
               Budget Range
             </label>
@@ -427,7 +564,12 @@ export function EventFilters({
           </div>
 
           {/* Guest Count Range */}
-          <div>
+          <div className={cn(
+            enableAnimations && enableStaggeredSections && [
+              getAnimationClass('animate-slideInUp'),
+              'animate-delay-700'
+            ]
+          )}>
             <label className="text-sm font-medium leading-none mb-3 block text-card-foreground">
               Guest Count Range
             </label>
@@ -448,13 +590,22 @@ export function EventFilters({
               />
             </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* Filter Summary */}
       {hasActiveFiltersCheck && (
-        <div className="pt-3 sm:pt-4 border-t border-border">
-          <div className="text-sm text-muted-foreground">
+        <div className={cn(
+          "pt-3 sm:pt-4 border-t border-border",
+          enableAnimations && [
+            getAnimationClass('animate-slideInUp animate-delay-800'),
+            "transition-all duration-300"
+          ]
+        )}>
+          <div className={cn(
+            "text-sm text-muted-foreground",
+            enableAnimations && "transition-opacity duration-200"
+          )}>
             {getFilterSummary(currentFilters)}
           </div>
         </div>

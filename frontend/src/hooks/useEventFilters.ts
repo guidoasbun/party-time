@@ -49,7 +49,7 @@ export function useEventFilters({
   const isUpdatingUrlRef = useRef(false)
 
   // Initialize filters from URL, localStorage, or defaults
-  const initializeFilters = useCallback((): EventFilters => {
+  const initializeFilters = (): EventFilters => {
     // Priority: URL params > localStorage > defaults > fallback
     if (syncWithUrl && searchParams) {
       const urlFilters = parseFiltersFromUrl(searchParams)
@@ -71,7 +71,7 @@ export function useEventFilters({
     }
 
     return { ...DEFAULT_FILTERS, ...defaultFilters }
-  }, [defaultFilters, persistToLocalStorage, syncWithUrl, storageKey])
+  }
 
   const [filters, setFilters] = useState<EventFilters>(() => initializeFilters())
   const [debouncedFilters, setDebouncedFilters] = useState<EventFilters>(() => initializeFilters())
