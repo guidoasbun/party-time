@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, act, fireEvent } from '../../../../__tests__/test-utils'
+import { render, screen, act, fireEvent } from "../../../../test-utils/test-utils"
 import userEvent from '@testing-library/user-event'
 import { EventFilters } from '../EventFilters'
 import { EventType, EventStatus } from '@/types/event.types'
@@ -43,8 +43,8 @@ jest.mock('@/components/ui/Input', () => ({
         value={value || ''}
         onChange={(e) => {
           if (!disabled && onChange) {
-            // Create a proper event-like object
-            onChange(e.target.value)
+            // Pass the full event object
+            onChange(e)
           }
         }}
         placeholder={placeholder}
@@ -123,9 +123,9 @@ jest.mock('@/components/ui/DatePicker', () => ({
   ),
   QuickDateFilters: ({ onSelect }: { onSelect?: (range: string) => void }) => (
     <div data-testid="quick-date-filters">
-      <button onClick={() => onSelect('today')}>Today</button>
-      <button onClick={() => onSelect('week')}>This Week</button>
-      <button onClick={() => onSelect('month')}>This Month</button>
+      <button onClick={() => onSelect?.('today')}>Today</button>
+      <button onClick={() => onSelect?.('week')}>This Week</button>
+      <button onClick={() => onSelect?.('month')}>This Month</button>
     </div>
   ),
 }))

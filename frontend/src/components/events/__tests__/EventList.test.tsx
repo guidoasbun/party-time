@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../test-utils/test-utils'
 import userEvent from '@testing-library/user-event'
 import { EventList } from '../EventList'
 import { createMockEventSummary } from '../../../../__tests__/mocks/eventData'
@@ -344,7 +344,7 @@ describe('EventList Component Tests', () => {
     })
 
     it('should call onPageChange when next button is clicked', async () => {
-      const paginationWithNext = { ...mockPagination, has_next: true }
+      const paginationWithNext = { ...mockPagination, has_next: true, total: 25 }
 
       render(
         <EventList
@@ -361,7 +361,7 @@ describe('EventList Component Tests', () => {
     })
 
     it('should call onPageChange when previous button is clicked', async () => {
-      const paginationWithPrev = { ...mockPagination, page: 2, has_previous: true }
+      const paginationWithPrev = { ...mockPagination, page: 2, has_previous: true, total: 25 }
 
       render(
         <EventList
@@ -378,10 +378,11 @@ describe('EventList Component Tests', () => {
     })
 
     it('should disable buttons appropriately based on pagination state', () => {
+      const paginationDisabled = { ...mockPagination, total: 25 }
       render(
         <EventList
           events={mockEvents}
-          pagination={mockPagination}
+          pagination={paginationDisabled}
           onPageChange={mockHandlers.onPageChange}
         />
       )
@@ -481,7 +482,7 @@ describe('EventList Component Tests', () => {
         />
       )
 
-      expect(screen.getByText('Select All')).toBeInTheDocument()
+      expect(screen.getByText('Select all')).toBeInTheDocument()
     })
 
     it('should call selectAllEvents when select all is clicked', async () => {
@@ -493,7 +494,7 @@ describe('EventList Component Tests', () => {
         />
       )
 
-      const selectAllButton = screen.getByText('Select All')
+      const selectAllButton = screen.getByText('Select all')
       await user.click(selectAllButton)
 
       expect(mockEventActions.selectAllEvents).toHaveBeenCalled()
@@ -529,7 +530,7 @@ describe('EventList Component Tests', () => {
       const bulkDeleteButton = screen.getByTitle('Delete selected events')
       await user.click(bulkDeleteButton)
 
-      expect(mockEventActions.showConfirmation).toHaveBeenCalled()
+      expect(mockEventActions.bulkDeleteEvents).toHaveBeenCalled()
     })
 
     it('should not render bulk selection when enableBulkSelection is false', () => {

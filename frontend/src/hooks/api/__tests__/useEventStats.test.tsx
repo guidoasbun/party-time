@@ -5,7 +5,7 @@
 import { waitFor } from '@testing-library/react'
 import { server } from '../../../../__tests__/mocks/server'
 import { http, HttpResponse } from 'msw'
-import { renderEventHook } from '../../../../__tests__/eventTestUtils'
+import { renderEventHook } from '../../../../test-utils/eventTestUtils'
 import {
   useEventStats,
   useDashboardStats,

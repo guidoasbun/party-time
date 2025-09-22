@@ -3,7 +3,7 @@
  */
 
 import { act, waitFor } from '@testing-library/react'
-import { renderEventHook } from '../../../../__tests__/eventTestUtils'
+import { renderEventHook } from '../../../../test-utils/eventTestUtils'
 import { useEvents, eventKeys } from '../useEvents'
 import { mockEvents, createMockPaginatedResponse } from '../../../../__tests__/mocks/eventData'
 import { eventsService } from '@/lib/api/services'

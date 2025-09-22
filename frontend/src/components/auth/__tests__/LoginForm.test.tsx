@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '../../../../__tests__/test-utils'
+import { render, screen, waitFor } from "../../../../test-utils/test-utils"
 import userEvent from '@testing-library/user-event'
 import { LoginForm } from '../LoginForm'
 

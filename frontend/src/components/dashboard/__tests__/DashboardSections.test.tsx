@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../test-utils/test-utils'
 import userEvent from '@testing-library/user-event'
 import { DashboardSections } from '../DashboardSections'
 
@@ -113,6 +113,7 @@ describe('DashboardSections Component Tests', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
+    mockPush.mockImplementation(() => {})
     mockDashboardData.error = null
     mockDashboardData.isLoading = false
   })

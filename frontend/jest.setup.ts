@@ -13,6 +13,7 @@ global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>
 
 // TextEncoder/TextDecoder polyfill for MSW
 import { TextEncoder, TextDecoder } from 'util'
+import { Readable } from 'stream'
 
 // Polyfill TextEncoder/TextDecoder for Jest environment
 Object.defineProperty(global, 'TextEncoder', {
@@ -23,6 +24,47 @@ Object.defineProperty(global, 'TextEncoder', {
 
 Object.defineProperty(global, 'TextDecoder', {
   value: TextDecoder,
+  writable: true,
+  configurable: true,
+})
+
+// Polyfill TransformStream for MSW
+class MockTransformStream {
+  readable: ReadableStream
+  writable: WritableStream
+
+  constructor() {
+    this.readable = new ReadableStream()
+    this.writable = new WritableStream()
+  }
+}
+
+Object.defineProperty(global, 'TransformStream', {
+  value: MockTransformStream,
+  writable: true,
+  configurable: true,
+})
+
+// Polyfill BroadcastChannel for MSW
+class MockBroadcastChannel {
+  name: string
+  onmessage: ((event: any) => void) | null = null
+
+  constructor(name: string) {
+    this.name = name
+  }
+
+  postMessage(message: any) {
+    // No-op for tests
+  }
+
+  close() {
+    // No-op for tests
+  }
+}
+
+Object.defineProperty(global, 'BroadcastChannel', {
+  value: MockBroadcastChannel,
   writable: true,
   configurable: true,
 })

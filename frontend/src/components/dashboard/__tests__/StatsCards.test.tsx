@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen } from '../../../../__tests__/test-utils'
+import { render, screen } from "../../../../test-utils/test-utils"
 import { StatsCards } from '../StatsCards'
 import { createMockDashboardStats } from '../../../../__tests__/mocks/eventData'
 

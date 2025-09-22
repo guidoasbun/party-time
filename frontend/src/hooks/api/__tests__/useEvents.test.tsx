@@ -5,7 +5,7 @@
 import { act, waitFor } from '@testing-library/react'
 import { server } from '../../../../__tests__/mocks/server'
 import { http, HttpResponse } from 'msw'
-import { renderEventHook, mockAuthenticatedRequest, mockServerError } from '../../../../__tests__/eventTestUtils'
+import { renderEventHook, mockAuthenticatedRequest, mockServerError } from '../../../../test-utils/eventTestUtils'
 import {
   useEvents,
   useInfiniteEvents,

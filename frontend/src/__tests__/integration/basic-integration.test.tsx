@@ -3,7 +3,7 @@
  * These tests verify that our ErrorBoundary and middleware protection logic work correctly
  */
 import React from 'react'
-import { render, screen } from '../../../__tests__/test-utils'
+import { render, screen } from "../../../test-utils/test-utils"
 import userEvent from '@testing-library/user-event'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
