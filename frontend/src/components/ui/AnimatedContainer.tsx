@@ -184,7 +184,7 @@ export function AnimatedContainer({
   }
 
   // Determine container props based on trigger type
-  const containerProps: any = {
+  const containerProps: Record<string, unknown> = {
     ref: containerRef,
     className: cn(
       getAnimationClasses(),
@@ -213,7 +213,7 @@ export function AnimatedContainer({
           className
         )}
         style={{
-          ...containerProps.style,
+          ...(containerProps.style as React.CSSProperties),
           ...animatedMount.animationStyle
         }}
       >

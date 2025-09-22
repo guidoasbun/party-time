@@ -47,7 +47,7 @@ export function useAnimatedMount({
   const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>(
     show ? 'entered' : 'exited'
   )
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
   const isFirstMount = useRef(true)
 
   // Clear timeout on unmount

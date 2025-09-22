@@ -29,7 +29,7 @@ export interface TransitionProps {
   /** Additional CSS classes */
   className?: string
   /** Container element type */
-  as?: keyof JSX.IntrinsicElements
+  as?: keyof React.JSX.IntrinsicElements
 }
 
 export function Transition({
@@ -90,7 +90,7 @@ export function ViewTransition({
 }: ViewTransitionProps) {
   const [currentView, setCurrentView] = useState(activeView)
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined)
 
   useEffect(() => {
     if (activeView !== currentView && !shouldReduceMotion()) {
