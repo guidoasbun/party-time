@@ -492,7 +492,7 @@ describe('EventCard Component Tests', () => {
       render(<EventCard event={event} {...mockHandlers} />)
 
       expect(screen.getByText('888,888/999,999 confirmed (89%)')).toBeInTheDocument()
-      expect(screen.getByText(/888,888,888.*999,999,999/)).toBeInTheDocument()
+      expect(screen.getByText('$888,888,888 / $999,999,999')).toBeInTheDocument()
     })
 
     it('should handle undefined callback functions', () => {

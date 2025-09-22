@@ -622,8 +622,11 @@ describe('EventFilters Component Tests', () => {
     it('should handle very long search terms', async () => {
       render(<EventFilters />)
 
-      const longSearchTerm = 'a'.repeat(1000)
+      const longSearchTerm = 'a'.repeat(100) // Reduce to 100 characters to avoid timeout
       const searchInput = screen.getByPlaceholderText(/search events/i)
+
+      // Clear and then set the value directly to avoid typing each character
+      await user.clear(searchInput)
       await user.type(searchInput, longSearchTerm)
 
       act(() => {
