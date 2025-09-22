@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor, act } from '../../../../__tests__/test-utils'
+import { render, screen, act } from '../../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { EventFilters } from '../EventFilters'
 import { EventType, EventStatus } from '@/types/event.types'
@@ -18,25 +18,39 @@ jest.mock('@/lib/animations', () => ({
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: string[]) => args.filter(Boolean).join(' '),
 }))
 
 // Mock UI components
+const MockInput = React.forwardRef<HTMLInputElement, {
+  onChange?: (value: string) => void
+  value?: string
+  placeholder?: string
+  [key: string]: unknown
+}>(({ onChange, value, placeholder, ...props }, ref) => (
+  <input
+    ref={ref}
+    value={value || ''}
+    onChange={(e) => onChange?.(e.target.value)}
+    placeholder={placeholder}
+    data-testid="filter-input"
+    {...props}
+  />
+))
+MockInput.displayName = 'MockInput'
+
 jest.mock('@/components/ui/Input', () => ({
-  Input: React.forwardRef<HTMLInputElement, any>(({ onChange, value, placeholder, ...props }, ref) => (
-    <input
-      ref={ref}
-      value={value || ''}
-      onChange={(e) => onChange?.(e.target.value)}
-      placeholder={placeholder}
-      data-testid="filter-input"
-      {...props}
-    />
-  )),
+  Input: MockInput,
 }))
 
 jest.mock('@/components/ui/Select', () => ({
-  Select: ({ value, onChange, options, placeholder, multiple }: any) => (
+  Select: ({ value, onChange, options, placeholder, multiple }: {
+    value?: string | string[]
+    onChange?: (value: string | string[]) => void
+    options?: Array<{ value: string; label: string }>
+    placeholder?: string
+    multiple?: boolean
+  }) => (
     <select
       multiple={multiple}
       value={multiple ? value : (value || '')}
@@ -49,7 +63,7 @@ jest.mock('@/components/ui/Select', () => ({
       data-testid="filter-select"
     >
       <option value="" disabled>{placeholder}</option>
-      {options?.map((option: any) => (
+      {options?.map((option: { value: string; label: string }) => (
         <option key={option.value} value={option.value}>
           {option.label}
         </option>
@@ -59,7 +73,11 @@ jest.mock('@/components/ui/Select', () => ({
 }))
 
 jest.mock('@/components/ui/Chip', () => ({
-  Chip: ({ children, selected, onClick }: any) => (
+  Chip: ({ children, selected, onClick }: {
+    children: React.ReactNode
+    selected?: boolean
+    onClick?: () => void
+  }) => (
     <button
       onClick={onClick}
       data-selected={selected}
@@ -68,11 +86,14 @@ jest.mock('@/components/ui/Chip', () => ({
       {children}
     </button>
   ),
-  ChipGroup: ({ children }: any) => <div data-testid="chip-group">{children}</div>,
+  ChipGroup: ({ children }: { children: React.ReactNode }) => <div data-testid="chip-group">{children}</div>,
 }))
 
 jest.mock('@/components/ui/DatePicker', () => ({
-  DateRangePicker: ({ value, onChange }: any) => (
+  DateRangePicker: ({ value, onChange }: {
+    value?: { start?: string; end?: string }
+    onChange?: (value: { start?: string; end?: string }) => void
+  }) => (
     <div data-testid="date-range-picker">
       <input
         type="date"
@@ -88,7 +109,7 @@ jest.mock('@/components/ui/DatePicker', () => ({
       />
     </div>
   ),
-  QuickDateFilters: ({ onSelect }: any) => (
+  QuickDateFilters: ({ onSelect }: { onSelect?: (range: string) => void }) => (
     <div data-testid="quick-date-filters">
       <button onClick={() => onSelect('today')}>Today</button>
       <button onClick={() => onSelect('week')}>This Week</button>
@@ -98,7 +119,12 @@ jest.mock('@/components/ui/DatePicker', () => ({
 }))
 
 jest.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick, variant, disabled }: any) => (
+  Button: ({ children, onClick, variant, disabled }: {
+    children: React.ReactNode
+    onClick?: () => void
+    variant?: string
+    disabled?: boolean
+  }) => (
     <button onClick={onClick} disabled={disabled} data-variant={variant}>
       {children}
     </button>
@@ -106,7 +132,10 @@ jest.mock('@/components/ui/Button', () => ({
 }))
 
 jest.mock('@/components/ui/ErrorMessage', () => ({
-  ErrorMessage: ({ error, onRetry }: any) => (
+  ErrorMessage: ({ error, onRetry }: {
+    error: Error | string
+    onRetry?: () => void
+  }) => (
     <div data-testid="error-message">
       <span>{error}</span>
       {onRetry && <button onClick={onRetry}>Retry</button>}
@@ -159,7 +188,6 @@ jest.mock('@/hooks/useAnimatedMount', () => ({
 describe('EventFilters Component Tests', () => {
   const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
   const mockOnChange = jest.fn()
-  const mockOnFiltersChange = jest.fn()
   const mockOnRetry = jest.fn()
 
   beforeEach(() => {

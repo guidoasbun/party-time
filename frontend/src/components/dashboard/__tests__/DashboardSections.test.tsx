@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { DashboardSections } from '../DashboardSections'
 
@@ -18,19 +18,19 @@ jest.mock('next/navigation', () => ({
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: string[]) => args.filter(Boolean).join(' '),
 }))
 
 // Mock dashboard layout
 jest.mock('../DashboardLayout', () => ({
-  DashboardGrid: ({ children }: any) => (
+  DashboardGrid: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dashboard-grid">{children}</div>
   ),
 }))
 
 // Mock ErrorBoundary
 jest.mock('@/components/ui/ErrorBoundary', () => ({
-  ErrorBoundary: ({ children, fallback }: any) => (
+  ErrorBoundary: ({ children }: { children: React.ReactNode; fallback?: React.ReactNode }) => (
     <div data-testid="error-boundary">{children}</div>
   ),
 }))
@@ -49,7 +49,10 @@ jest.mock('../RecentActivityFeed', () => ({
 }))
 
 jest.mock('../UpcomingEventsWidget', () => ({
-  UpcomingEventsWidget: ({ onViewEvent, onCreateEvent }: any) => (
+  UpcomingEventsWidget: ({ onViewEvent, onCreateEvent }: {
+    onViewEvent?: (eventId: string) => void
+    onCreateEvent?: () => void
+  }) => (
     <div data-testid="upcoming-events-widget">
       <div>Upcoming Events Widget</div>
       <button onClick={() => onViewEvent?.('test-event-1')}>View Event</button>
@@ -59,7 +62,10 @@ jest.mock('../UpcomingEventsWidget', () => ({
 }))
 
 jest.mock('../QuickActionsPanel', () => ({
-  QuickActionsPanel: ({ onCreateEvent, onViewAllEvents }: any) => (
+  QuickActionsPanel: ({ onCreateEvent, onViewAllEvents }: {
+    onCreateEvent?: () => void
+    onViewAllEvents?: () => void
+  }) => (
     <div data-testid="quick-actions-panel">
       <div>Quick Actions Panel</div>
       <button onClick={onCreateEvent}>Create New Event</button>
@@ -69,7 +75,10 @@ jest.mock('../QuickActionsPanel', () => ({
 }))
 
 jest.mock('../RecentEventsSection', () => ({
-  RecentEventsSection: ({ onViewEvent, onEditEvent }: any) => (
+  RecentEventsSection: ({ onViewEvent, onEditEvent }: {
+    onViewEvent?: (eventId: string) => void
+    onEditEvent?: (eventId: string) => void
+  }) => (
     <div data-testid="recent-events-section">
       <div>Recent Events Section</div>
       <button onClick={() => onViewEvent?.('test-event-1')}>View Recent Event</button>

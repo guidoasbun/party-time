@@ -1,11 +1,11 @@
 import React from 'react'
-import { render, screen, waitFor } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../__tests__/test-utils'
 import { StatsCards } from '../StatsCards'
 import { createMockDashboardStats } from '../../../../__tests__/mocks/eventData'
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: string[]) => args.filter(Boolean).join(' '),
 }))
 
 // Mock StatCard component
@@ -19,7 +19,16 @@ jest.mock('../StatCard', () => ({
     loading,
     className,
     ...props
-  }: any) => (
+  }: {
+    title: string
+    value: number | string
+    previousValue?: number
+    icon?: React.ComponentType<{ 'data-testid'?: string }>
+    prefix?: string
+    loading?: boolean
+    className?: string
+    [key: string]: unknown
+  }) => (
     <div
       className={className}
       data-testid={props['data-testid']}

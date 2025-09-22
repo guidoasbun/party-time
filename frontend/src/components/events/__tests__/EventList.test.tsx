@@ -1,9 +1,9 @@
 import React from 'react'
-import { render, screen, waitFor, fireEvent } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { EventList } from '../EventList'
 import { createMockEventSummary } from '../../../../__tests__/mocks/eventData'
-import { EventType, EventStatus } from '@/types/event.types'
+import { EventType } from '@/types/event.types'
 
 // Mock animations
 jest.mock('@/lib/animations', () => ({
@@ -16,12 +16,20 @@ jest.mock('@/lib/animations', () => ({
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: string[]) => args.filter(Boolean).join(' '),
 }))
 
 // Mock Button component
 jest.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick, variant, size, className, title, ...props }: any) => (
+  Button: ({ children, onClick, variant, size, className, title, ...props }: {
+    children: React.ReactNode
+    onClick?: () => void
+    variant?: string
+    size?: string
+    className?: string
+    title?: string
+    [key: string]: unknown
+  }) => (
     <button
       onClick={onClick}
       className={`${variant} ${size} ${className}`}
@@ -37,7 +45,13 @@ jest.mock('@/components/ui/Button', () => ({
 // Mock ConfirmDialog
 jest.mock('@/components/ui/ConfirmDialog', () => ({
   __esModule: true,
-  default: ({ open, onClose, onConfirm, title, description }: any) =>
+  default: ({ open, onClose, onConfirm, title, description }: {
+    open: boolean
+    onClose: () => void
+    onConfirm: () => void
+    title: string
+    description: string
+  }) =>
     open ? (
       <div data-testid="confirm-dialog">
         <h3>{title}</h3>
@@ -50,7 +64,15 @@ jest.mock('@/components/ui/ConfirmDialog', () => ({
 
 // Mock EventCard
 jest.mock('../EventCard', () => ({
-  EventCard: ({ event, onEdit, onDelete, onView, onDuplicate, onArchive, viewMode }: any) => (
+  EventCard: ({ event, onEdit, onDelete, onView, onDuplicate, onArchive, viewMode }: {
+    event: { id: string; name: string; type: string }
+    onEdit?: (id: string) => void
+    onDelete?: (id: string) => void
+    onView?: (id: string) => void
+    onDuplicate?: (id: string) => void
+    onArchive?: (id: string) => void
+    viewMode?: string
+  }) => (
     <div data-testid="event-card" data-view-mode={viewMode}>
       <h3>{event.name}</h3>
       <p>{event.type}</p>
@@ -523,7 +545,6 @@ describe('EventList Component Tests', () => {
       )
 
       const firstCard = screen.getAllByTestId('event-card')[0]
-      const editButton = firstCard.querySelector('button:contains("Edit")')
 
       expect(firstCard.querySelector('button')).toBeInTheDocument()
     })

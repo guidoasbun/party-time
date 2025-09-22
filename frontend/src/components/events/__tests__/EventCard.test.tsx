@@ -1,5 +1,5 @@
 import React from 'react'
-import { render, screen, waitFor } from '../../../../__tests__/test-utils'
+import { render, screen } from '../../../../__tests__/test-utils'
 import userEvent from '@testing-library/user-event'
 import { EventCard } from '../EventCard'
 import { createMockEventSummary } from '../../../../__tests__/mocks/eventData'
@@ -16,12 +16,18 @@ jest.mock('@/lib/animations', () => ({
 
 // Mock utils
 jest.mock('@/lib/utils', () => ({
-  cn: (...args: any[]) => args.filter(Boolean).join(' '),
+  cn: (...args: string[]) => args.filter(Boolean).join(' '),
 }))
 
 // Mock Button component
 jest.mock('@/components/ui/Button', () => ({
-  Button: ({ children, onClick, title, className, ...props }: any) => (
+  Button: ({ children, onClick, title, className, ...props }: {
+    children: React.ReactNode
+    onClick?: () => void
+    title?: string
+    className?: string
+    [key: string]: unknown
+  }) => (
     <button onClick={onClick} title={title} className={className} {...props}>
       {children}
     </button>
