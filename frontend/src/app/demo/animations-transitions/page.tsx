@@ -5,7 +5,7 @@
 'use client'
 
 import React, { useState, Suspense } from 'react'
-import { Play, RotateCcw, Eye, EyeOff, Zap, Layers, MousePointer, Monitor } from 'lucide-react'
+import { Play, RotateCcw, Eye, EyeOff, Zap, Layers, MousePointer, Monitor, Palette, Sun, Moon } from 'lucide-react'
 import { EventCard } from '@/components/events/EventCard'
 import { EventList } from '@/components/events/EventList'
 import { EventFilters } from '@/components/events/EventFilters'
@@ -14,6 +14,158 @@ import { AnimatedContainer, FadeInContainer, SlideInContainer } from '@/componen
 import { ViewTransition, ModalTransition, CollapseTransition } from '@/components/ui/Transition'
 import { EventSummary, EventType, EventStatus } from '@/types/event.types'
 import { cn } from '@/lib/utils'
+
+// Standalone Theme Toggle implementation
+function SafeThemeToggle() {
+  const [mounted, setMounted] = React.useState(false)
+  const [isOpen, setIsOpen] = React.useState(false)
+  const [currentTheme, setCurrentTheme] = React.useState<'light' | 'dark' | 'system'>('system')
+  const dropdownRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    setMounted(true)
+    // Initialize theme from localStorage and apply it
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('party-time-theme') as 'light' | 'dark' | 'system' || 'system'
+      setCurrentTheme(savedTheme)
+      applyTheme(savedTheme)
+    }
+  }, [])
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+      }
+    }
+
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false)
+      }
+    }
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleEscapeKey)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleEscapeKey)
+    }
+  }, [isOpen])
+
+  const applyTheme = (theme: 'light' | 'dark' | 'system') => {
+    if (typeof window === 'undefined') return
+
+    const root = document.documentElement
+
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      root.classList.toggle('dark', prefersDark)
+      root.classList.toggle('light', !prefersDark)
+    } else {
+      root.classList.toggle('dark', theme === 'dark')
+      root.classList.toggle('light', theme === 'light')
+    }
+
+    localStorage.setItem('party-time-theme', theme)
+  }
+
+  const handleThemeChange = (theme: 'light' | 'dark' | 'system') => {
+    setCurrentTheme(theme)
+    applyTheme(theme)
+    setIsOpen(false)
+  }
+
+  const getResolvedTheme = (): 'light' | 'dark' => {
+    if (!mounted) return 'light'
+
+    if (currentTheme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+    }
+    return currentTheme
+  }
+
+  const resolvedTheme = getResolvedTheme()
+
+  if (!mounted) {
+    return (
+      <Button variant="ghost" size="sm" className="h-9 w-9 px-0" disabled title="Theme toggle loading...">
+        <Monitor className="h-4 w-4" />
+      </Button>
+    )
+  }
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-9 w-9 px-0"
+        onClick={() => setIsOpen(!isOpen)}
+        title={`Current theme: ${currentTheme} (${resolvedTheme})`}
+      >
+        {resolvedTheme === 'dark' ? (
+          <Moon className="h-4 w-4" />
+        ) : (
+          <Sun className="h-4 w-4" />
+        )}
+      </Button>
+
+      <div className={cn(
+        "absolute right-0 top-full mt-2 w-48 bg-popover border border-border rounded-lg shadow-lg transition-all duration-200 z-[99999] pointer-events-auto",
+        isOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
+      )}>
+        <div className="p-1">
+          <button
+            onClick={() => handleThemeChange('light')}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+              currentTheme === 'light' && 'bg-accent text-accent-foreground'
+            )}
+          >
+            <Sun className="h-4 w-4" />
+            <span>Light</span>
+            {currentTheme === 'light' && (
+              <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => handleThemeChange('dark')}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+              currentTheme === 'dark' && 'bg-accent text-accent-foreground'
+            )}
+          >
+            <Moon className="h-4 w-4" />
+            <span>Dark</span>
+            {currentTheme === 'dark' && (
+              <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => handleThemeChange('system')}
+            className={cn(
+              'flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-accent hover:text-accent-foreground transition-colors',
+              currentTheme === 'system' && 'bg-accent text-accent-foreground'
+            )}
+          >
+            <Monitor className="h-4 w-4" />
+            <span>System</span>
+            {currentTheme === 'system' && (
+              <div className="ml-auto w-2 h-2 bg-primary rounded-full" />
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Mock data for demonstrations
 const mockEvents: EventSummary[] = [
@@ -396,6 +548,11 @@ export default function AnimationsTransitionsDemo() {
                     />
                   </div>
 
+                  <div className="flex items-center gap-2">
+                    <Palette className="h-4 w-4 text-muted-foreground" />
+                    <SafeThemeToggle />
+                  </div>
+
                   <Button
                     variant="outline"
                     size="sm"
@@ -411,7 +568,7 @@ export default function AnimationsTransitionsDemo() {
         </div>
 
         {/* Navigation */}
-        <div className="border-b bg-muted/30">
+        <div className="border-b bg-muted/30 relative z-10">
           <div className="container mx-auto px-4">
             <SlideInContainer direction="down" delay={200}>
               <div className="flex gap-1 py-2">
