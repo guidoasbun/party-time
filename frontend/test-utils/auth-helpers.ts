@@ -8,8 +8,18 @@ export const TEST_CREDENTIALS = {
   name: 'Guido Asbun'
 } as const
 
+// Test session type with id field
+type TestSession = Session & {
+  user?: {
+    id?: string
+    name?: string | null
+    email?: string | null
+    image?: string | null
+  }
+}
+
 // Mock session data
-export const createMockSession = (overrides?: Partial<Session>): Session => ({
+export const createMockSession = (overrides?: Partial<TestSession>): TestSession => ({
   user: {
     id: 'test-user-id',
     email: TEST_CREDENTIALS.email,
@@ -23,7 +33,7 @@ export const createMockSession = (overrides?: Partial<Session>): Session => ({
 })
 
 // Mock authenticated session
-export const createAuthenticatedSession = (overrides?: Partial<Session>): Session => 
+export const createAuthenticatedSession = (overrides?: Partial<TestSession>): TestSession =>
   createMockSession({
     idToken: 'valid-test-token',
     accessToken: 'valid-access-token',
@@ -34,13 +44,13 @@ export const createAuthenticatedSession = (overrides?: Partial<Session>): Sessio
 export const createUnauthenticatedSession = () => null
 
 // Mock expired session
-export const createExpiredSession = (): Session => 
+export const createExpiredSession = (): TestSession =>
   createMockSession({
     expires: '2020-01-01T00:00:00Z', // Past date
   })
 
 // Mock session with missing token
-export const createSessionWithoutToken = (): Session => 
+export const createSessionWithoutToken = (): TestSession =>
   createMockSession({
     idToken: undefined,
     accessToken: undefined,
@@ -110,7 +120,7 @@ export const createTestRegisterRequest = (overrides?: Partial<RegisterRequest>) 
 })
 
 // Mock NextAuth useSession hook responses
-export const createMockUseSession = (session: Session | null, status: 'loading' | 'authenticated' | 'unauthenticated' = 'authenticated') => ({
+export const createMockUseSession = (session: TestSession | null, status: 'loading' | 'authenticated' | 'unauthenticated' = 'authenticated') => ({
   data: session,
   status,
   update: jest.fn(),
