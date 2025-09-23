@@ -938,17 +938,17 @@ The testing foundation is now ready for **Phase 5.3: Component Unit Tests** with
 ### Phase 5.4: State Management Tests (Day 2, Afternoon)
 
 #### Task 5.4.1: Custom Hook Tests
-- [ ] **useViewPreferences.test.tsx**
+- [x] **useViewPreferences.test.tsx**
   - View mode persistence (grid/list)
   - Filter state persistence
   - LocalStorage integration
 
-- [ ] **useEventFilters.test.tsx**
+- [x] **useEventFilters.test.tsx**
   - Filter combination logic
   - URL parameter synchronization
   - Debounced search implementation
 
-- [ ] **useEventActions.test.tsx**
+- [x] **useEventActions.test.tsx**
   - Optimistic updates behavior
   - Confirmation dialog handling
   - Toast notification triggers
