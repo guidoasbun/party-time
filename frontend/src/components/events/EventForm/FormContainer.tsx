@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { useForm, FormProvider } from 'react-hook-form'
+import { useForm, FormProvider, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, ChevronRight, Save, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -71,7 +71,7 @@ export function FormContainer({
 
   // Form setup
   const form = useForm<EventCreateFormData>({
-    resolver: zodResolver(eventCreateSchema),
+    resolver: zodResolver(eventCreateSchema) as Resolver<EventCreateFormData>,
     defaultValues: savedData as EventCreateFormData,
     mode: 'onChange',
   })
@@ -297,7 +297,16 @@ export function FormContainer({
             isStepValid,
             isSubmitting,
             completedSteps,
-            errors: { ...formErrors, ...errors },
+            errors: {
+              ...formErrors,
+              ...Object.keys(errors).reduce((acc, key) => {
+                const error = errors[key as keyof typeof errors]
+                if (error && typeof error === 'object' && 'message' in error) {
+                  acc[key] = error.message || 'Invalid field'
+                }
+                return acc
+              }, {} as Record<string, string>)
+            },
             clearErrors: () => {
               clearErrors()
               setFormErrors({})

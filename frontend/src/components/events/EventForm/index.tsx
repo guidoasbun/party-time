@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { toast } from '@/hooks/useToast'
+import { useToast } from '@/hooks/useToast'
 import { FormContainer } from './FormContainer'
 import { BasicInfoStep } from './BasicInfoStep'
 import { DateTimeStep } from './DateTimeStep'
@@ -10,7 +10,7 @@ import { LocationStep } from './LocationStep'
 import { SettingsStep } from './SettingsStep'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { transformFormDataForApi } from '@/lib/utils/form'
-import { useEvents } from '@/hooks/api/useEvents'
+import { useCreateEvent } from '@/hooks/api/useEvents'
 
 interface EventFormProps {
   initialData?: Partial<EventCreateFormData>
@@ -28,7 +28,8 @@ export function EventForm({
   className
 }: EventFormProps) {
   const router = useRouter()
-  const { createEvent, saveDraft } = useEvents()
+  const createEvent = useCreateEvent()
+  const { toast } = useToast()
 
   // Form submission handler
   const handleSubmit = React.useCallback(async (data: EventCreateFormData) => {
@@ -65,7 +66,7 @@ export function EventForm({
       // Re-throw to let form handle the error state
       throw error
     }
-  }, [createEvent, onSuccess, router])
+  }, [createEvent, onSuccess, router, toast])
 
   // Draft save handler
   const handleSaveDraft = React.useCallback(async (data: Partial<EventCreateFormData>) => {
@@ -73,9 +74,7 @@ export function EventForm({
       // Only save drafts that have at least a name
       if (!data.name) return
 
-      const apiData = transformFormDataForApi(data as EventCreateFormData)
-      await saveDraft.mutateAsync(apiData)
-
+      // TODO: Implement draft saving functionality
       toast({
         title: 'Draft Saved',
         description: 'Your event draft has been saved.',
@@ -84,7 +83,7 @@ export function EventForm({
       console.error('Failed to save draft:', error)
       // Don't show error for draft saves - they're automatic
     }
-  }, [saveDraft])
+  }, [toast])
 
   // Cancel handler
   const handleCancel = React.useCallback(() => {

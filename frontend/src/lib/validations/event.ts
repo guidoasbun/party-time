@@ -98,9 +98,17 @@ export const eventCreateSchema = z.object({
   // Settings step
   ...settingsSchema.shape,
 
-  // Additional settings (optional)
-  guest_settings: guestSettingsSchema.optional(),
-  notification_settings: notificationSettingsSchema.optional(),
+  // Additional settings (with defaults)
+  guest_settings: guestSettingsSchema.default({
+    allow_plus_ones: false,
+    require_rsvp: true,
+    dietary_restrictions_enabled: false,
+  }),
+  notification_settings: notificationSettingsSchema.default({
+    send_invitations: true,
+    reminder_schedule: [],
+    auto_reminders: true,
+  }),
 })
 
 // Event update schema (all fields optional except ID)
