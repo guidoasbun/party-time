@@ -14,25 +14,19 @@ const locationPresets = [
     icon: Home,
     label: 'Home',
     description: 'Host at your home or residence',
-    onClick: (setValue: (field: string, value: unknown, options?: unknown) => void) => {
-      setValue('location', 'Home', { shouldValidate: true })
-    }
+    value: 'Home'
   },
   {
     icon: Building2,
     label: 'Office/Workplace',
     description: 'Host at your office or workplace',
-    onClick: (setValue: (field: string, value: unknown, options?: unknown) => void) => {
-      setValue('location', 'Office', { shouldValidate: true })
-    }
+    value: 'Office'
   },
   {
     icon: MapPin,
     label: 'Outdoor Location',
     description: 'Park, beach, or outdoor venue',
-    onClick: (setValue: (field: string, value: unknown, options?: unknown) => void) => {
-      setValue('location', 'Outdoor Location', { shouldValidate: true })
-    }
+    value: 'Outdoor Location'
   }
 ]
 
@@ -51,12 +45,7 @@ export function LocationStep() {
   const [isSearchingVenues, setIsSearchingVenues] = React.useState(false)
 
   const handleLocationPreset = (preset: typeof locationPresets[0]) => {
-    // Create a wrapper function that matches the preset signature
-    const setValueWrapper = (field: string, value: unknown, options?: unknown) => {
-      // Use type assertion to match React Hook Form's strict typing
-      setValue(field as keyof EventCreateFormData, value, options as Parameters<typeof setValue>[2])
-    }
-    preset.onClick(setValueWrapper)
+    setValue('location', preset.value, { shouldValidate: true })
   }
 
   const handleVenueSearch = () => {

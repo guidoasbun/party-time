@@ -173,18 +173,22 @@ export const transformApiDataForForm = (apiData: Record<string, unknown>): Parti
   const transformed = { ...apiData }
 
   // Transform ISO dates to YYYY-MM-DD format for form inputs
-  if (transformed.start_date) {
+  if (transformed.start_date && typeof transformed.start_date === 'string') {
     transformed.start_date = new Date(transformed.start_date).toISOString().split('T')[0]
   }
 
-  if (transformed.end_date) {
+  if (transformed.end_date && typeof transformed.end_date === 'string') {
     transformed.end_date = new Date(transformed.end_date).toISOString().split('T')[0]
   }
 
-  if (transformed.guest_settings?.rsvp_deadline) {
-    transformed.guest_settings.rsvp_deadline = new Date(
-      transformed.guest_settings.rsvp_deadline
-    ).toISOString().split('T')[0]
+  if (transformed.guest_settings &&
+      typeof transformed.guest_settings === 'object' &&
+      transformed.guest_settings !== null &&
+      'rsvp_deadline' in transformed.guest_settings) {
+    const guestSettings = transformed.guest_settings as Record<string, unknown>
+    if (typeof guestSettings.rsvp_deadline === 'string') {
+      guestSettings.rsvp_deadline = new Date(guestSettings.rsvp_deadline).toISOString().split('T')[0]
+    }
   }
 
   return transformed
@@ -245,5 +249,5 @@ export const createAutoSave = (
   saveFunction: (data: Partial<EventCreateFormData>) => void,
   delay: number = 1000
 ) => {
-  return debounce(saveFunction, delay)
+  return debounce(saveFunction as (...args: unknown[]) => unknown, delay)
 }
