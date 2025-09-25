@@ -6,10 +6,8 @@ const eventTypeSchema = z.nativeEnum(EventType)
 const eventStatusSchema = z.nativeEnum(EventStatus)
 
 // Helper schemas
-const positiveNumberSchema = z.number().min(0, 'Must be a positive number')
 const optionalPositiveNumberSchema = z.number().min(0).optional()
 const nonEmptyStringSchema = z.string().min(1, 'This field is required')
-const optionalStringSchema = z.string().optional()
 
 // Date validation helpers
 const futureDateSchema = z.string()

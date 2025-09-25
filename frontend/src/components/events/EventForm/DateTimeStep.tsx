@@ -2,7 +2,7 @@
 
 import * as React from 'react'
 import { useFormContext } from 'react-hook-form'
-import { Calendar, Clock } from 'lucide-react'
+import { Calendar } from 'lucide-react'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -121,14 +121,14 @@ export function DateTimeStep() {
             onChange={handleStartDateChange}
           />
 
-          <Input
-            type="time"
-            {...register('start_time')}
-            label="Start Time (Optional)"
-            error={errors.start_time?.message}
-            leftIcon={<Clock className="h-4 w-4" />}
-            defaultValue="18:00"
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Start Time (Optional)</label>
+            <input
+              type="time"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              defaultValue="18:00"
+            />
+          </div>
         </div>
 
         {/* Quick date presets */}
@@ -168,15 +168,15 @@ export function DateTimeStep() {
             leftIcon={<Calendar className="h-4 w-4" />}
           />
 
-          <Input
-            type="time"
-            {...register('end_time')}
-            label="End Time"
-            error={errors.end_time?.message}
-            leftIcon={<Clock className="h-4 w-4" />}
-            disabled={!endDate}
-            defaultValue="22:00"
-          />
+          <div className="space-y-2">
+            <label className="text-sm font-medium">End Time</label>
+            <input
+              type="time"
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
+              disabled={!endDate}
+              defaultValue="22:00"
+            />
+          </div>
         </div>
       </div>
 
@@ -213,22 +213,20 @@ export function DateTimeStep() {
           <h4 className="font-medium mb-2">📅 Event Schedule Preview</h4>
           <div className="text-sm text-muted-foreground space-y-1">
             <p>
-              <strong>Starts:</strong> {new Date(startDate + (watch('start_time') ? `T${watch('start_time')}` : '')).toLocaleDateString('en-US', {
+              <strong>Starts:</strong> {new Date(startDate).toLocaleDateString('en-US', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
-                day: 'numeric',
-                ...(watch('start_time') && { hour: '2-digit', minute: '2-digit' })
+                day: 'numeric'
               })}
             </p>
             {endDate && (
               <p>
-                <strong>Ends:</strong> {new Date(endDate + (watch('end_time') ? `T${watch('end_time')}` : '')).toLocaleDateString('en-US', {
+                <strong>Ends:</strong> {new Date(endDate).toLocaleDateString('en-US', {
                   weekday: 'long',
                   year: 'numeric',
                   month: 'long',
-                  day: 'numeric',
-                  ...(watch('end_time') && { hour: '2-digit', minute: '2-digit' })
+                  day: 'numeric'
                 })}
               </p>
             )}

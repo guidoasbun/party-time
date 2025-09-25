@@ -188,7 +188,7 @@ export function FormContainer({
       console.error('Form submission error:', error)
       throw error
     }
-  }, [onSubmit])
+  }, [onSubmit, formId])
 
   // Cancel handler
   const handleCancel = React.useCallback(() => {
@@ -197,7 +197,7 @@ export function FormContainer({
     }
     // Optionally clear saved data
     // FormPersistence.clearFormData(formId)
-  }, [onCancel, formId])
+  }, [onCancel])
 
   // Keyboard navigation
   React.useEffect(() => {

@@ -32,7 +32,12 @@ jest.mock('@/lib/utils/form', () => ({
 
 // Mock form components
 jest.mock('../FormContainer', () => ({
-  FormContainer: ({ children, onSubmit, onCancel, onSaveDraft }: any) => {
+  FormContainer: ({ children, onSubmit, onCancel, onSaveDraft }: {
+    children: (props: Record<string, unknown>) => React.ReactNode
+    onSubmit: (data: Record<string, unknown>) => void
+    onCancel: () => void
+    onSaveDraft: (data: Record<string, unknown>) => void
+  }) => {
     const mockFormProps = {
       currentStep: 'basicInfo',
       currentStepIndex: 0,
@@ -112,7 +117,7 @@ describe('EventForm', () => {
       saveDraft: {
         mutateAsync: mockSaveDraft
       }
-    } as any)
+    } as ReturnType<typeof useEvents>)
 
     mockTransformFormDataForApi.mockImplementation((data) => data)
     mockCreateEvent.mockResolvedValue({ id: 'test-event-id' })
@@ -251,7 +256,10 @@ describe('EventForm', () => {
 
       // Mock the FormContainer to pass data without name
       jest.doMock('../FormContainer', () => ({
-        FormContainer: ({ children, onSaveDraft }: any) => (
+        FormContainer: ({ children, onSaveDraft }: {
+          children: (props: Record<string, unknown>) => React.ReactNode
+          onSaveDraft: (data: Record<string, unknown>) => void
+        }) => (
           <div data-testid="form-container">
             <button onClick={() => onSaveDraft({})}>Save Draft</button>
             {children({})}
@@ -335,7 +343,10 @@ describe('EventForm', () => {
 
       // Mock FormContainer to pass the test data
       jest.doMock('../FormContainer', () => ({
-        FormContainer: ({ children, onSubmit }: any) => (
+        FormContainer: ({ children, onSubmit }: {
+          children: (props: Record<string, unknown>) => React.ReactNode
+          onSubmit: (data: Record<string, unknown>) => void
+        }) => (
           <div data-testid="form-container">
             <button onClick={() => onSubmit(testFormData)}>Submit Form</button>
             {children({})}

@@ -7,7 +7,6 @@ import { EventCreateFormData } from '@/lib/validations/event'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Textarea } from '@/components/ui/Textarea'
-import { cn } from '@/lib/utils'
 
 // Event type options for the select component
 const eventTypeOptions = [
