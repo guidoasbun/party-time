@@ -116,48 +116,29 @@ export function FormContainer({
     FormPersistence.saveCurrentStep(currentStep.name, formId)
   }, [currentStep.name, formId])
 
-  // Validate current step
-  const validateCurrentStep = React.useCallback(async (): Promise<boolean> => {
-    try {
-      const stepData = getStepData(formData, currentStep.name)
-      const result = validateFormStep(currentStep.name, stepData)
 
-      if (!result.success) {
-        const errors = formatZodErrors(result.error)
-        setFormErrors(errors)
-        return false
-      }
-
-      // Clear errors for this step
-      setFormErrors(prev => {
-        const newErrors = { ...prev }
-        Object.keys(newErrors).forEach(key => {
-          if (isFieldInCurrentStep(key, currentStep.name)) {
-            delete newErrors[key]
-          }
-        })
-        return newErrors
-      })
-
-      return true
-    } catch (error) {
-      console.error('Step validation error:', error)
-      return false
-    }
+  // Memoize the current step data to prevent unnecessary re-validations
+  const currentStepData = React.useMemo(() => {
+    return getStepData(formData, currentStep.name)
   }, [formData, currentStep.name])
+
+  const currentStepDataString = React.useMemo(() => {
+    return JSON.stringify(currentStepData)
+  }, [currentStepData])
+
+  // Check if current step is valid
+  const [isStepValid, setIsStepValid] = React.useState(false)
 
   // Navigation functions
   const goToNextStep = React.useCallback(async () => {
-    const isValid = await validateCurrentStep()
-
-    if (isValid) {
+    if (isStepValid) {
       setCompletedSteps(prev => new Set(prev).add(currentStepIndex))
 
       if (!isLastStep) {
         setCurrentStepIndex(prev => prev + 1)
       }
     }
-  }, [validateCurrentStep, currentStepIndex, isLastStep])
+  }, [isStepValid, currentStepIndex, isLastStep])
 
   const goToPreviousStep = React.useCallback(() => {
     if (!isFirstStep) {
@@ -171,12 +152,39 @@ export function FormContainer({
     }
   }, [currentStepIndex, completedSteps])
 
-  // Check if current step is valid
-  const [isStepValid, setIsStepValid] = React.useState(false)
-
   React.useEffect(() => {
-    validateCurrentStep().then(setIsStepValid)
-  }, [validateCurrentStep])
+    async function checkStepValidity() {
+      try {
+        const stepData = getStepData(formData, currentStep.name)
+        const result = validateFormStep(currentStep.name, stepData)
+
+        if (!result.success) {
+          const errors = formatZodErrors(result.error)
+          setFormErrors(errors)
+          setIsStepValid(false)
+          return
+        }
+
+        // Clear errors for this step
+        setFormErrors(prev => {
+          const newErrors = { ...prev }
+          Object.keys(newErrors).forEach(key => {
+            if (isFieldInCurrentStep(key, currentStep.name)) {
+              delete newErrors[key]
+            }
+          })
+          return newErrors
+        })
+
+        setIsStepValid(true)
+      } catch (error) {
+        console.error('Step validation error:', error)
+        setIsStepValid(false)
+      }
+    }
+
+    checkStepValidity()
+  }, [currentStepDataString])
 
   // Submit handler
   const onFormSubmit = React.useCallback(async (data: EventCreateFormData) => {
