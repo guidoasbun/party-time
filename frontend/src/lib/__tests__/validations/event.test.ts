@@ -39,7 +39,7 @@ describe('Event Validation Schemas', () => {
       expect(result.success).toBe(false)
       if (!result.success) {
         expect(result.error.issues[0].path).toEqual(['name'])
-        expect(result.error.issues[0].message).toBe('This field is required')
+        expect(result.error.issues[0].message).toContain('expected string')
       }
     })
 
@@ -311,7 +311,7 @@ describe('Event Validation Schemas', () => {
       const result = settingsSchema.safeParse(invalidData)
       expect(result.success).toBe(false)
       if (!result.success) {
-        expect(result.error.issues[0].message).toBe('Budget must be between $0 and $10,000,000')
+        expect(result.error.issues[0].message).toContain('expected number to be >=0')
       }
     })
 

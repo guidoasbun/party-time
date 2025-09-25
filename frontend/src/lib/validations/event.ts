@@ -15,7 +15,7 @@ const optionalStringSchema = z.string().optional()
 const futureDateSchema = z.string()
   .min(1, 'Date is required')
   .refine((date) => {
-    const selectedDate = new Date(date)
+    const selectedDate = new Date(date + 'T00:00:00')
     const now = new Date()
     // Allow events to be created for today or future
     now.setHours(0, 0, 0, 0)
@@ -27,7 +27,7 @@ const endDateSchema = z.string().optional()
 // Multi-step form schemas
 export const basicInfoSchema = z.object({
   name: nonEmptyStringSchema.max(255, 'Event name must be less than 255 characters'),
-  description: optionalStringSchema.max(2000, 'Description must be less than 2000 characters'),
+  description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
   type: eventTypeSchema,
 })
 
@@ -37,19 +37,19 @@ export const dateTimeSchema = z.object({
   timezone: z.string().optional().default('UTC'),
 }).refine((data) => {
   if (!data.end_date) return true
-  const startDate = new Date(data.start_date)
-  const endDate = new Date(data.end_date)
-  return endDate > startDate
+  const startDate = new Date(data.start_date + 'T00:00:00')
+  const endDate = new Date(data.end_date + 'T00:00:00')
+  return endDate >= startDate
 }, {
   message: 'End date must be after start date',
   path: ['end_date']
 })
 
 export const locationSchema = z.object({
-  location: optionalStringSchema.max(500, 'Location must be less than 500 characters'),
-  venue_name: optionalStringSchema.max(255, 'Venue name must be less than 255 characters'),
-  venue_address: optionalStringSchema.max(500, 'Venue address must be less than 500 characters'),
-  venue_google_place_id: optionalStringSchema,
+  location: z.string().max(500, 'Location must be less than 500 characters').optional(),
+  venue_name: z.string().max(255, 'Venue name must be less than 255 characters').optional(),
+  venue_address: z.string().max(500, 'Venue address must be less than 500 characters').optional(),
+  venue_google_place_id: z.string().optional(),
 })
 
 export const settingsSchema = z.object({
@@ -202,12 +202,12 @@ export const validateCompleteForm = (data: unknown) => {
 }
 
 // Error formatting utilities
-export const formatZodErrors = (errors: z.ZodError) => {
+export const formatZodErrors = (error: z.ZodError) => {
   const formattedErrors: Record<string, string> = {}
 
-  errors.errors.forEach((error) => {
-    const path = error.path.join('.')
-    formattedErrors[path] = error.message
+  error.issues.forEach((issue) => {
+    const path = issue.path.join('.')
+    formattedErrors[path] = issue.message
   })
 
   return formattedErrors

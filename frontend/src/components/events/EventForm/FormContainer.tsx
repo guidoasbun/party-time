@@ -49,14 +49,6 @@ interface FormChildrenProps {
   clearErrors: () => void
 }
 
-const Progress = ({ value, className }: { value: number; className?: string }) => (
-  <div className={cn("w-full bg-secondary rounded-full h-2", className)}>
-    <div
-      className="bg-primary h-2 rounded-full transition-all duration-300"
-      style={{ width: `${Math.max(0, Math.min(100, value))}%` }}
-    />
-  </div>
-)
 
 export function FormContainer({
   initialData,
