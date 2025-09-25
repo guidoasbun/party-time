@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { FormContainer } from '../FormContainer'
-import { EventType, EventStatus } from '@/types/event.types'
+import { EventType } from '@/types/event.types'
 import { FormPersistence } from '@/lib/utils/form'
 import { EventCreateFormData } from '@/lib/validations/event'
 

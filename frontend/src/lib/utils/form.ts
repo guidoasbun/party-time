@@ -25,8 +25,8 @@ export class FormPersistence {
         version: '1.0',
       }
       localStorage.setItem(key, JSON.stringify(formData))
-    } catch (error) {
-      console.warn('Failed to save form data to localStorage:', error)
+    } catch {
+      console.warn('Failed to save form data to localStorage')
     }
   }
 
