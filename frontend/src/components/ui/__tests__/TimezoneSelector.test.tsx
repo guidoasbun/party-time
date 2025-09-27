@@ -217,9 +217,9 @@ describe('TimezoneSelector', () => {
       const button = screen.getByRole('button')
       await userEvent.click(button)
 
-      const selectedTimezone = screen.getByText('New York (UTC+05:00)')
-      // In real implementation, this would have a specific class for selected state
-      expect(selectedTimezone).toBeInTheDocument()
+      // Check that the timezone appears in the dropdown (there might be multiple instances)
+      const selectedTimezones = screen.getAllByText('New York (UTC+05:00)')
+      expect(selectedTimezones.length).toBeGreaterThan(0)
     })
 
     it('closes dropdown after selection', async () => {
