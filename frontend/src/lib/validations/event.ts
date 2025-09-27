@@ -32,14 +32,20 @@ export const basicInfoSchema = z.object({
 export const dateTimeSchema = z.object({
   start_date: futureDateSchema,
   end_date: endDateSchema,
+  start_time: z.string().optional(),
+  end_time: z.string().optional(),
+  all_day: z.boolean().default(false),
   timezone: z.string().optional().default('UTC'),
 }).refine((data) => {
   if (!data.end_date) return true
-  const startDate = new Date(data.start_date + 'T00:00:00')
-  const endDate = new Date(data.end_date + 'T00:00:00')
-  return endDate >= startDate
+
+  // Create datetime objects for comparison
+  const startDateTime = new Date(data.start_date + 'T' + (data.start_time || '00:00:00'))
+  const endDateTime = new Date(data.end_date + 'T' + (data.end_time || '23:59:59'))
+
+  return endDateTime >= startDateTime
 }, {
-  message: 'End date must be after start date',
+  message: 'End date and time must be after start date and time',
   path: ['end_date']
 })
 
