@@ -396,6 +396,9 @@ function getStepData(formData: Partial<EventCreateFormData>, stepName: FormStepN
       return {
         start_date: formData.start_date,
         end_date: formData.end_date,
+        start_time: formData.start_time,
+        end_time: formData.end_time,
+        all_day: formData.all_day,
         timezone: formData.timezone,
       }
     case 'location':
@@ -424,7 +427,7 @@ function getStepData(formData: Partial<EventCreateFormData>, stepName: FormStepN
 function isFieldInCurrentStep(fieldPath: string, stepName: FormStepName): boolean {
   const stepFields: Record<FormStepName, string[]> = {
     basicInfo: ['name', 'description', 'type'],
-    dateTime: ['start_date', 'end_date', 'timezone'],
+    dateTime: ['start_date', 'end_date', 'start_time', 'end_time', 'all_day', 'timezone'],
     location: ['location', 'venue_name', 'venue_address', 'venue_google_place_id'],
     settings: ['is_public', 'max_guests', 'budget_total', 'status'],
     guestSettings: ['guest_settings.allow_plus_ones', 'guest_settings.require_rsvp', 'guest_settings.rsvp_deadline', 'guest_settings.dietary_restrictions_enabled'],

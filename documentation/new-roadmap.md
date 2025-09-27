@@ -133,13 +133,18 @@
 - [ ] Add timezone selection
 - [ ] Implement start/end date validation
 - [ ] Add quick date templates (today, tomorrow, next week)
+- [ ] This is a Typescript Project, watch for types, no 'any' types
 
 **Testing (2 hours)**:
+- [ ] Run tests as they are written, so that by end of day all tests pass
 - [ ] Test date/time picker interactions
 - [ ] Test timezone selection functionality
 - [ ] Test date range validation (end after start)
 - [ ] Test quick date template functionality
 - [ ] Test edge cases (invalid dates, timezone changes)
+
+**Deployment**:
+- [ ] Run 'npm run build' to ensure production build passes without errors
 
 **Files to Create**:
 ```
