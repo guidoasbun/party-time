@@ -1,279 +1,338 @@
 'use client'
 
 import * as React from 'react'
-import { useFormContext } from 'react-hook-form'
-import { Eye, EyeOff, Users, DollarSign, Settings, Info } from 'lucide-react'
+import { useFormContext, Controller } from 'react-hook-form'
+import { Lock, Users, DollarSign, Eye, EyeOff, HelpCircle } from 'lucide-react'
 import { EventStatus } from '@/types/event.types'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { Input } from '@/components/ui/Input'
-import { Button } from '@/components/ui/Button'
+import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/utils'
 
-// Event status options
-const statusOptions = [
-  {
-    value: EventStatus.DRAFT,
-    label: '📝 Draft',
-    description: 'Still planning, not visible to guests'
-  },
-  {
-    value: EventStatus.PLANNING,
-    label: '🔄 Planning',
-    description: 'Active planning phase, visible to collaborators'
-  },
-  {
-    value: EventStatus.CONFIRMED,
-    label: '✅ Confirmed',
-    description: 'Event details confirmed, ready for invitations'
-  }
-]
+interface SettingsStepProps {
+  className?: string
+  errors?: Record<string, string>
+  onFieldChange?: (field: string, value: unknown) => void
+}
 
-// Budget range suggestions
-const budgetSuggestions = [
-  { label: '$500', value: 500 },
-  { label: '$1,000', value: 1000 },
-  { label: '$2,500', value: 2500 },
-  { label: '$5,000', value: 5000 },
-  { label: '$10,000', value: 10000 },
-  { label: '$25,000', value: 25000 }
-]
+// Simple Switch component for privacy toggle
+interface SwitchProps {
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+  label: string
+  description?: string
+  icon?: React.ReactNode
+  disabled?: boolean
+  id?: string
+}
 
-// Guest count suggestions
-const guestSuggestions = [
-  { label: '10', value: 10 },
-  { label: '25', value: 25 },
-  { label: '50', value: 50 },
-  { label: '100', value: 100 },
-  { label: '200', value: 200 },
-  { label: '500', value: 500 }
-]
+function Switch({ checked, onCheckedChange, label, description, icon, disabled, id }: SwitchProps) {
+  const generatedId = React.useId()
+  const switchId = id || generatedId
 
-export function SettingsStep() {
-  const {
-    register,
-    setValue,
-    watch,
-    formState: { errors }
-  } = useFormContext<EventCreateFormData>()
+  return (
+    <div className="flex items-start space-x-3">
+      {icon && (
+        <div className="flex-shrink-0 mt-1 text-muted-foreground">
+          {icon}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between">
+          <div>
+            <label id={switchId} className="text-sm font-medium text-foreground">
+              {label}
+            </label>
+            {description && (
+              <div className="text-sm text-muted-foreground mt-1">
+                {description}
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={checked}
+            aria-labelledby={switchId}
+            aria-label={label}
+            disabled={disabled}
+            onClick={() => onCheckedChange(!checked)}
+            className={cn(
+              "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+              checked ? 'bg-primary' : 'bg-input'
+            )}
+          >
+            <span
+              className={cn(
+                "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out",
+                checked ? 'translate-x-5' : 'translate-x-0'
+              )}
+            />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
+export function SettingsStep({ className, errors, onFieldChange }: SettingsStepProps) {
+  const { control, watch, formState: { errors: formErrors } } = useFormContext<EventCreateFormData>()
+
+  // Watch form values to show preview
   const isPublic = watch('is_public')
-  const status = watch('status')
   const maxGuests = watch('max_guests')
   const budgetTotal = watch('budget_total')
+  const status = watch('status')
 
-  const handlePrivacyToggle = () => {
-    setValue('is_public', !isPublic, { shouldValidate: true })
+  // Handle field changes
+  const handleFieldChange = React.useCallback((field: string, value: unknown) => {
+    onFieldChange?.(field, value)
+  }, [onFieldChange])
+
+  // Format currency display
+  const formatCurrency = (amount: number | undefined): string => {
+    if (!amount) return '$0'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount)
   }
 
-  const handleStatusChange = (newStatus: EventStatus) => {
-    setValue('status', newStatus, { shouldValidate: true })
-  }
-
-  const handleBudgetSuggestion = (value: number) => {
-    setValue('budget_total', value, { shouldValidate: true })
-  }
-
-  const handleGuestSuggestion = (value: number) => {
-    setValue('max_guests', value, { shouldValidate: true })
+  // Get error message for a field
+  const getFieldError = (fieldName: string): string | undefined => {
+    return errors?.[fieldName] || formErrors[fieldName as keyof typeof formErrors]?.message
   }
 
   return (
-    <div className="space-y-6">
-      {/* Privacy Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium flex items-center gap-2">
-          <Settings className="h-4 w-4" />
-          Privacy & Visibility
-        </h3>
+    <div className={cn('space-y-6', className)}>
+      {/* Privacy Settings Card */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Lock className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">Privacy Settings</h3>
+          </div>
 
-        <div className="border rounded-lg p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                {isPublic ? (
-                  <Eye className="h-4 w-4 text-blue-600" />
-                ) : (
-                  <EyeOff className="h-4 w-4 text-gray-600" />
-                )}
-                <span className="font-medium">
-                  {isPublic ? 'Public Event' : 'Private Event'}
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                {isPublic
-                  ? 'Your event will be visible to the public and searchable'
-                  : 'Your event is private and only visible to invited guests'
+          <Controller
+            name="is_public"
+            control={control}
+            render={({ field }) => (
+              <Switch
+                checked={field.value || false}
+                onCheckedChange={(checked) => {
+                  field.onChange(checked)
+                  handleFieldChange('is_public', checked)
+                }}
+                label="Make event public"
+                description={
+                  field.value
+                    ? "Your event will be visible to anyone with the link"
+                    : "Your event will only be visible to invited guests"
                 }
-              </p>
-            </div>
-            <Button
-              type="button"
-              variant={isPublic ? "default" : "outline"}
-              size="sm"
-              onClick={handlePrivacyToggle}
-            >
-              {isPublic ? 'Make Private' : 'Make Public'}
-            </Button>
-          </div>
-        </div>
+                icon={field.value ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+              />
+            )}
+          />
 
-        {errors.is_public && (
-          <p className="text-sm text-destructive">{errors.is_public.message}</p>
-        )}
-      </div>
-
-      {/* Event Status */}
-      <div className="space-y-4">
-        <h3 className="font-medium">Event Status</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {statusOptions.map((option) => (
-            <Button
-              key={option.value}
-              type="button"
-              variant={status === option.value ? "default" : "outline"}
-              className="h-auto p-4 flex flex-col items-start gap-2 text-left"
-              onClick={() => handleStatusChange(option.value)}
-            >
-              <div className="font-medium">{option.label}</div>
-              <div className="text-xs text-muted-foreground">
-                {option.description}
+          {isPublic && (
+            <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-md">
+              <div className="flex items-start space-x-2">
+                <HelpCircle className="h-4 w-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  <strong>Public Event:</strong> Anyone with the link can view event details and RSVP if enabled.
+                  Guest list and contact information remain private.
+                </div>
               </div>
-            </Button>
-          ))}
-        </div>
-        {errors.status && (
-          <p className="text-sm text-destructive">{errors.status.message}</p>
-        )}
-      </div>
-
-      {/* Guest Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Guest Limit (Optional)
-        </h3>
-
-        <Input
-          type="number"
-          {...register('max_guests', { valueAsNumber: true })}
-          label="Maximum Number of Guests"
-          placeholder="e.g., 50"
-          error={errors.max_guests?.message}
-          leftIcon={<Users className="h-4 w-4" />}
-          min="1"
-          max="10000"
-        />
-
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Quick suggestions:</p>
-          <div className="flex flex-wrap gap-2">
-            {guestSuggestions.map((suggestion) => (
-              <Button
-                key={suggestion.value}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleGuestSuggestion(suggestion.value)}
-                className={cn(
-                  "text-xs",
-                  maxGuests === suggestion.value && "border-primary bg-primary/10"
-                )}
-              >
-                {suggestion.label} guests
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Budget Settings */}
-      <div className="space-y-4">
-        <h3 className="font-medium flex items-center gap-2">
-          <DollarSign className="h-4 w-4" />
-          Budget (Optional)
-        </h3>
-
-        <Input
-          type="number"
-          {...register('budget_total', { valueAsNumber: true })}
-          label="Total Budget"
-          placeholder="e.g., 5000"
-          error={errors.budget_total?.message}
-          leftIcon={<DollarSign className="h-4 w-4" />}
-          min="0"
-          max="10000000"
-          step="50"
-        />
-
-        <div className="space-y-2">
-          <p className="text-sm text-muted-foreground">Budget suggestions:</p>
-          <div className="flex flex-wrap gap-2">
-            {budgetSuggestions.map((suggestion) => (
-              <Button
-                key={suggestion.value}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleBudgetSuggestion(suggestion.value)}
-                className={cn(
-                  "text-xs",
-                  budgetTotal === suggestion.value && "border-primary bg-primary/10"
-                )}
-              >
-                {suggestion.label}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Settings Summary */}
-      <div className="bg-muted/50 rounded-lg p-4">
-        <h4 className="font-medium mb-2">⚙️ Event Settings Summary</h4>
-        <div className="text-sm text-muted-foreground space-y-1">
-          <p>
-            <strong>Privacy:</strong> {isPublic ? 'Public event' : 'Private event'}
-          </p>
-          <p>
-            <strong>Status:</strong> {statusOptions.find(s => s.value === status)?.label || 'Draft'}
-          </p>
-          {maxGuests && (
-            <p>
-              <strong>Guest Limit:</strong> {maxGuests} people
-            </p>
-          )}
-          {budgetTotal && (
-            <p>
-              <strong>Budget:</strong> ${budgetTotal.toLocaleString()}
-            </p>
+            </div>
           )}
         </div>
-      </div>
+      </Card>
 
-      {/* Settings Information */}
-      <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-        <div className="flex items-start gap-3">
-          <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-          <div>
-            <h4 className="font-medium mb-2 text-amber-900 dark:text-amber-100">Important Notes:</h4>
-            <ul className="text-sm text-amber-700 dark:text-amber-200 space-y-1">
-              <li>• All these settings can be changed later from your event dashboard</li>
-              <li>• Budget tracking helps you stay organized but isn&apos;t required</li>
-              <li>• Guest limits help with planning but don&apos;t restrict actual invitations</li>
-              <li>• Private events are only visible to people you invite</li>
-            </ul>
+      {/* Guest Settings Card */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <Users className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">Guest Management</h3>
+          </div>
+
+          <div className="space-y-4">
+            <Controller
+              name="max_guests"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  label="Maximum guest limit (optional)"
+                  placeholder="Enter maximum number of guests"
+                  error={getFieldError('max_guests')}
+                  value={field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? parseInt(e.target.value, 10) : undefined
+                    field.onChange(value)
+                    handleFieldChange('max_guests', value)
+                  }}
+                  min="1"
+                  max="10000"
+                  leftIcon={<Users className="h-4 w-4" />}
+                />
+              )}
+            />
+
+            {maxGuests && (
+              <div className="text-sm text-muted-foreground">
+                This event can accommodate up to <strong>{maxGuests}</strong> {maxGuests === 1 ? 'guest' : 'guests'}.
+              </div>
+            )}
           </div>
         </div>
-      </div>
+      </Card>
 
-      {/* Ready to Create */}
-      <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-        <h4 className="font-medium mb-2 text-green-900 dark:text-green-100">🎉 Ready to Create!</h4>
-        <p className="text-sm text-green-700 dark:text-green-200">
-          You&apos;re all set! Click &quot;Create Event&quot; to finalize your event and start inviting guests.
-          Don&apos;t worry - you can always edit these details later.
-        </p>
-      </div>
+      {/* Budget Settings Card */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <DollarSign className="h-5 w-5 text-muted-foreground" />
+            <h3 className="text-lg font-semibold">Budget Planning</h3>
+          </div>
+
+          <div className="space-y-4">
+            <Controller
+              name="budget_total"
+              control={control}
+              render={({ field }) => (
+                <Input
+                  {...field}
+                  type="number"
+                  label="Total event budget (optional)"
+                  placeholder="Enter your total budget"
+                  error={getFieldError('budget_total')}
+                  value={field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value ? parseFloat(e.target.value) : undefined
+                    field.onChange(value)
+                    handleFieldChange('budget_total', value)
+                  }}
+                  min="0"
+                  max="10000000"
+                  step="0.01"
+                  leftIcon={<DollarSign className="h-4 w-4" />}
+                />
+              )}
+            />
+
+            {budgetTotal !== undefined && (
+              <div className="space-y-2">
+                <div className="text-sm text-muted-foreground">
+                  Total budget: <strong>{formatCurrency(budgetTotal)}</strong>
+                </div>
+                {maxGuests && maxGuests > 0 && budgetTotal > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Budget per guest: <strong>{formatCurrency(budgetTotal / maxGuests)}</strong>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Event Status Card */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-center space-x-2">
+            <div className={cn(
+              'h-3 w-3 rounded-full',
+              status === EventStatus.DRAFT && 'bg-gray-400',
+              status === EventStatus.PLANNING && 'bg-blue-400',
+              status === EventStatus.CONFIRMED && 'bg-green-400'
+            )} />
+            <h3 className="text-lg font-semibold">Event Status</h3>
+          </div>
+
+          <Controller
+            name="status"
+            control={control}
+            render={({ field }) => (
+              <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { value: EventStatus.DRAFT, label: 'Draft', description: 'Work in progress' },
+                    { value: EventStatus.PLANNING, label: 'Planning', description: 'Active planning' },
+                    { value: EventStatus.CONFIRMED, label: 'Confirmed', description: 'Ready to go' }
+                  ].map((statusOption) => (
+                    <button
+                      key={statusOption.value}
+                      type="button"
+                      onClick={() => {
+                        field.onChange(statusOption.value)
+                        handleFieldChange('status', statusOption.value)
+                      }}
+                      className={cn(
+                        'p-3 text-left border rounded-lg transition-colors',
+                        field.value === statusOption.value
+                          ? 'border-primary bg-primary/5 text-primary'
+                          : 'border-border hover:border-primary/50 hover:bg-accent'
+                      )}
+                    >
+                      <div className="font-medium text-sm">{statusOption.label}</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {statusOption.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                <div className="text-sm text-muted-foreground">
+                  {status === EventStatus.DRAFT && "You can continue editing and save as draft to come back later."}
+                  {status === EventStatus.PLANNING && "Event is in active planning phase. You can invite guests and manage details."}
+                  {status === EventStatus.CONFIRMED && "Event is confirmed and ready. Guests can RSVP and view final details."}
+                </div>
+              </div>
+            )}
+          />
+        </div>
+      </Card>
+
+      {/* Summary Preview */}
+      <Card className="p-6 bg-accent/50">
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Event Summary</h3>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div>
+              <div className="text-muted-foreground">Privacy</div>
+              <div className="font-medium">
+                {isPublic ? 'Public Event' : 'Private Event'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-muted-foreground">Guest Limit</div>
+              <div className="font-medium">
+                {maxGuests ? `${maxGuests} ${maxGuests === 1 ? 'guest' : 'guests'}` : 'No limit'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-muted-foreground">Budget</div>
+              <div className="font-medium">
+                {budgetTotal !== undefined ? formatCurrency(budgetTotal) : 'No budget set'}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-muted-foreground">Status</div>
+              <div className="font-medium capitalize">
+                {status?.replace('_', ' ') || 'Draft'}
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
     </div>
   )
 }
