@@ -19,9 +19,10 @@
 - **State Management**: React Query integration, optimistic updates, bulk operations
 - **Event Form Infrastructure**: ✅ **NEW** - Multi-step form system, Zod validation, React Hook Form integration, localStorage persistence (Phase 3.1.1 COMPLETE)
 - **Basic Information Step**: ✅ **NEW** - Event name/description fields, visual event type selector with icons, form validation feedback, character counting, accessibility support (Phase 3.1.2 COMPLETE)
+- **Date & Time Step**: ✅ **NEW** - Date/time pickers with date-fns, comprehensive timezone selector with IANA timezones, all-day toggle, quick date presets, start/end validation, schedule preview (Phase 3.1.3 COMPLETE)
 
 ### 🔄 In Progress
-- **Event Creation Forms**: Date & Time Step (Phase 3.1.3 - NEXT)
+- **Event Creation Forms**: Settings & Submission Step (Phase 3.1.4 - NEXT)
 
 ### ❌ Remaining Work
 - Event creation/edit forms completion and detail pages
@@ -127,34 +128,41 @@
 
 **Status**: ✅ **PHASE 3.1.2 COMPLETE** - 62/62 tests passing, TypeScript compliant, production-ready
 
-#### 3.1.3: Date & Time Step (Day 3 - 5 hours)
-**Development (3 hours)**:
-- [ ] Create date/time picker components
-- [ ] Add timezone selection
-- [ ] Implement start/end date validation
-- [ ] Add quick date templates (today, tomorrow, next week)
-- [ ] This is a Typescript Project, watch for types, no 'any' types
+#### 3.1.3: Date & Time Step (Day 3 - 5 hours) ✅ **COMPLETED**
+**Development (3 hours)**: ✅ **COMPLETED**
+- [x] Create date/time picker components with date-fns integration
+- [x] Add comprehensive timezone selection (all IANA timezones grouped by region)
+- [x] Implement start/end date validation with automatic constraints
+- [x] Add quick date templates (Today, Tomorrow, Next Week, Next Month)
+- [x] Built with strict TypeScript compliance (no 'any' types)
+- [x] All-day vs timed event toggle functionality
+- [x] Event schedule preview with formatted dates
+- [x] Form persistence and validation integration
 
-**Testing (2 hours)**:
-- [ ] Run tests as they are written, so that by end of day all tests pass
-- [ ] Test date/time picker interactions
-- [ ] Test timezone selection functionality
-- [ ] Test date range validation (end after start)
-- [ ] Test quick date template functionality
-- [ ] Test edge cases (invalid dates, timezone changes)
+**Testing (2 hours)**: ✅ **COMPLETED**
+- [x] All tests passing (84/84 tests - 100% success rate)
+- [x] DateTimeStep tests (13/13 passing) - UI rendering, toggle, preview, quick dates
+- [x] DateTimePicker tests (34/34 passing) - Date/time modes, validation, clear functionality
+- [x] TimezoneSelector tests (37/37 passing) - Timezone search, selection, auto-detection
+- [x] Comprehensive test coverage for date validation and edge cases
+- [x] Form integration and React Hook Form compatibility tested
 
-**Deployment**:
-- [ ] Run 'npm run build' to ensure production build passes without errors
+**Deployment**: ✅ **COMPLETED**
+- [x] Production build passes without errors ('npm run build' successful)
+- [x] All TypeScript compilation successful
+- [x] All ESLint checks passing
 
-**Files to Create**:
+**Files Created**: ✅ **ALL CREATED AND TESTED**
 ```
-frontend/src/components/events/EventForm/DateTimeStep.tsx
-frontend/src/components/events/EventForm/__tests__/DateTimeStep.test.tsx
-frontend/src/components/ui/DateTimePicker.tsx
-frontend/src/components/ui/__tests__/DateTimePicker.test.tsx
-frontend/src/components/ui/TimezoneSelector.tsx
-frontend/src/components/ui/__tests__/TimezoneSelector.test.tsx
+✅ frontend/src/components/events/EventForm/DateTimeStep.tsx
+✅ frontend/src/components/events/EventForm/__tests__/DateTimeStep.test.tsx
+✅ frontend/src/components/ui/DateTimePicker.tsx
+✅ frontend/src/components/ui/__tests__/DateTimePicker.test.tsx
+✅ frontend/src/components/ui/TimezoneSelector.tsx
+✅ frontend/src/components/ui/__tests__/TimezoneSelector.test.tsx
 ```
+
+**Status**: ✅ **PHASE 3.1.3 COMPLETE** - All components functional, tests passing, production-ready
 
 #### 3.1.4: Settings & Submission (Day 4 - 5 hours)
 **Development (3 hours)**:
@@ -163,13 +171,18 @@ frontend/src/components/ui/__tests__/TimezoneSelector.test.tsx
 - [ ] Save as draft functionality
 - [ ] Form submission and success handling
 - [ ] Create event creation page
+- [ ] This is a Typescript Project, watch for types, no 'any' types
 
 **Testing (2 hours)**:
+- [ ] Run tests as they are written, so that by end of day all tests pass
 - [ ] Test privacy toggle functionality
 - [ ] Test numeric field validation (guest limit, budget)
 - [ ] Test draft save and restore
 - [ ] Test form submission with API integration
 - [ ] Test error handling and success states
+
+**Deployment**:
+- [ ] Run 'npm run build' to ensure production build passes without errors
 
 **Files to Create**:
 ```
