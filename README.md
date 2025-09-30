@@ -7,15 +7,6 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript)](https://typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.13-3776AB?logo=python)](https://python.org/)
 
-⚠️ **PROPRIETARY SOFTWARE** ⚠️
-
-This repository contains proprietary and confidential information. 
-All rights reserved. See LICENSE file for complete terms.
-
-Unauthorized access, use, or distribution is strictly prohibited.
-
----
-
 ## Table of Contents
 
 - [Overview](#-overview)
@@ -437,3 +428,14 @@ type(scope): description
 - [Project Documentation](./documentation/)
 - [Development Timeline](./documentation/development-timeline.md)
 - [API Documentation](http://localhost:8000/docs) (when running locally)
+
+---
+
+⚠️ **PROPRIETARY SOFTWARE** ⚠️
+
+This repository contains proprietary and confidential information. 
+All rights reserved. See LICENSE file for complete terms.
+
+Unauthorized access, use, or distribution is strictly prohibited.
+
+---

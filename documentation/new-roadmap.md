@@ -24,7 +24,7 @@
 - **Form Integration Testing**: ✅ **NEW** - 12 comprehensive integration tests covering complete form workflow, API integration, data persistence, error handling (Phase 3.1.5 COMPLETE)
 
 ### 🔄 In Progress
-- **Event Detail Pages**: Layout, tabs, editing functionality (Phase 3.2 - NEXT)
+- **Event Detail Pages**: ✅ Layout complete (Phase 3.2.1), tabs and editing functionality in progress (Phase 3.2.2-3.2.5 - NEXT)
 
 ### ❌ Remaining Work
 - Event detail pages and edit functionality
@@ -57,7 +57,7 @@
 
 | Phase | Title | Timeline | Priority | Hours | Key Deliverables |
 |-------|-------|----------|----------|-------|------------------|
-| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 18 hrs | ✅ **COMPLETE** - Event forms (3.1), Detail pages with smoke tests (3.2) |
+| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 4 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail layout (3.2.1 ✅ COMPLETE), Tabs/editing pending (3.2.2-3.2.5) |
 | [Phase 4](#phase-4-guest-management-system-weeks-3-4) | Guest Management System | Weeks 3-4<br/>(Oct 9 - Oct 23) | **HIGH** | 30 hrs | Guest CRUD, CSV import, RSVP tokens, analytics dashboard |
 | [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6) | RSVP & Email Systems | Weeks 5-6<br/>(Oct 23 - Nov 6) | **HIGH** | 34 hrs | Public RSVP portal, Email templates, automation |
 | [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8) | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20) | **HIGH** | 42 hrs | Fabric.js canvas, drag-drop tables, guest assignments, exports |
@@ -245,25 +245,30 @@
 **Duration**: 3-4 days
 **Estimated Hours**: 18-22 hours (with smoke testing only)
 
-#### 3.2.1: Event Detail Layout (Day 1 - 4 hours)
-**Development (3.5 hours)**:
-- [ ] Create event detail page structure with dynamic routing
-- [ ] Add breadcrumb navigation component
-- [ ] Implement event header with title, date, type, status badges
-- [ ] Add action buttons (edit, delete, duplicate, share)
-- [ ] Implement loading skeleton for data fetching
+#### 3.2.1: Event Detail Layout (Day 1 - 4 hours) ✅ **COMPLETED**
+**Development (3.5 hours)**: ✅ **COMPLETED**
+- [x] Create event detail page structure with dynamic routing
+- [x] Add breadcrumb navigation component
+- [x] Implement event header with title, date, type, status badges
+- [x] Add action buttons (edit, delete, duplicate, share)
+- [x] Implement loading skeleton for data fetching
 
-**Smoke Testing (0.5 hours)**:
-- [ ] Verify page loads with valid event ID
-- [ ] Test navigation to/from event detail
-- [ ] Confirm action buttons are clickable
+**Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+- [x] Verify page loads with valid event ID
+- [x] Test navigation to/from event detail
+- [x] Confirm action buttons are clickable
 
-**Files to Create**:
+**Files Created**: ✅ **ALL CREATED**
 ```
-frontend/src/app/events/[id]/page.tsx
-frontend/src/components/events/EventDetailHeader.tsx
-frontend/src/components/events/EventActionButtons.tsx
+✅ frontend/src/app/events/[id]/page.tsx
+✅ frontend/src/components/events/EventDetailHeader.tsx
+✅ frontend/src/components/events/EventActionButtons.tsx
+✅ frontend/src/components/events/EventDetailSkeleton.tsx
+✅ frontend/src/components/layout/Breadcrumb.tsx
+✅ frontend/src/__tests__/smoke/event-detail.test.tsx (24/24 tests passing)
 ```
+
+**Status**: ✅ **PHASE 3.2.1 COMPLETE** - All components implemented, 24 smoke tests passing (100% pass rate), TypeScript compilation successful, production build ready
 
 #### 3.2.2: Event Tabs Interface (Day 2 - 4.5 hours)
 **Development (4 hours)**:
