@@ -11,6 +11,7 @@ import { Breadcrumb } from '@/components/layout/Breadcrumb'
 import { EventDetailHeader } from '@/components/events/EventDetailHeader'
 import { EventActionButtons } from '@/components/events/EventActionButtons'
 import { EventDetailSkeleton } from '@/components/events/EventDetailSkeleton'
+import { EventTabs } from '@/components/events/EventTabs'
 import { ErrorMessage } from '@/components/ui/ErrorMessage'
 import { useEvent } from '@/hooks/api/useEvents'
 import type { UUID } from '@/types'
@@ -85,58 +86,8 @@ export default function EventDetailPage() {
           />
         </div>
 
-        {/* Overview Section - Placeholder for Phase 3.2.2 */}
-        <div className="bg-card rounded-lg border border-border shadow-sm p-6">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                Event Overview
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Guest Summary */}
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Guests
-                  </h3>
-                  <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {event.guest_count || 0}
-                  </div>
-                  {event.confirmed_guests > 0 && (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {event.confirmed_guests} confirmed
-                    </p>
-                  )}
-                </div>
-
-                {/* Budget Summary */}
-                {(event.budget_total || event.total_expenses) && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Budget
-                    </h3>
-                    {event.budget_total && (
-                      <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                        ${event.budget_total.toLocaleString()}
-                      </div>
-                    )}
-                    {event.total_expenses > 0 && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        ${event.total_expenses.toLocaleString()} spent
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Placeholder for tabs - Phase 3.2.2 */}
-            <div className="border-t border-border pt-6">
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                Additional event details and management features will be available in the tabs interface.
-              </p>
-            </div>
-          </div>
-        </div>
+        {/* Tabbed Interface - Phase 3.2.2 */}
+        <EventTabs event={event} />
       </div>
     </div>
   )

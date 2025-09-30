@@ -45,6 +45,7 @@ function getEventTypeEmoji(type: EventType): string {
     [EventType.FUNDRAISER]: '💰',
     [EventType.HOLIDAY_PARTY]: '🎄',
     [EventType.REUNION]: '👥',
+    [EventType.CELEBRATION]: '🎉',
     [EventType.OTHER]: '📅'
   }
   return emojiMap[type] || '📅'
@@ -56,6 +57,7 @@ function getStatusBadge(status: EventStatus): { text: string; className: string 
     [EventStatus.PLANNING]: { text: 'Planning', className: 'bg-yellow-100 text-yellow-700' },
     [EventStatus.CONFIRMED]: { text: 'Confirmed', className: 'bg-green-100 text-green-700' },
     [EventStatus.IN_PROGRESS]: { text: 'In Progress', className: 'bg-blue-100 text-blue-700' },
+    [EventStatus.ACTIVE]: { text: 'Active', className: 'bg-green-100 text-green-700' },
     [EventStatus.COMPLETED]: { text: 'Completed', className: 'bg-emerald-100 text-emerald-700' },
     [EventStatus.CANCELLED]: { text: 'Cancelled', className: 'bg-red-100 text-red-700' },
     [EventStatus.POSTPONED]: { text: 'Postponed', className: 'bg-orange-100 text-orange-700' }

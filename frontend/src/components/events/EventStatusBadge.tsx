@@ -23,6 +23,10 @@ const statusConfig = {
     label: 'In Progress',
     className: 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/50 dark:text-yellow-300 dark:border-yellow-700'
   },
+  [EventStatus.ACTIVE]: {
+    label: 'Active',
+    className: 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700'
+  },
   [EventStatus.COMPLETED]: {
     label: 'Completed',
     className: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/50 dark:text-emerald-300 dark:border-emerald-700'
@@ -39,7 +43,22 @@ const statusConfig = {
 
 export function EventStatusBadge({ status, className }: EventStatusBadgeProps) {
   const config = statusConfig[status]
-  
+
+  // Fallback for unknown status
+  if (!config) {
+    return (
+      <span
+        className={cn(
+          'inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border',
+          'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700',
+          className
+        )}
+      >
+        {status}
+      </span>
+    )
+  }
+
   return (
     <span
       className={cn(

@@ -20,6 +20,7 @@ export enum EventType {
   FUNDRAISER = 'fundraiser',
   HOLIDAY_PARTY = 'holiday_party',
   REUNION = 'reunion',
+  CELEBRATION = 'celebration',
   OTHER = 'other'
 }
 
@@ -29,6 +30,7 @@ export enum EventStatus {
   PLANNING = 'planning',
   CONFIRMED = 'confirmed',
   IN_PROGRESS = 'in_progress',
+  ACTIVE = 'active', // Kept for backward compatibility
   COMPLETED = 'completed',
   CANCELLED = 'cancelled',
   POSTPONED = 'postponed'
