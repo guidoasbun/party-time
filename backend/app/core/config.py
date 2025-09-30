@@ -24,7 +24,11 @@ class Settings(BaseSettings):
     COGNITO_CLIENT_SECRET: Optional[str] = None
     COGNITO_REGION: str = "us-east-1"
     COGNITO_DOMAIN: Optional[str] = None
-    
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+
     # JWT Configuration
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"

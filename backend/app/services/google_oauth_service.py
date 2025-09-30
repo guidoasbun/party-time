@@ -6,14 +6,16 @@ from google.auth.transport import requests as google_requests
 import logging
 import uuid
 import hashlib
+from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
 class GoogleOAuthService:
     def __init__(self):
-        self.client_id = os.getenv('GOOGLE_CLIENT_ID')
-        self.client_secret = os.getenv('GOOGLE_CLIENT_SECRET')
-        
+        settings = get_settings()
+        self.client_id = settings.GOOGLE_CLIENT_ID
+        self.client_secret = settings.GOOGLE_CLIENT_SECRET
+
         if not self.client_id or not self.client_secret:
             logger.warning("Google OAuth credentials not found in environment variables")
 
