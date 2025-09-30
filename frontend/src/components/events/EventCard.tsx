@@ -50,6 +50,7 @@ const eventTypeLabels: Record<EventType, string> = {
   [EventType.FUNDRAISER]: 'Fundraiser',
   [EventType.HOLIDAY_PARTY]: 'Holiday Party',
   [EventType.REUNION]: 'Reunion',
+  [EventType.CELEBRATION]: 'Celebration',
   [EventType.OTHER]: 'Other'
 }
 

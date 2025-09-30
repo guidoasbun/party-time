@@ -13,8 +13,16 @@ class EventType(str, enum.Enum):
     """Types of events supported by the platform."""
     WEDDING = "wedding"
     BIRTHDAY = "birthday"
+    ANNIVERSARY = "anniversary"
     GRADUATION = "graduation"
+    BABY_SHOWER = "baby_shower"
+    BRIDAL_SHOWER = "bridal_shower"
     CORPORATE = "corporate"
+    CONFERENCE = "conference"
+    WORKSHOP = "workshop"
+    FUNDRAISER = "fundraiser"
+    HOLIDAY_PARTY = "holiday_party"
+    REUNION = "reunion"
     CELEBRATION = "celebration"
     OTHER = "other"
 
@@ -22,9 +30,13 @@ class EventType(str, enum.Enum):
 class EventStatus(str, enum.Enum):
     """Event lifecycle states."""
     DRAFT = "draft"
-    ACTIVE = "active"
+    PLANNING = "planning"
+    CONFIRMED = "confirmed"
+    IN_PROGRESS = "in_progress"
+    ACTIVE = "active"  # Kept for backward compatibility
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    POSTPONED = "postponed"
 
 
 class Event(Base):

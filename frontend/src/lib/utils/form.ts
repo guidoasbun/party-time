@@ -1,4 +1,5 @@
 import { EventCreateFormData, FormStepName } from '@/lib/validations/event'
+import { EventCreate } from '@/types/event.types'
 
 // Local storage keys
 const FORM_STORAGE_KEY = 'party-time-event-form'
@@ -147,24 +148,39 @@ export const canNavigateToStep = (
 }
 
 // Form data transformation utilities
-export const transformFormDataForApi = (formData: EventCreateFormData) => {
-  // Transform dates to proper ISO strings if needed
-  const transformed = { ...formData }
+export const transformFormDataForApi = (formData: EventCreateFormData): EventCreate => {
+  // Combine date and time into proper ISO datetime strings
+  const startTime = formData.start_time || '00:00:00'
+  const startDateTime = `${formData.start_date}T${startTime}`
+  const start_date = new Date(startDateTime).toISOString()
 
-  // Ensure dates are properly formatted
-  if (transformed.start_date) {
-    transformed.start_date = new Date(transformed.start_date).toISOString()
+  // Create object with required fields
+  const transformed: EventCreate = {
+    name: formData.name,
+    type: formData.type,
+    start_date,
+    is_public: formData.is_public ?? false,
   }
 
-  if (transformed.end_date) {
-    transformed.end_date = new Date(transformed.end_date).toISOString()
+  // Add optional fields
+  if (formData.description) transformed.description = formData.description
+  if (formData.location) transformed.location = formData.location
+  if (formData.venue_name) transformed.venue_name = formData.venue_name
+  if (formData.venue_address) transformed.venue_address = formData.venue_address
+  if (formData.venue_google_place_id) transformed.venue_google_place_id = formData.venue_google_place_id
+  if (formData.max_guests !== undefined && formData.max_guests !== null) transformed.max_guests = formData.max_guests
+  if (formData.budget_total !== undefined && formData.budget_total !== null) transformed.budget_total = formData.budget_total
+  if (formData.status) transformed.status = formData.status
+
+  // Handle end date if provided
+  if (formData.end_date) {
+    const endTime = formData.end_time || '23:59:59'
+    const endDateTime = `${formData.end_date}T${endTime}`
+    transformed.end_date = new Date(endDateTime).toISOString()
   }
 
-  if (transformed.guest_settings?.rsvp_deadline) {
-    transformed.guest_settings.rsvp_deadline = new Date(
-      transformed.guest_settings.rsvp_deadline
-    ).toISOString()
-  }
+  // Note: start_time, end_time, all_day, timezone, guest_settings, and notification_settings
+  // are intentionally omitted as they are not part of the backend EventCreate schema
 
   return transformed
 }

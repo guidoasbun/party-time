@@ -14,6 +14,7 @@ import {
   HandHeart,
   PartyPopper,
   UserCheck,
+  Sparkle,
   MoreHorizontal
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -33,6 +34,7 @@ const EVENT_TYPE_ICONS = {
   [EventType.FUNDRAISER]: HandHeart,
   [EventType.HOLIDAY_PARTY]: PartyPopper,
   [EventType.REUNION]: UserCheck,
+  [EventType.CELEBRATION]: Sparkle,
   [EventType.OTHER]: MoreHorizontal,
 } as const
 
@@ -50,6 +52,7 @@ const EVENT_TYPE_LABELS = {
   [EventType.FUNDRAISER]: 'Fundraiser',
   [EventType.HOLIDAY_PARTY]: 'Holiday Party',
   [EventType.REUNION]: 'Reunion',
+  [EventType.CELEBRATION]: 'Celebration',
   [EventType.OTHER]: 'Other',
 } as const
 
