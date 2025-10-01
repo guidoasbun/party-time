@@ -169,7 +169,7 @@ export function SettingsStep({ className, errors, onFieldChange }: SettingsStepP
                   label="Maximum guest limit (optional)"
                   placeholder="Enter maximum number of guests"
                   error={getFieldError('max_guests')}
-                  value={field.value || ''}
+                  value={field.value !== undefined && field.value !== null ? field.value.toString() : ''}
                   onChange={(e) => {
                     const value = e.target.value ? parseInt(e.target.value, 10) : undefined
                     field.onChange(value)
@@ -210,7 +210,7 @@ export function SettingsStep({ className, errors, onFieldChange }: SettingsStepP
                   label="Total event budget (optional)"
                   placeholder="Enter your total budget"
                   error={getFieldError('budget_total')}
-                  value={field.value || ''}
+                  value={field.value !== undefined && field.value !== null ? field.value.toString() : ''}
                   onChange={(e) => {
                     const value = e.target.value ? parseFloat(e.target.value) : undefined
                     field.onChange(value)

@@ -6,10 +6,12 @@ const eventTypeSchema = z.nativeEnum(EventType)
 const eventStatusSchema = z.nativeEnum(EventStatus)
 
 // Helper schemas
-const optionalPositiveNumberSchema = z.number().min(0).optional()
+const optionalPositiveNumberSchema = z.number().min(0).optional().nullable().transform(val => val === null ? undefined : val)
 const nonEmptyStringSchema = z.string().min(1, 'This field is required')
+const optionalStringSchema = z.string().optional().nullable().transform(val => val === null ? undefined : val)
 
 // Date validation helpers
+// For new events, require future dates; for editing, allow any date
 const futureDateSchema = z.string()
   .min(1, 'Date is required')
   .refine((date) => {
@@ -20,22 +22,46 @@ const futureDateSchema = z.string()
     return selectedDate >= now
   }, 'Event date cannot be in the past')
 
-const endDateSchema = z.string().optional()
+// For edit mode - allows any date (past or future)
+const anyDateSchema = z.string().min(1, 'Date is required')
+
+const endDateSchema = z.string().optional().nullable().transform(val => val === null ? undefined : val)
 
 // Multi-step form schemas
 export const basicInfoSchema = z.object({
   name: nonEmptyStringSchema.max(255, 'Event name must be less than 255 characters'),
-  description: z.string().max(2000, 'Description must be less than 2000 characters').optional(),
+  description: optionalStringSchema.refine(val => !val || val.length <= 2000, 'Description must be less than 2000 characters'),
   type: eventTypeSchema,
 })
 
 export const dateTimeSchema = z.object({
   start_date: futureDateSchema,
   end_date: endDateSchema,
-  start_time: z.string().optional(),
-  end_time: z.string().optional(),
+  start_time: z.string().optional().nullable().transform(val => val === null ? undefined : val),
+  end_time: z.string().optional().nullable().transform(val => val === null ? undefined : val),
   all_day: z.boolean().default(false),
-  timezone: z.string().optional().default('UTC'),
+  timezone: z.string().optional().nullable().transform(val => val === null ? undefined : val).default('UTC'),
+}).refine((data) => {
+  if (!data.end_date) return true
+
+  // Create datetime objects for comparison
+  const startDateTime = new Date(data.start_date + 'T' + (data.start_time || '00:00:00'))
+  const endDateTime = new Date(data.end_date + 'T' + (data.end_time || '23:59:59'))
+
+  return endDateTime >= startDateTime
+}, {
+  message: 'End date and time must be after start date and time',
+  path: ['end_date']
+})
+
+// Edit mode version - allows past dates
+export const dateTimeSchemaEdit = z.object({
+  start_date: anyDateSchema,
+  end_date: endDateSchema,
+  start_time: z.string().optional().nullable().transform(val => val === null ? undefined : val),
+  end_time: z.string().optional().nullable().transform(val => val === null ? undefined : val),
+  all_day: z.boolean().default(false),
+  timezone: z.string().optional().nullable().transform(val => val === null ? undefined : val).default('UTC'),
 }).refine((data) => {
   if (!data.end_date) return true
 
@@ -50,10 +76,10 @@ export const dateTimeSchema = z.object({
 })
 
 export const locationSchema = z.object({
-  location: z.string().max(500, 'Location must be less than 500 characters').optional(),
-  venue_name: z.string().max(255, 'Venue name must be less than 255 characters').optional(),
-  venue_address: z.string().max(500, 'Venue address must be less than 500 characters').optional(),
-  venue_google_place_id: z.string().optional(),
+  location: optionalStringSchema.refine(val => !val || val.length <= 500, 'Location must be less than 500 characters'),
+  venue_name: optionalStringSchema.refine(val => !val || val.length <= 255, 'Venue name must be less than 255 characters'),
+  venue_address: optionalStringSchema.refine(val => !val || val.length <= 500, 'Venue address must be less than 500 characters'),
+  venue_google_place_id: optionalStringSchema,
 })
 
 export const settingsSchema = z.object({
@@ -66,13 +92,13 @@ export const settingsSchema = z.object({
     if (val === undefined) return true
     return val >= 0 && val <= 10000000
   }, 'Budget must be between $0 and $10,000,000'),
-  status: eventStatusSchema.optional().default(EventStatus.DRAFT),
+  status: eventStatusSchema.optional().nullable().transform(val => val === null ? undefined : val).default(EventStatus.DRAFT),
 })
 
 export const guestSettingsSchema = z.object({
   allow_plus_ones: z.boolean().default(false),
   require_rsvp: z.boolean().default(true),
-  rsvp_deadline: z.string().optional(),
+  rsvp_deadline: optionalStringSchema,
   dietary_restrictions_enabled: z.boolean().default(false),
 }).refine((data) => {
   if (!data.rsvp_deadline) return true
@@ -108,6 +134,35 @@ export const eventCreateSchema = z.object({
   guest_settings: guestSettingsSchema.default({
     allow_plus_ones: false,
     require_rsvp: true,
+    rsvp_deadline: undefined,
+    dietary_restrictions_enabled: false,
+  }),
+  notification_settings: notificationSettingsSchema.default({
+    send_invitations: true,
+    reminder_schedule: [],
+    auto_reminders: true,
+  }),
+})
+
+// Event edit schema - allows past dates
+export const eventEditSchema = z.object({
+  // Basic info step
+  ...basicInfoSchema.shape,
+
+  // Date/time step (edit version - allows past dates)
+  ...dateTimeSchemaEdit.shape,
+
+  // Location step
+  ...locationSchema.shape,
+
+  // Settings step
+  ...settingsSchema.shape,
+
+  // Additional settings (with defaults)
+  guest_settings: guestSettingsSchema.default({
+    allow_plus_ones: false,
+    require_rsvp: true,
+    rsvp_deadline: undefined,
     dietary_restrictions_enabled: false,
   }),
   notification_settings: notificationSettingsSchema.default({
@@ -126,6 +181,16 @@ export const eventUpdateSchema = eventCreateSchema.partial().extend({
 export const formStepSchemas = {
   basicInfo: basicInfoSchema,
   dateTime: dateTimeSchema,
+  location: locationSchema,
+  settings: settingsSchema,
+  guestSettings: guestSettingsSchema,
+  notificationSettings: notificationSettingsSchema,
+} as const
+
+// Form step validation mapping for edit mode
+export const formStepSchemasEdit = {
+  basicInfo: basicInfoSchema,
+  dateTime: dateTimeSchemaEdit,
   location: locationSchema,
   settings: settingsSchema,
   guestSettings: guestSettingsSchema,
@@ -194,6 +259,7 @@ export const defaultEventFormValues: Partial<EventCreateFormData> = {
   guest_settings: {
     allow_plus_ones: false,
     require_rsvp: true,
+    rsvp_deadline: undefined,
     dietary_restrictions_enabled: false,
   },
   notification_settings: {
@@ -204,13 +270,19 @@ export const defaultEventFormValues: Partial<EventCreateFormData> = {
 }
 
 // Form validation utilities
-export const validateFormStep = (stepName: FormStepName, data: unknown) => {
-  const schema = formStepSchemas[stepName]
+export const validateFormStep = (
+  stepName: FormStepName,
+  data: unknown,
+  mode: 'create' | 'edit' = 'create'
+) => {
+  const schemas = mode === 'edit' ? formStepSchemasEdit : formStepSchemas
+  const schema = schemas[stepName]
   return schema.safeParse(data)
 }
 
-export const validateCompleteForm = (data: unknown) => {
-  return eventCreateSchema.safeParse(data)
+export const validateCompleteForm = (data: unknown, mode: 'create' | 'edit' = 'create') => {
+  const schema = mode === 'edit' ? eventEditSchema : eventCreateSchema
+  return schema.safeParse(data)
 }
 
 // Error formatting utilities

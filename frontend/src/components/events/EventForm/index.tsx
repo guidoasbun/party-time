@@ -10,9 +10,11 @@ import { LocationStep } from './LocationStep'
 import { SettingsStep } from './SettingsStep'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { transformFormDataForApi } from '@/lib/utils/form'
-import { useCreateEvent } from '@/hooks/api/useEvents'
+import { useCreateEvent, useUpdateEvent } from '@/hooks/api/useEvents'
 
 interface EventFormProps {
+  mode?: 'create' | 'edit'
+  eventId?: string
   initialData?: Partial<EventCreateFormData>
   formId?: string
   onSuccess?: (eventId: string) => void
@@ -21,6 +23,8 @@ interface EventFormProps {
 }
 
 export function EventForm({
+  mode = 'create',
+  eventId,
   initialData,
   formId,
   onSuccess,
@@ -29,7 +33,10 @@ export function EventForm({
 }: EventFormProps) {
   const router = useRouter()
   const createEvent = useCreateEvent()
+  const updateEvent = useUpdateEvent()
   const { toast } = useToast()
+
+  const isEditMode = mode === 'edit'
 
   // Form submission handler
   const handleSubmit = React.useCallback(async (data: EventCreateFormData) => {
@@ -37,28 +44,41 @@ export function EventForm({
       // Transform form data for API
       const apiData = transformFormDataForApi(data)
 
-      // Create the event
-      const result = await createEvent.mutateAsync(apiData)
+      let result
 
-      // Show success message
-      toast({
-        title: 'Event Created!',
-        description: `${data.name} has been created successfully.`,
-      })
+      if (isEditMode && eventId) {
+        // Update existing event
+        result = await updateEvent.mutateAsync({ id: eventId, data: apiData })
+
+        // Show success message
+        toast({
+          title: 'Event Updated!',
+          description: `${data.name} has been updated successfully.`,
+        })
+      } else {
+        // Create new event
+        result = await createEvent.mutateAsync(apiData)
+
+        // Show success message
+        toast({
+          title: 'Event Created!',
+          description: `${data.name} has been created successfully.`,
+        })
+      }
 
       // Handle success
       if (onSuccess) {
         onSuccess(result.id)
       } else {
-        // Default behavior: navigate to the new event
+        // Default behavior: navigate to the event detail page
         router.push(`/events/${result.id}`)
       }
     } catch (error) {
-      console.error('Failed to create event:', error)
+      console.error(`Failed to ${isEditMode ? 'update' : 'create'} event:`, error)
 
       // Show error message
       toast({
-        title: 'Failed to Create Event',
+        title: `Failed to ${isEditMode ? 'Update' : 'Create'} Event`,
         description: error instanceof Error ? error.message : 'Something went wrong. Please try again.',
         variant: 'destructive',
       })
@@ -66,7 +86,7 @@ export function EventForm({
       // Re-throw to let form handle the error state
       throw error
     }
-  }, [createEvent, onSuccess, router, toast])
+  }, [isEditMode, eventId, createEvent, updateEvent, onSuccess, router, toast])
 
   // Draft save handler
   const handleSaveDraft = React.useCallback(async (data: Partial<EventCreateFormData>) => {
@@ -103,6 +123,8 @@ export function EventForm({
       onCancel={handleCancel}
       onSaveDraft={handleSaveDraft}
       className={className}
+      enableUnsavedWarning={isEditMode}
+      mode={mode}
     >
       {({ currentStep }) => (
         <>

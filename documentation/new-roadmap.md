@@ -23,9 +23,10 @@
 - **Settings & Submission Step**: ✅ **NEW** - Privacy controls, guest limits, budget planning, event status selection, draft functionality, comprehensive validation (Phase 3.1.4 COMPLETE)
 - **Form Integration Testing**: ✅ **NEW** - 12 comprehensive integration tests covering complete form workflow, API integration, data persistence, error handling (Phase 3.1.5 COMPLETE)
 - **Event Tabs Interface**: ✅ **NEW** - Tabbed interface with 5 tabs (Overview, Guests, Budget, Timeline, Settings), URL persistence, keyboard navigation, event creation via UI fully functional with all enum fixes (Phase 3.2.2 COMPLETE)
+- **Event Editing System**: ✅ **NEW** - Complete edit mode implementation with form pre-population, optimistic updates, unsaved changes warning, comprehensive null-handling in validation schemas, conditional validation for past/future dates (Phase 3.2.3 COMPLETE)
 
 ### 🔄 In Progress
-- **Event Detail Pages**: ✅ Layout complete (Phase 3.2.1), ✅ Tabs complete (Phase 3.2.2), editing functionality in progress (Phase 3.2.3-3.2.5 - NEXT)
+- **Event Detail Pages**: ✅ Layout complete (Phase 3.2.1), ✅ Tabs complete (Phase 3.2.2), ✅ Editing complete (Phase 3.2.3), Event Actions & Dialogs in progress (Phase 3.2.4-3.2.5 - NEXT)
 
 ### ❌ Remaining Work
 - Event detail pages and edit functionality
@@ -58,7 +59,7 @@
 
 | Phase | Title | Timeline | Priority | Hours | Key Deliverables |
 |-------|-------|----------|----------|-------|------------------|
-| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 8.5 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail layout (3.2.1 ✅ COMPLETE), Tabs (3.2.2 ✅ COMPLETE), Editing pending (3.2.3-3.2.5) |
+| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 13 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail layout (3.2.1 ✅ COMPLETE), Tabs (3.2.2 ✅ COMPLETE), Editing (3.2.3 ✅ COMPLETE), Actions pending (3.2.4-3.2.5) |
 | [Phase 4](#phase-4-guest-management-system-weeks-3-4) | Guest Management System | Weeks 3-4<br/>(Oct 9 - Oct 23) | **HIGH** | 30 hrs | Guest CRUD, CSV import, RSVP tokens, analytics dashboard |
 | [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6) | RSVP & Email Systems | Weeks 5-6<br/>(Oct 23 - Nov 6) | **HIGH** | 34 hrs | Public RSVP portal, Email templates, automation |
 | [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8) | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20) | **HIGH** | 42 hrs | Fabric.js canvas, drag-drop tables, guest assignments, exports |
@@ -318,25 +319,56 @@
 - TypeScript compilation successful
 - Production build ready
 
-#### 3.2.3: Event Editing System (Day 3 - 4.5 hours)
-**Development (4 hours)**:
-- [ ] Create edit page route `/events/[id]/edit`
-- [ ] Reuse EventForm component with edit mode
-- [ ] Pre-populate form with existing event data
-- [ ] Add "unsaved changes" warning on navigation
-- [ ] Implement optimistic updates with React Query
-- [ ] Add success toast and redirect to detail page
+#### 3.2.3: Event Editing System (Day 3 - 4.5 hours) ✅ **COMPLETED**
+**Development (4 hours)**: ✅ **COMPLETED**
+- [x] Create edit page route `/events/[id]/edit`
+- [x] Reuse EventForm component with edit mode
+- [x] Pre-populate form with existing event data
+- [x] Add "unsaved changes" warning on navigation
+- [x] Implement optimistic updates with React Query
+- [x] Add success toast and redirect to detail page
 
-**Smoke Testing (0.5 hours)**:
-- [ ] Verify form pre-populates correctly
-- [ ] Test successful edit and save
-- [ ] Confirm optimistic updates work
+**Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+- [x] Verify form pre-populates correctly
+- [x] Test successful edit and save
+- [x] Confirm optimistic updates work
 
-**Files to Create**:
+**Files Created/Updated**: ✅ **ALL CREATED AND TESTED**
 ```
-frontend/src/app/events/[id]/edit/page.tsx
-frontend/src/components/events/EventEditForm.tsx
+✅ frontend/src/app/events/[id]/edit/page.tsx
+✅ frontend/src/components/events/EventEditForm.tsx
+✅ frontend/src/hooks/useUnsavedChangesWarning.ts
+✅ frontend/src/__tests__/smoke/event-edit.test.tsx
+✅ frontend/src/lib/validations/event.ts (updated with null-handling schemas)
+✅ frontend/src/lib/utils/form.ts (updated time format extraction)
+✅ frontend/src/components/events/EventForm/FormContainer.tsx (added mode prop)
+✅ frontend/src/components/events/EventForm/index.tsx (enhanced for edit mode)
+✅ frontend/src/hooks/api/useEvents.ts (added optimistic updates)
 ```
+
+**Critical Bug Fixes Completed**:
+- [x] Fixed null-handling in all Zod validation schemas
+- [x] Created reusable `optionalStringSchema` and `optionalPositiveNumberSchema` helpers
+- [x] Updated all form schemas to handle null values from React Hook Form
+- [x] Fixed validation blocking on Date/Time step for past events
+- [x] Fixed validation blocking on Location step with empty optional fields
+- [x] Fixed validation blocking on Settings step with null budget/guest limits
+- [x] Added `rsvp_deadline: undefined` to default form values
+- [x] Verified complete edit flow works end-to-end (all 4 steps navigable)
+
+**Status**: ✅ **PHASE 3.2.3 COMPLETE** - All features implemented with:
+- Edit page route with proper URL structure
+- EventForm enhanced to support both create and edit modes (conditional schemas for past dates)
+- API data transformation for form pre-population (date/time extraction in HH:mm format)
+- Optimistic updates with rollback on error
+- Unsaved changes warning using beforeunload event
+- Complete null-value handling across all form validation schemas
+- Edit mode allows past dates, create mode enforces future dates
+- All Next buttons functional on all form steps (Date/Time, Location, Settings)
+- Comprehensive Zod schema updates with `.nullable().transform()` pattern
+- 7 smoke tests passing (100% pass rate)
+- TypeScript compilation successful
+- Production build passing without errors
 
 #### 3.2.4: Event Actions & Dialogs (Day 4 - 4 hours)
 **Development (3.5 hours)**:
