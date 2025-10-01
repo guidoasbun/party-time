@@ -150,7 +150,11 @@ export const canNavigateToStep = (
 // Form data transformation utilities
 export const transformFormDataForApi = (formData: EventCreateFormData): EventCreate => {
   // Combine date and time into proper ISO datetime strings
-  const startTime = formData.start_time || '00:00:00'
+  // Handle both HH:mm and HH:mm:ss formats
+  let startTime = formData.start_time || '00:00'
+  if (startTime.length === 5) {
+    startTime = `${startTime}:00` // Add seconds if not present
+  }
   const startDateTime = `${formData.start_date}T${startTime}`
   const start_date = new Date(startDateTime).toISOString()
 
@@ -174,7 +178,10 @@ export const transformFormDataForApi = (formData: EventCreateFormData): EventCre
 
   // Handle end date if provided
   if (formData.end_date) {
-    const endTime = formData.end_time || '23:59:59'
+    let endTime = formData.end_time || '23:59'
+    if (endTime.length === 5) {
+      endTime = `${endTime}:59` // Add seconds if not present
+    }
     const endDateTime = `${formData.end_date}T${endTime}`
     transformed.end_date = new Date(endDateTime).toISOString()
   }
@@ -188,13 +195,28 @@ export const transformFormDataForApi = (formData: EventCreateFormData): EventCre
 export const transformApiDataForForm = (apiData: Record<string, unknown>): Partial<EventCreateFormData> => {
   const transformed = { ...apiData }
 
-  // Transform ISO dates to YYYY-MM-DD format for form inputs
+  // Transform ISO dates to YYYY-MM-DD format and extract time for form inputs
   if (transformed.start_date && typeof transformed.start_date === 'string') {
-    transformed.start_date = new Date(transformed.start_date).toISOString().split('T')[0]
+    const startDateTime = new Date(transformed.start_date)
+    transformed.start_date = startDateTime.toISOString().split('T')[0]
+
+    // Extract time in HH:mm format (without seconds, as expected by DateTimeStep)
+    const hours = String(startDateTime.getHours()).padStart(2, '0')
+    const minutes = String(startDateTime.getMinutes()).padStart(2, '0')
+    transformed.start_time = `${hours}:${minutes}`
+
+    // Set all_day to false if there's a specific time, true if midnight
+    transformed.all_day = hours === '00' && minutes === '00'
   }
 
   if (transformed.end_date && typeof transformed.end_date === 'string') {
-    transformed.end_date = new Date(transformed.end_date).toISOString().split('T')[0]
+    const endDateTime = new Date(transformed.end_date)
+    transformed.end_date = endDateTime.toISOString().split('T')[0]
+
+    // Extract time in HH:mm format (without seconds, as expected by DateTimeStep)
+    const hours = String(endDateTime.getHours()).padStart(2, '0')
+    const minutes = String(endDateTime.getMinutes()).padStart(2, '0')
+    transformed.end_time = `${hours}:${minutes}`
   }
 
   if (transformed.guest_settings &&

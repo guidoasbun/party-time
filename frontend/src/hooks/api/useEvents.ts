@@ -162,14 +162,33 @@ export function useCreateEvent(
 }
 
 export function useUpdateEvent(
-  options?: UseMutationOptions<Event, ApiException, { id: string; data: EventUpdate }>
+  options?: UseMutationOptions<Event, ApiException, { id: string; data: EventUpdate }, { previousEvent: Event | undefined }>
 ) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: ({ id, data }) => eventsService.updateEvent(id, data),
+    // Optimistically update the cache before the server responds
+    onMutate: async ({ id, data }): Promise<{ previousEvent: Event | undefined }> => {
+      // Cancel any outgoing refetches (so they don't overwrite our optimistic update)
+      await queryClient.cancelQueries({ queryKey: eventKeys.detail(id) })
+
+      // Snapshot the previous value
+      const previousEvent = queryClient.getQueryData<Event>(eventKeys.detail(id))
+
+      // Optimistically update to the new value
+      if (previousEvent) {
+        queryClient.setQueryData<Event>(
+          eventKeys.detail(id),
+          { ...previousEvent, ...data }
+        )
+      }
+
+      // Return a context with the previous value for rollback
+      return { previousEvent }
+    },
     onSuccess: (data, variables) => {
-      // Update the specific event cache
+      // Update the specific event cache with server response
       queryClient.setQueryData(
         eventKeys.detail(variables.id),
         data
@@ -177,11 +196,21 @@ export function useUpdateEvent(
 
       // Invalidate lists to reflect changes
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() })
-      
+
       // Invalidate stats if status changed
       queryClient.invalidateQueries({
         queryKey: [...eventKeys.stats(), variables.id]
       })
+    },
+    // Rollback on error
+    onError: (error, variables, context) => {
+      // Restore previous value if the update fails
+      if (context?.previousEvent) {
+        queryClient.setQueryData(
+          eventKeys.detail(variables.id),
+          context.previousEvent
+        )
+      }
     },
     ...options,
   })

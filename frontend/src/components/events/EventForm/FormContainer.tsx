@@ -12,6 +12,7 @@ import {
   FormStepName,
   validateFormStep,
   eventCreateSchema,
+  eventEditSchema,
   formatZodErrors
 } from '@/lib/validations/event'
 import {
@@ -22,6 +23,7 @@ import {
 } from '@/lib/utils/form'
 import { Button } from '@/components/ui/Button'
 import { Progress } from '@/components/ui/Progress'
+import { useUnsavedChangesWarning } from '@/hooks/useUnsavedChangesWarning'
 
 interface FormContainerProps {
   initialData?: Partial<EventCreateFormData>
@@ -31,6 +33,8 @@ interface FormContainerProps {
   onSaveDraft?: (data: Partial<EventCreateFormData>) => void | Promise<void>
   children: (props: FormChildrenProps) => React.ReactNode
   className?: string
+  enableUnsavedWarning?: boolean
+  mode?: 'create' | 'edit'
 }
 
 interface FormChildrenProps {
@@ -57,7 +61,9 @@ export function FormContainer({
   onCancel,
   onSaveDraft,
   children,
-  className
+  className,
+  enableUnsavedWarning = false,
+  mode = 'create'
 }: FormContainerProps) {
   // Load saved data from localStorage if available
   const savedData = React.useMemo(() => {
@@ -69,14 +75,20 @@ export function FormContainer({
     return FormPersistence.loadCurrentStep(formId) || 'basicInfo'
   }, [formId])
 
+  // Use appropriate schema based on mode
+  const validationSchema = mode === 'edit' ? eventEditSchema : eventCreateSchema
+
   // Form setup
   const form = useForm<EventCreateFormData>({
-    resolver: zodResolver(eventCreateSchema) as Resolver<EventCreateFormData>,
+    resolver: zodResolver(validationSchema) as Resolver<EventCreateFormData>,
     defaultValues: savedData as EventCreateFormData,
     mode: 'onChange',
   })
 
   const { handleSubmit, formState: { isSubmitting, isDirty, errors }, watch, clearErrors } = form
+
+  // Warn about unsaved changes if enabled
+  useUnsavedChangesWarning(enableUnsavedWarning && isDirty)
 
   // Step management
   const [currentStepIndex, setCurrentStepIndex] = React.useState(() => {
@@ -156,7 +168,7 @@ export function FormContainer({
     async function checkStepValidity() {
       try {
         const stepData = getStepData(formData, currentStep.name)
-        const result = validateFormStep(currentStep.name, stepData)
+        const result = validateFormStep(currentStep.name, stepData, mode)
 
         if (!result.success) {
           const errors = formatZodErrors(result.error)

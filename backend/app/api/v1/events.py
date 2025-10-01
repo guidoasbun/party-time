@@ -229,12 +229,34 @@ async def update_event(
 ):
     """Update an event."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         event = await crud_event.update_event(db, event_id, event_data, user_id)
         if not event:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
+        return event
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to update event: {str(e)}")
+
+
+@router.patch("/{event_id}", response_model=Event)
+async def partial_update_event(
+    event_id: UUID,
+    event_data: EventUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Partially update an event (same as PUT for this API)."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        event = await crud_event.update_event(db, event_id, event_data, user_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
         return event
     except HTTPException:
         raise
