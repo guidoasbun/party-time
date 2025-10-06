@@ -59,7 +59,7 @@
 
 | Phase | Title | Timeline | Priority | Hours | Key Deliverables |
 |-------|-------|----------|----------|-------|------------------|
-| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 13 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail layout (3.2.1 ✅ COMPLETE), Tabs (3.2.2 ✅ COMPLETE), Editing (3.2.3 ✅ COMPLETE), Actions pending (3.2.4-3.2.5) |
+| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 16 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail pages (3.2.1-3.2.4 ✅ COMPLETE), Events list page pending (3.2.6), Final testing (3.2.5) |
 | [Phase 4](#phase-4-guest-management-system-weeks-3-4) | Guest Management System | Weeks 3-4<br/>(Oct 9 - Oct 23) | **HIGH** | 30 hrs | Guest CRUD, CSV import, RSVP tokens, analytics dashboard |
 | [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6) | RSVP & Email Systems | Weeks 5-6<br/>(Oct 23 - Nov 6) | **HIGH** | 34 hrs | Public RSVP portal, Email templates, automation |
 | [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8) | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20) | **HIGH** | 42 hrs | Fabric.js canvas, drag-drop tables, guest assignments, exports |
@@ -243,9 +243,9 @@
 - Error recovery and validation behavior verification
 - Production build successful with no TypeScript errors
 
-### Phase 3.2: Event Detail Pages (Week 2)
-**Duration**: 3-4 days
-**Estimated Hours**: 18-22 hours (with smoke testing only)
+### Phase 3.2: Event Detail Pages & Events List (Week 2)
+**Duration**: 5-6 days
+**Estimated Hours**: 21-25 hours (with smoke testing only)
 
 #### 3.2.1: Event Detail Layout (Day 1 - 4 hours) ✅ **COMPLETED**
 **Development (3.5 hours)**: ✅ **COMPLETED**
@@ -370,26 +370,39 @@
 - TypeScript compilation successful
 - Production build passing without errors
 
-#### 3.2.4: Event Actions & Dialogs (Day 4 - 4 hours)
-**Development (3.5 hours)**:
-- [ ] Create delete confirmation dialog with AlertDialog
-- [ ] Implement event deletion with cascade handling
-- [ ] Add event duplication functionality
-- [ ] Create event status change dropdown
-- [ ] Add share event functionality (copy link)
-- [ ] Implement toast notifications for all actions
+#### 3.2.4: Event Actions & Dialogs (Day 4 - 4 hours) ✅ **COMPLETED**
+**Development (3.5 hours)**: ✅ **COMPLETED**
+- [x] Create delete confirmation dialog with AlertDialog
+- [x] Implement event deletion with cascade handling
+- [x] Add event duplication functionality with name customization
+- [x] Create event status change dropdown with confirmations
+- [x] Add enhanced share event functionality (copy link, email, native share)
+- [x] Implement toast notifications for all actions
 
-**Smoke Testing (0.5 hours)**:
-- [ ] Test delete flow end-to-end
-- [ ] Verify duplication creates new event
-- [ ] Confirm status changes persist
+**Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+- [x] Test delete flow end-to-end
+- [x] Verify duplication creates new event
+- [x] Confirm status changes persist
+- [x] Test share functionality (clipboard, email, native)
 
-**Files to Create**:
+**Files Created**: ✅ **ALL CREATED**
 ```
-frontend/src/components/events/DeleteEventDialog.tsx
-frontend/src/components/events/DuplicateEventDialog.tsx
-frontend/src/components/events/ShareEventButton.tsx
+✅ frontend/src/components/events/DeleteEventDialog.tsx
+✅ frontend/src/components/events/DuplicateEventDialog.tsx
+✅ frontend/src/components/events/ShareEventButton.tsx
+✅ frontend/src/components/events/EventStatusDropdown.tsx
+✅ frontend/src/__tests__/smoke/event-actions.test.tsx (11 test suites)
 ```
+
+**Status**: ✅ **PHASE 3.2.4 COMPLETE** - All features implemented with:
+- Dedicated delete dialog showing event impact (guests, budget, timeline)
+- Duplicate dialog with optional name customization and copy summary
+- Advanced share button with multiple options (link, email, native API)
+- Status dropdown with 7 statuses, color-coding, and confirmations
+- Full theme support (light/dark/system modes)
+- 11 comprehensive smoke tests passing (100% pass rate)
+- TypeScript compilation successful
+- Production build passing without errors
 
 #### 3.2.5: Event Detail Smoke Testing (30 minutes)
 **Basic Integration Checks**:
@@ -403,6 +416,46 @@ frontend/src/components/events/ShareEventButton.tsx
 ```
 frontend/src/__tests__/smoke/event-detail.test.tsx
 ```
+
+#### 3.2.6: Events List Page (Day 5 - 3 hours)
+**Development (2.5 hours)**:
+- [ ] Create `/events` page route with full-page layout
+- [ ] Implement events list view reusing EventList component
+- [ ] Add filtering sidebar with EventFilters component
+- [ ] Create view mode toggle (grid/list) with persistence
+- [ ] Add pagination controls for large event lists
+- [ ] Implement sort options (date, name, status, type)
+- [ ] Add search functionality with debouncing
+- [ ] Create "Create New Event" FAB button
+- [ ] Add breadcrumb navigation
+- [ ] Implement empty state for no events
+
+**Smoke Testing (0.5 hours)**:
+- [ ] Verify page loads and displays all events
+- [ ] Test filtering and search functionality
+- [ ] Confirm view mode toggle persists
+- [ ] Test pagination navigation
+- [ ] Verify sort options work correctly
+- [ ] Test mobile responsiveness
+
+**Files to Create**:
+```
+frontend/src/app/events/page.tsx
+frontend/src/components/events/EventsPageHeader.tsx
+frontend/src/__tests__/smoke/events-list.test.tsx
+```
+
+**Features**:
+- Full-page dedicated events list (separate from dashboard)
+- Advanced filtering (type, status, date range, search)
+- Grid/List view toggle with localStorage persistence
+- Pagination for handling 100+ events
+- Sort by multiple criteria (date, name, status, type)
+- Create new event FAB (floating action button)
+- Empty state with "Create your first event" CTA
+- Breadcrumb navigation: Dashboard > Events
+- Responsive design (mobile-first approach)
+- Loading skeletons and error states
 
 ---
 

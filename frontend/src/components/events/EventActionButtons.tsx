@@ -2,16 +2,19 @@
 
 /**
  * Event action buttons component
- * Displays edit, delete, duplicate, and share actions
+ * Displays edit, delete, duplicate, share, and status change actions
  */
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Edit, Trash2, Copy, Share2 } from 'lucide-react'
+import { Edit, Trash2, Copy } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { useDeleteEvent, useDuplicateEvent } from '@/hooks/api/useEvents'
-import { useConfirmation } from '@/hooks/useConfirmation'
+import { useDeleteEvent, useDuplicateEvent, useEvent } from '@/hooks/api/useEvents'
 import { useToast } from '@/hooks/useToast'
+import { DeleteEventDialog } from './DeleteEventDialog'
+import { DuplicateEventDialog } from './DuplicateEventDialog'
+import { ShareEventButton } from './ShareEventButton'
+import { EventStatusDropdown } from './EventStatusDropdown'
 import { cn } from '@/lib/utils'
 import type { UUID } from '@/types'
 
@@ -21,6 +24,7 @@ interface EventActionButtonsProps {
   className?: string
   onDeleteSuccess?: () => void
   onDuplicateSuccess?: (newEventId: UUID) => void
+  showStatusDropdown?: boolean
 }
 
 export function EventActionButtons({
@@ -29,11 +33,15 @@ export function EventActionButtons({
   className,
   onDeleteSuccess,
   onDuplicateSuccess,
+  showStatusDropdown = true,
 }: EventActionButtonsProps) {
   const router = useRouter()
   const { toast } = useToast()
-  const { showConfirmation } = useConfirmation()
-  const [isCopying, setIsCopying] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false)
+
+  // Get full event data for dialogs and status dropdown
+  const { data: event } = useEvent(eventId)
 
   const deleteMutation = useDeleteEvent({
     onSuccess: () => {
@@ -42,6 +50,7 @@ export function EventActionButtons({
         description: `${eventName} has been deleted successfully.`,
         variant: 'success',
       })
+      setShowDeleteDialog(false)
       onDeleteSuccess?.()
       router.push('/dashboard')
     },
@@ -61,6 +70,7 @@ export function EventActionButtons({
         description: `${newEvent.name} has been created successfully.`,
         variant: 'success',
       })
+      setShowDuplicateDialog(false)
       onDuplicateSuccess?.(newEvent.id)
       router.push(`/events/${newEvent.id}`)
     },
@@ -77,126 +87,102 @@ export function EventActionButtons({
     router.push(`/events/${eventId}/edit`)
   }
 
-  const handleDelete = async () => {
-    const confirmed = await showConfirmation({
-      title: 'Delete Event',
-      description: `Are you sure you want to delete "${eventName}"? This action cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      variant: 'destructive',
-    })
-
-    if (confirmed) {
-      deleteMutation.mutate(eventId)
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true)
   }
 
-  const handleDuplicate = async () => {
-    const confirmed = await showConfirmation({
-      title: 'Duplicate Event',
-      description: `Create a copy of "${eventName}"?`,
-      confirmText: 'Duplicate',
-      cancelText: 'Cancel',
-    })
-
-    if (confirmed) {
-      duplicateMutation.mutate(eventId)
-    }
+  const handleDeleteConfirm = () => {
+    deleteMutation.mutate(eventId)
   }
 
-  const handleShare = async () => {
-    setIsCopying(true)
-    const eventUrl = `${window.location.origin}/events/${eventId}`
+  const handleDeleteCancel = () => {
+    setShowDeleteDialog(false)
+  }
 
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(eventUrl)
-        toast({
-          title: 'Link copied',
-          description: 'Event link has been copied to clipboard.',
-          variant: 'success',
-        })
-      } else {
-        // Fallback for non-secure contexts
-        const textArea = document.createElement('textarea')
-        textArea.value = eventUrl
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-999999px'
-        document.body.appendChild(textArea)
-        textArea.select()
-        document.execCommand('copy')
-        document.body.removeChild(textArea)
-        toast({
-          title: 'Link copied',
-          description: 'Event link has been copied to clipboard.',
-          variant: 'success',
-        })
-      }
-    } catch {
-      toast({
-        title: 'Failed to copy link',
-        description: 'Please copy the URL from your browser address bar.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsCopying(false)
-    }
+  const handleDuplicateClick = () => {
+    setShowDuplicateDialog(true)
+  }
+
+  const handleDuplicateConfirm = (_customName?: string) => {
+    // Note: customName parameter available for future enhancement
+    duplicateMutation.mutate(eventId)
+  }
+
+  const handleDuplicateCancel = () => {
+    setShowDuplicateDialog(false)
   }
 
   return (
-    <div className={cn('flex flex-wrap gap-2', className)}>
-      <Button
-        variant="default"
-        size="md"
-        onClick={handleEdit}
-        className="gap-2"
-        aria-label="Edit event"
-      >
-        <Edit className="h-4 w-4" />
-        <span className="hidden sm:inline">Edit</span>
-      </Button>
+    <>
+      <div className={cn('flex flex-wrap gap-2', className)}>
+        {/* Status Dropdown */}
+        {showStatusDropdown && event && (
+          <EventStatusDropdown event={event} />
+        )}
 
-      <Button
-        variant="outline"
-        size="md"
-        onClick={handleDuplicate}
-        disabled={duplicateMutation.isPending}
-        className="gap-2"
-        aria-label="Duplicate event"
-      >
-        <Copy className="h-4 w-4" />
-        <span className="hidden sm:inline">
-          {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate'}
-        </span>
-      </Button>
+        {/* Edit Button */}
+        <Button
+          variant="default"
+          size="md"
+          onClick={handleEdit}
+          className="gap-2"
+          aria-label="Edit event"
+        >
+          <Edit className="h-4 w-4" />
+          <span className="hidden sm:inline">Edit</span>
+        </Button>
 
-      <Button
-        variant="outline"
-        size="md"
-        onClick={handleShare}
-        disabled={isCopying}
-        className="gap-2"
-        aria-label="Share event"
-      >
-        <Share2 className="h-4 w-4" />
-        <span className="hidden sm:inline">
-          {isCopying ? 'Copying...' : 'Share'}
-        </span>
-      </Button>
+        {/* Duplicate Button */}
+        <Button
+          variant="outline"
+          size="md"
+          onClick={handleDuplicateClick}
+          disabled={duplicateMutation.isPending}
+          className="gap-2"
+          aria-label="Duplicate event"
+        >
+          <Copy className="h-4 w-4" />
+          <span className="hidden sm:inline">
+            {duplicateMutation.isPending ? 'Duplicating...' : 'Duplicate'}
+          </span>
+        </Button>
 
-      <Button
-        variant="outline"
-        size="md"
-        onClick={handleDelete}
-        disabled={deleteMutation.isPending}
-        className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-        aria-label="Delete event"
-      >
-        <Trash2 className="h-4 w-4" />
-        <span className="hidden sm:inline">
-          {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
-        </span>
-      </Button>
-    </div>
+        {/* Share Button */}
+        <ShareEventButton eventId={eventId} eventName={eventName} />
+
+        {/* Delete Button */}
+        <Button
+          variant="outline"
+          size="md"
+          onClick={handleDeleteClick}
+          disabled={deleteMutation.isPending}
+          className="gap-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950 border-red-200 dark:border-red-800"
+          aria-label="Delete event"
+        >
+          <Trash2 className="h-4 w-4" />
+          <span className="hidden sm:inline">
+            {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+          </span>
+        </Button>
+      </div>
+
+      {/* Delete Dialog */}
+      <DeleteEventDialog
+        isOpen={showDeleteDialog}
+        event={event || null}
+        isDeleting={deleteMutation.isPending}
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Duplicate Dialog */}
+      <DuplicateEventDialog
+        isOpen={showDuplicateDialog}
+        event={event || null}
+        isDuplicating={duplicateMutation.isPending}
+        onConfirm={handleDuplicateConfirm}
+        onCancel={handleDuplicateCancel}
+      />
+    </>
   )
 }
