@@ -1,40 +1,40 @@
-'use client'
+"use client";
 
 /**
  * Events Page Header Component
  * Displays page title, event count, view controls, sort options, and actions
  */
 
-import React from 'react'
-import { Plus, Filter, X, Grid, List, SortAsc, SortDesc } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
-import { SortOption, SortDirection } from '@/types/preferences.types'
-import { cn } from '@/lib/utils'
+import React from "react";
+import { Plus, Filter, X, Grid, List, SortAsc, SortDesc } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+import { SortOption, SortDirection } from "@/types/preferences.types";
+import { cn } from "@/lib/utils";
 
 interface EventsPageHeaderProps {
-  totalEvents: number
-  viewMode: 'grid' | 'list'
-  onViewModeChange: (mode: 'grid' | 'list') => void
-  sortBy: SortOption
-  sortDirection: SortDirection
-  onSortChange: (sortBy: SortOption, sortDirection: SortDirection) => void
-  showFilters: boolean
-  onFilterToggle: () => void
-  hasActiveFilters: boolean
-  onClearFilters: () => void
-  onCreateEvent: () => void
-  className?: string
+  totalEvents: number;
+  viewMode: "grid" | "list";
+  onViewModeChange: (mode: "grid" | "list") => void;
+  sortBy: SortOption;
+  sortDirection: SortDirection;
+  onSortChange: (sortBy: SortOption, sortDirection: SortDirection) => void;
+  showFilters: boolean;
+  onFilterToggle: () => void;
+  hasActiveFilters: boolean;
+  onClearFilters: () => void;
+  onCreateEvent: () => void;
+  className?: string;
 }
 
 const sortOptions = [
-  { value: 'date', label: 'Event Date' },
-  { value: 'name', label: 'Name' },
-  { value: 'status', label: 'Status' },
-  { value: 'created', label: 'Created Date' },
-  { value: 'guests', label: 'Guest Count' },
-  { value: 'budget', label: 'Budget' },
-] as const
+  { value: "date", label: "Event Date" },
+  { value: "name", label: "Name" },
+  { value: "status", label: "Status" },
+  { value: "created", label: "Created Date" },
+  { value: "guests", label: "Guest Count" },
+  { value: "budget", label: "Budget" },
+] as const;
 
 export function EventsPageHeader({
   totalEvents,
@@ -51,17 +51,17 @@ export function EventsPageHeader({
   className,
 }: EventsPageHeaderProps) {
   const handleSortByChange = (value: string | string[]) => {
-    const newSortBy = Array.isArray(value) ? value[0] : value
-    onSortChange(newSortBy as SortOption, sortDirection)
-  }
+    const newSortBy = Array.isArray(value) ? value[0] : value;
+    onSortChange(newSortBy as SortOption, sortDirection);
+  };
 
   const handleSortDirectionToggle = () => {
-    const newDirection = sortDirection === 'asc' ? 'desc' : 'asc'
-    onSortChange(sortBy, newDirection)
-  }
+    const newDirection = sortDirection === "asc" ? "desc" : "asc";
+    onSortChange(sortBy, newDirection);
+  };
 
   return (
-    <div className={cn('space-y-4 sm:space-y-6', className)}>
+    <div className={cn("space-y-4 sm:space-y-6", className)}>
       {/* Title and Create Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="flex items-baseline gap-3">
@@ -69,7 +69,7 @@ export function EventsPageHeader({
             Events
           </h1>
           <span className="text-sm sm:text-base text-muted-foreground">
-            {totalEvents} {totalEvents === 1 ? 'event' : 'events'}
+            {totalEvents} {totalEvents === 1 ? "event" : "events"}
           </span>
         </div>
 
@@ -90,17 +90,17 @@ export function EventsPageHeader({
         <div className="flex flex-col sm:flex-row gap-3 flex-1">
           {/* Filter Toggle */}
           <Button
-            variant={showFilters ? 'default' : 'outline'}
+            variant={showFilters ? "default" : "outline"}
             size="sm"
             onClick={onFilterToggle}
             className={cn(
-              'gap-2 min-h-[44px] justify-start sm:justify-center',
-              showFilters && 'shadow-sm'
+              "gap-2 min-h-[44px] justify-start sm:justify-center",
+              showFilters && "shadow-sm"
             )}
           >
             <Filter className="h-4 w-4" />
             <span className="sm:inline">
-              {showFilters ? 'Hide Filters' : 'Show Filters'}
+              {showFilters ? "Hide Filters" : "Show Filters"}
             </span>
             {hasActiveFilters && (
               <span className="ml-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
@@ -125,7 +125,7 @@ export function EventsPageHeader({
             {/* Sort By Dropdown */}
             <div className="flex-1 sm:w-48">
               <Select
-                options={sortOptions.map(opt => ({
+                options={sortOptions.map((opt) => ({
                   value: opt.value,
                   label: opt.label,
                 }))}
@@ -142,9 +142,9 @@ export function EventsPageHeader({
               size="sm"
               onClick={handleSortDirectionToggle}
               className="min-h-[44px] min-w-[44px] px-3"
-              title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+              title={sortDirection === "asc" ? "Ascending" : "Descending"}
             >
-              {sortDirection === 'asc' ? (
+              {sortDirection === "asc" ? (
                 <SortAsc className="h-4 w-4" />
               ) : (
                 <SortDesc className="h-4 w-4" />
@@ -154,15 +154,15 @@ export function EventsPageHeader({
         </div>
 
         {/* Right Controls - View Mode Toggle */}
-        <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
+        {/* <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
           <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
+            variant={viewMode === "grid" ? "default" : "ghost"}
             size="sm"
-            onClick={() => onViewModeChange('grid')}
+            onClick={() => onViewModeChange("grid")}
             className={cn(
-              'gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3',
-              'transition-all duration-200',
-              viewMode === 'grid' && 'shadow-sm'
+              "gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3",
+              "transition-all duration-200",
+              viewMode === "grid" && "shadow-sm"
             )}
             title="Grid view"
           >
@@ -171,21 +171,21 @@ export function EventsPageHeader({
           </Button>
 
           <Button
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
+            variant={viewMode === "list" ? "default" : "ghost"}
             size="sm"
-            onClick={() => onViewModeChange('list')}
+            onClick={() => onViewModeChange("list")}
             className={cn(
-              'gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3',
-              'transition-all duration-200',
-              viewMode === 'list' && 'shadow-sm'
+              "gap-1 min-h-[44px] min-w-[44px] px-2 sm:px-3",
+              "transition-all duration-200",
+              viewMode === "list" && "shadow-sm"
             )}
             title="List view"
           >
             <List className="h-4 w-4" />
             <span className="hidden sm:inline">List</span>
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
-  )
+  );
 }
