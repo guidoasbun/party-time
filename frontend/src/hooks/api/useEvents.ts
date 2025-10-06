@@ -47,27 +47,16 @@ export function useEvents(
   return useQuery({
     queryKey: eventKeys.list(params),
     queryFn: async (): Promise<PaginatedResponse<EventSummary>> => {
-      try {
-        const result = await eventsService.getEvents(params)
-        return result || {
-          items: [],
-          page: 1,
-          limit: 10,
-          total: 0,
-          has_next: false,
-          has_previous: false
-        }
-      } catch (error) {
-        // Return empty result for demo purposes when API fails
-        console.warn('Failed to fetch events:', error)
-        return {
-          items: [],
-          page: 1,
-          limit: 10,
-          total: 0,
-          has_next: false,
-          has_previous: false
-        }
+      console.log('[useEvents] Fetching events with params:', params)
+      const result = await eventsService.getEvents(params)
+      console.log('[useEvents] Received events:', result)
+      return result || {
+        items: [],
+        page: 1,
+        limit: 10,
+        total: 0,
+        has_next: false,
+        has_previous: false
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes

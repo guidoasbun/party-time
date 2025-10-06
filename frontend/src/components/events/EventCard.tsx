@@ -57,7 +57,7 @@ const eventTypeLabels: Record<EventType, string> = {
 function BudgetProgressBar({ budgetTotal, totalExpenses }: { budgetTotal?: number; totalExpenses: number }) {
   if (!budgetTotal || budgetTotal === 0) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <DollarSign className="h-4 w-4" />
         <span>No budget set</span>
       </div>
@@ -76,20 +76,20 @@ function BudgetProgressBar({ budgetTotal, totalExpenses }: { budgetTotal?: numbe
         </div>
         <span className={cn(
           'font-medium text-xs sm:text-sm',
-          isOverBudget ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'
+          isOverBudget ? 'text-destructive' : 'text-card-foreground'
         )}>
           ${totalExpenses.toLocaleString()} / ${budgetTotal.toLocaleString()}
         </span>
       </div>
-      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
         <div
           className={cn(
             'h-2 rounded-full progress-fill transition-all duration-500 ease-out',
             isOverBudget
-              ? 'bg-gradient-to-r from-red-500 to-red-600 dark:from-red-400 dark:to-red-500'
+              ? 'bg-gradient-to-r from-red-500 to-red-600'
               : percentage > 80
-                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600 dark:from-yellow-400 dark:to-yellow-500'
-                : 'bg-gradient-to-r from-green-500 to-green-600 dark:from-green-400 dark:to-green-500',
+                ? 'bg-gradient-to-r from-yellow-500 to-yellow-600'
+                : 'bg-gradient-to-r from-green-500 to-green-600',
             percentage > 0 && 'shadow-sm'
           )}
           style={{
@@ -147,8 +147,8 @@ export function EventCard({
 
   // Animation classes for list view
   const listCardClasses = cn(
-    'group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4',
-    'hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600',
+    'group bg-card border border-border rounded-lg p-3 sm:p-4',
+    'hover:shadow-md hover:border-muted-foreground/20',
     animated ? [
       PRESET_ANIMATIONS.CARD_HOVER,
       'hover:shadow-lg hover:-translate-y-0.5',
@@ -169,11 +169,11 @@ export function EventCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between mb-2">
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
+                <h3 className="text-base sm:text-lg font-semibold text-card-foreground truncate">
                   {event.name}
                 </h3>
                 {/* Mobile: Stack info vertically, Desktop: Horizontal */}
-                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1 text-sm text-gray-600 dark:text-gray-400">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4 mt-1 text-sm text-muted-foreground">
                   <span className="font-medium">{eventTypeLabels[event.type]}</span>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4 flex-shrink-0" />
@@ -194,7 +194,7 @@ export function EventCard({
 
             {/* Mobile: Stack metrics, Desktop: Horizontal */}
             <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-              <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <Users className="h-4 w-4 flex-shrink-0" />
                 <span>{event.confirmed_guests}/{event.guest_count} confirmed ({rsvpRate}%)</span>
               </div>
@@ -211,10 +211,10 @@ export function EventCard({
           {/* Actions - Always visible on mobile, hover on desktop */}
           {showActions && (
             <div className={cn(
-              'flex items-center gap-1 sm:ml-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-200 dark:border-gray-700',
+              'flex items-center justify-end gap-1 sm:ml-4 pt-2 sm:pt-0 border-t sm:border-t-0 border-border',
               animated ? [
                 'sm:opacity-0 sm:group-hover:opacity-100 sm:group-hover:translate-x-0',
-                'sm:translate-x-2 transition-all duration-300 ease-out'
+                'sm:-translate-x-2 transition-all duration-300 ease-out'
               ] : 'sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
             )}>
               {onView && (
@@ -280,7 +280,7 @@ export function EventCard({
                   onClick={() => onDelete(event.id)}
                   title="Delete event"
                   className={cn(
-                    "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                    "text-destructive hover:text-destructive/90 hover:bg-destructive/10 min-h-[44px] min-w-[44px] p-2 sm:p-1",
                     animated && "button-press hover:scale-110 transition-all duration-150"
                   )}
                 >
@@ -296,8 +296,8 @@ export function EventCard({
 
   // Animation classes for grid view
   const gridCardClasses = cn(
-    'group bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 sm:p-6',
-    'hover:border-gray-300 dark:hover:border-gray-600',
+    'group bg-card border border-border rounded-lg p-4 sm:p-6',
+    'hover:border-muted-foreground/20',
     animated ? [
       PRESET_ANIMATIONS.CARD_HOVER,
       'hover:shadow-xl hover:-translate-y-2 hover:scale-102',
@@ -316,10 +316,10 @@ export function EventCard({
       {/* Header */}
       <div className="flex items-start justify-between mb-3 sm:mb-4">
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white truncate mb-1">
+          <h3 className="text-lg sm:text-xl font-semibold text-card-foreground truncate mb-1">
             {event.name}
           </h3>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             {eventTypeLabels[event.type]}
           </p>
         </div>
@@ -331,7 +331,7 @@ export function EventCard({
       {/* Event Details */}
       <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4">
         {/* Date and Time - Stack on very small screens */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 flex-shrink-0" />
             <span>{formattedDate}</span>
@@ -343,18 +343,18 @@ export function EventCard({
         </div>
 
         {event.venue_name && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <MapPin className="h-4 w-4 flex-shrink-0" />
             <span className="truncate">{event.venue_name}</span>
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 flex-shrink-0" />
             <span>{event.confirmed_guests}/{event.guest_count} confirmed</span>
           </div>
-          <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded w-fit">
+          <span className="text-xs bg-muted px-2 py-1 rounded w-fit">
             {rsvpRate}% RSVP
           </span>
         </div>
@@ -371,10 +371,10 @@ export function EventCard({
       {/* Actions - Always visible on mobile, hover on desktop */}
       {showActions && (
         <div className={cn(
-          'flex justify-end gap-1 sm:gap-2 pt-3 sm:pt-4 border-t border-gray-100 dark:border-gray-700',
+          'flex items-center justify-end gap-1 sm:gap-2 pt-3 sm:pt-4 border-t border-border',
           animated ? [
             'sm:opacity-0 sm:group-hover:opacity-100 sm:group-hover:translate-y-0',
-            'sm:translate-y-2 transition-all duration-300 ease-out'
+            'sm:-translate-y-2 transition-all duration-300 ease-out'
           ] : 'sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200'
         )}>
           {onView && (
@@ -426,7 +426,7 @@ export function EventCard({
               onClick={() => onArchive(event.id)}
               title="Archive event"
               className={cn(
-                "text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                "text-amber-600 hover:text-amber-700 hover:bg-amber-50/50 min-h-[44px] min-w-[44px] p-2 sm:p-1",
                 animated && "button-press hover:scale-110 transition-all duration-150"
               )}
             >
@@ -440,7 +440,7 @@ export function EventCard({
               onClick={() => onDelete(event.id)}
               title="Delete event"
               className={cn(
-                "text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] p-2 sm:p-1",
+                "text-destructive hover:text-destructive/90 hover:bg-destructive/10 min-h-[44px] min-w-[44px] p-2 sm:p-1",
                 animated && "button-press hover:scale-110 transition-all duration-150"
               )}
             >

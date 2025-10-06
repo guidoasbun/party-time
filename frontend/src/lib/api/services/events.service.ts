@@ -27,11 +27,34 @@ export class EventsService {
    * Get all events for the current user
    */
   async getEvents(params?: EventSearchParams): Promise<PaginatedResponse<EventSummary>> {
-    return api.get<PaginatedResponse<EventSummary>>(
+    const response = await api.get<PaginatedResponse<EventSummary> | EventSummary[]>(
       API_ENDPOINTS.EVENTS.LIST,
       params,
       withRetry({ attempts: 2 })
     )
+
+    console.log('[EventsService] Raw API response:', response)
+    console.log('[EventsService] Response type:', typeof response, Array.isArray(response))
+
+    // TEMPORARY FIX: Backend returns array instead of paginated response
+    // Transform array response to match PaginatedResponse format
+    if (Array.isArray(response)) {
+      console.warn('[EventsService] Backend returned array instead of PaginatedResponse - transforming...')
+      const page = params?.page || 1
+      const limit = params?.limit || 20
+      const items = response as EventSummary[]
+
+      return {
+        items,
+        total: items.length,
+        page,
+        limit,
+        has_next: false, // Cannot determine without backend pagination
+        has_previous: page > 1,
+      }
+    }
+
+    return response
   }
 
   /**
