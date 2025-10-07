@@ -224,11 +224,6 @@ export default function DashboardPage() {
 
   return (
     <>
-      <DashboardHeader
-        user={userInfo}
-        onSignOut={() => signOut({ callbackUrl: "/" })}
-      />
-
       <DashboardLayout>
         {/* Dashboard View Toggle - Mobile responsive */}
         <div className="mb-4 sm:mb-6">

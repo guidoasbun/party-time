@@ -7,12 +7,11 @@
 
 import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { Plus } from "lucide-react";
 import { EventList } from "@/components/events/EventList";
 import { EventFilters } from "@/components/events/EventFilters";
 import { EventsPageHeader } from "@/components/events/EventsPageHeader";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/Button";
 import { useEvents } from "@/hooks/api/useEvents";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
@@ -291,12 +290,6 @@ function EventsPageContent() {
 
   return (
     <>
-      {/* Dashboard Header with Theme Toggle */}
-      <DashboardHeader
-        user={userInfo}
-        onSignOut={() => signOut({ callbackUrl: "/" })}
-      />
-
       <div className="min-h-screen bg-background">
         {/* Page Container */}
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
