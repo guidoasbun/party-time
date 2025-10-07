@@ -47,6 +47,7 @@ const FAB = React.forwardRef<HTMLButtonElement, FABProps>(
             sizes[size],
             className
           )}
+          aria-label={label}
           title={label}
           {...props}
         >
