@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardLayout, DashboardStatsSection, DashboardMainContent, DashboardFiltersSection, DashboardSection } from "@/components/dashboard/DashboardLayout"
 import { DashboardSections } from "@/components/dashboard/DashboardSections"
@@ -12,7 +12,7 @@ import { EventFilters } from "@/components/events/EventFilters"
 import { FAB } from "@/components/ui/FAB"
 import { useEvents } from "@/hooks/api/useEvents"
 import { UserProfileResponse } from "@/types/auth.types"
-import { EventFilters as EventFiltersType, EventSearchParams } from "@/types/event.types"
+import { EventFilters as EventFiltersType } from "@/types/event.types"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -33,23 +33,85 @@ export default function DashboardPage() {
     guest_count_range: {}
   })
 
-  // Convert EventFilters to backend API params
-  const searchParams: EventSearchParams = {
-    skip: 0,
-    limit: 100,
-    type: eventFilters.types.length > 0 ? eventFilters.types : undefined,
-    status: eventFilters.statuses.length > 0 ? eventFilters.statuses : undefined,
-    include_relations: true,
-    // Note: Backend doesn't support search, location, date range, budget, or guest count yet
-    // These filters would need to be implemented backend-side or filtered client-side
-  }
-
-  // Fetch events with current filters
+  // Fetch ALL events from API (no filters)
   const {
     data: eventsData,
     isLoading: eventsLoading,
     error: eventsError
-  } = useEvents(searchParams)
+  } = useEvents({
+    page: 1,
+    limit: 1000, // Get all events
+  })
+
+  // Client-side filtering (same logic as /events page)
+  const filteredEvents = useMemo(() => {
+    if (!eventsData?.items) return [];
+
+    return eventsData.items.filter(event => {
+      // Search filter
+      if (eventFilters.search) {
+        const searchLower = eventFilters.search.toLowerCase();
+        const matchesSearch =
+          (event.name?.toLowerCase() || '').includes(searchLower) ||
+          (event.venue_name?.toLowerCase() || '').includes(searchLower) ||
+          (event.planner_name?.toLowerCase() || '').includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Type filter
+      if (eventFilters.types.length > 0 && !eventFilters.types.includes(event.type)) {
+        return false;
+      }
+
+      // Status filter
+      if (eventFilters.statuses.length > 0 && !eventFilters.statuses.includes(event.status)) {
+        return false;
+      }
+
+      // Date range filter
+      if (eventFilters.date_range.start || eventFilters.date_range.end) {
+        const eventDate = new Date(event.start_date).toISOString().split('T')[0];
+        if (eventFilters.date_range.start && eventDate < eventFilters.date_range.start) {
+          return false;
+        }
+        if (eventFilters.date_range.end && eventDate > eventFilters.date_range.end) {
+          return false;
+        }
+      }
+
+      // Location filter
+      if (eventFilters.location) {
+        const venueName = event.venue_name?.toLowerCase() || '';
+        if (!venueName.includes(eventFilters.location.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Budget range filter
+      if (eventFilters.budget_range?.min || eventFilters.budget_range?.max) {
+        const budget = event.budget_total || 0;
+        if (eventFilters.budget_range.min && budget < eventFilters.budget_range.min) {
+          return false;
+        }
+        if (eventFilters.budget_range.max && budget > eventFilters.budget_range.max) {
+          return false;
+        }
+      }
+
+      // Guest count range filter
+      if (eventFilters.guest_count_range?.min || eventFilters.guest_count_range?.max) {
+        const guestCount = event.guest_count || 0;
+        if (eventFilters.guest_count_range.min && guestCount < eventFilters.guest_count_range.min) {
+          return false;
+        }
+        if (eventFilters.guest_count_range.max && guestCount > eventFilters.guest_count_range.max) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [eventsData?.items, eventFilters])
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -221,7 +283,7 @@ export default function DashboardPage() {
                 fullWidth
               >
                 <EventList
-                  events={eventsData?.items || []}
+                  events={filteredEvents}
                   onEdit={handleEditEvent}
                   onDelete={handleDeleteEvent}
                   onView={handleViewEvent}
@@ -230,13 +292,6 @@ export default function DashboardPage() {
                   onViewModeChange={setViewMode}
                   isLoading={eventsLoading}
                   error={eventsError?.message || null}
-                  pagination={{
-                    page: eventsData?.page || 1,
-                    limit: eventsData?.limit || 10,
-                    total: eventsData?.total || 0,
-                    has_next: eventsData?.has_next || false,
-                    has_previous: eventsData?.has_previous || false,
-                  }}
                   enableBulkSelection={true}
                   enableEventActions={true}
                   emptyStateTitle="No events found"
