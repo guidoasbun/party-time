@@ -1,27 +1,27 @@
-'use client'
+"use client";
 
 /**
  * Event detail page
  * Displays comprehensive event information with edit, delete, and share actions
  */
 
-import React from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb } from '@/components/layout/Breadcrumb'
-import { EventDetailHeader } from '@/components/events/EventDetailHeader'
-import { EventActionButtons } from '@/components/events/EventActionButtons'
-import { EventDetailSkeleton } from '@/components/events/EventDetailSkeleton'
-import { EventTabs } from '@/components/events/EventTabs'
-import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useEvent } from '@/hooks/api/useEvents'
-import type { UUID } from '@/types'
+import React from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { EventDetailHeader } from "@/components/events/EventDetailHeader";
+import { EventActionButtons } from "@/components/events/EventActionButtons";
+import { EventDetailSkeleton } from "@/components/events/EventDetailSkeleton";
+import { EventTabs } from "@/components/events/EventTabs";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { useEvent } from "@/hooks/api/useEvents";
+import type { UUID } from "@/types";
 
 export default function EventDetailPage() {
-  const params = useParams()
-  const router = useRouter()
-  const eventId = params?.id as UUID
+  const params = useParams();
+  const router = useRouter();
+  const eventId = params?.id as UUID;
 
-  const { data: event, isLoading, error, refetch } = useEvent(eventId)
+  const { data: event, isLoading, error, refetch } = useEvent(eventId);
 
   // Loading state
   if (isLoading) {
@@ -29,7 +29,7 @@ export default function EventDetailPage() {
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <EventDetailSkeleton />
       </div>
-    )
+    );
   }
 
   // Error state
@@ -43,16 +43,23 @@ export default function EventDetailPage() {
           {/* Error message */}
           <ErrorMessage
             title="Failed to load event"
-            message={error?.message || 'The event could not be found or you do not have permission to view it.'}
-            onRetry={error ? () => {
-              void refetch()
-            } : undefined}
+            message={
+              error?.message ||
+              "The event could not be found or you do not have permission to view it."
+            }
+            onRetry={
+              error
+                ? () => {
+                    void refetch();
+                  }
+                : undefined
+            }
           />
 
           {/* Back button */}
           <div className="flex justify-center">
             <button
-              onClick={() => router.push('/dashboard')}
+              onClick={() => router.push("/dashboard")}
               className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               ← Back to Dashboard
@@ -60,7 +67,7 @@ export default function EventDetailPage() {
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -78,10 +85,10 @@ export default function EventDetailPage() {
             eventId={event.id}
             eventName={event.name}
             onDeleteSuccess={() => {
-              router.push('/dashboard')
+              router.push("/dashboard");
             }}
             onDuplicateSuccess={(newEventId) => {
-              router.push(`/events/${newEventId}`)
+              router.push(`/events/${newEventId}`);
             }}
           />
         </div>
@@ -90,5 +97,5 @@ export default function EventDetailPage() {
         <EventTabs event={event} />
       </div>
     </div>
-  )
+  );
 }
