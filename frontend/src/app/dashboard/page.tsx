@@ -11,7 +11,6 @@ import { EventList } from "@/components/events/EventList"
 import { EventFilters } from "@/components/events/EventFilters"
 import { FAB } from "@/components/ui/FAB"
 import { useEvents } from "@/hooks/api/useEvents"
-import { useViewPreferences } from "@/hooks/useViewPreferences"
 import { UserProfileResponse } from "@/types/auth.types"
 import { EventFilters as EventFiltersType } from "@/types/event.types"
 
@@ -23,6 +22,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
   const [dashboardView, setDashboardView] = useState<'overview' | 'events'>('overview')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [compactMode, setCompactMode] = useState(false)
   const [eventFilters, setEventFilters] = useState<EventFiltersType>({
     search: '',
     types: [],
@@ -31,21 +32,6 @@ export default function DashboardPage() {
     location: '',
     budget_range: {},
     guest_count_range: {}
-  })
-
-  // View preferences with persistence
-  const {
-    preferences,
-    setViewMode,
-    setCompactMode,
-  } = useViewPreferences({
-    persistToLocalStorage: true,
-    storageKey: "dashboard-preferences",
-    syncWithUrl: false,
-    defaultPreferences: {
-      viewMode: "grid",
-      compactMode: false,
-    },
   })
 
   // Fetch ALL events from API (no filters)
@@ -168,8 +154,8 @@ export default function DashboardPage() {
   }
 
   const handleCompactModeToggle = useCallback(() => {
-    setCompactMode(!preferences.compactMode)
-  }, [preferences.compactMode, setCompactMode])
+    setCompactMode(!compactMode)
+  }, [compactMode])
 
   const handleEditEvent = (eventId: string) => {
     router.push(`/events/${eventId}/edit`)
@@ -289,7 +275,7 @@ export default function DashboardPage() {
                   <input
                     id="dashboard-compact-mode"
                     type="checkbox"
-                    checked={preferences.compactMode}
+                    checked={compactMode}
                     onChange={handleCompactModeToggle}
                     className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
                   />
@@ -314,8 +300,8 @@ export default function DashboardPage() {
               <EventFilters
                 value={eventFilters}
                 onChange={setEventFilters}
-                compact={preferences.compactMode}
-                showAdvanced={!preferences.compactMode}
+                compact={compactMode}
+                showAdvanced={!compactMode}
               />
             </DashboardFiltersSection>
 
@@ -332,7 +318,7 @@ export default function DashboardPage() {
                   onDelete={handleDeleteEvent}
                   onView={handleViewEvent}
                   onCreateEvent={handleCreateEvent}
-                  viewMode={preferences.viewMode}
+                  viewMode={viewMode}
                   onViewModeChange={setViewMode}
                   isLoading={eventsLoading}
                   error={eventsError?.message || null}
