@@ -9,6 +9,7 @@
 ## 📊 Current Status Assessment
 
 ### ✅ Completed Features
+
 - **Infrastructure**: Docker environment, PostgreSQL database, MCP servers
 - **Authentication**: AWS Cognito integration, NextAuth.js setup, protected routes
 - **Event Backend API**: Complete CRUD operations with validation and filtering
@@ -24,12 +25,16 @@
 - **Form Integration Testing**: ✅ **NEW** - 12 comprehensive integration tests covering complete form workflow, API integration, data persistence, error handling (Phase 3.1.5 COMPLETE)
 - **Event Tabs Interface**: ✅ **NEW** - Tabbed interface with 5 tabs (Overview, Guests, Budget, Timeline, Settings), URL persistence, keyboard navigation, event creation via UI fully functional with all enum fixes (Phase 3.2.2 COMPLETE)
 - **Event Editing System**: ✅ **NEW** - Complete edit mode implementation with form pre-population, optimistic updates, unsaved changes warning, comprehensive null-handling in validation schemas, conditional validation for past/future dates (Phase 3.2.3 COMPLETE)
+- **Event Actions & Dialogs**: ✅ **NEW** - Delete/duplicate/share/status change dialogs with comprehensive functionality (Phase 3.2.4 COMPLETE)
+- **Event Detail Smoke Testing**: ✅ **NEW** - Comprehensive E2E and unit test coverage for complete event detail flow with mobile and theme support (Phase 3.2.5 COMPLETE)
 
 ### 🔄 In Progress
-- **Event Detail Pages**: ✅ Layout complete (Phase 3.2.1), ✅ Tabs complete (Phase 3.2.2), ✅ Editing complete (Phase 3.2.3), Event Actions & Dialogs in progress (Phase 3.2.4-3.2.5 - NEXT)
+
+- **Event Detail Pages**: ✅ Layout complete (Phase 3.2.1-3.2.5), Events List Page in progress (Phase 3.2.6 - NEXT)
 
 ### ❌ Remaining Work
-- Event detail pages and edit functionality
+
+- Events list page (Phase 3.2.6)
 - Guest management system
 - RSVP system
 - Email integration (AWS SES)
@@ -45,6 +50,7 @@
 ## 🗓️ 11-Week Completion Timeline
 
 ### Timeline Overview
+
 - **Weeks 1-2**: Event Forms & Detail Pages
 - **Weeks 3-4**: Guest Management System
 - **Weeks 5-6**: RSVP & Email Systems
@@ -57,21 +63,22 @@
 
 ## 📑 Phase Index
 
-| Phase | Title | Timeline | Priority | Hours | Key Deliverables |
-|-------|-------|----------|----------|-------|------------------|
-| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2) | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9) | **CRITICAL** | ✅ 26 hrs + 16 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail pages (3.2.1-3.2.4 ✅ COMPLETE), Events list page pending (3.2.6), Final testing (3.2.5) |
-| [Phase 4](#phase-4-guest-management-system-weeks-3-4) | Guest Management System | Weeks 3-4<br/>(Oct 9 - Oct 23) | **HIGH** | 30 hrs | Guest CRUD, CSV import, RSVP tokens, analytics dashboard |
-| [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6) | RSVP & Email Systems | Weeks 5-6<br/>(Oct 23 - Nov 6) | **HIGH** | 34 hrs | Public RSVP portal, Email templates, automation |
-| [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8) | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20) | **HIGH** | 42 hrs | Fabric.js canvas, drag-drop tables, guest assignments, exports |
-| [Phase 7](#phase-7-venue-search--budget-tracking-week-9---part-1) | Venue & Budget | Week 9.1<br/>(Nov 20-22) | **MEDIUM** | 18 hrs | Google Places search, basic budget tracking |
-| [Phase 8](#phase-8-testing-sprint--ui-polish-week-9---part-2) | Testing Sprint | Week 9.2<br/>(Nov 23-24) | **CRITICAL** | 16 hrs | Comprehensive test coverage, UI polish |
-| [Phase 9](#phase-9-performance--final-polish-week-10) | Performance & Polish | Week 10<br/>(Nov 27 - Dec 1) | **HIGH** | 20 hrs | Performance optimization, final bug fixes |
-| [Phase 10](#phase-10-deployment--infrastructure-week-11) | Deployment | Week 11<br/>(Dec 2 - Dec 6) | **CRITICAL** | 40 hrs | AWS infrastructure, CI/CD, production launch |
-| [Phase 11](#phase-11-chat--ai-systems-weeks-12-13) | Chat & AI Systems | Weeks 12-13<br/>(Dec 7 - Dec 12) | **MEDIUM** | 45 hrs | WebSocket chat, Claude AI integration, rich messaging |
+| Phase                                                             | Title                      | Timeline                         | Priority     | Hours              | Key Deliverables                                                                                                                                    |
+| ----------------------------------------------------------------- | -------------------------- | -------------------------------- | ------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2)           | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9)   | **CRITICAL** | ✅ 26 hrs + 18 hrs | 🔄 **IN PROGRESS** - Event forms (3.1 ✅ COMPLETE), Detail pages (3.2.1-3.2.5 ✅ COMPLETE), Events list page pending (3.2.6) |
+| [Phase 4](#phase-4-guest-management-system-weeks-3-4)             | Guest Management System    | Weeks 3-4<br/>(Oct 9 - Oct 23)   | **HIGH**     | 30 hrs             | Guest CRUD, CSV import, RSVP tokens, analytics dashboard                                                                                            |
+| [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6)                 | RSVP & Email Systems       | Weeks 5-6<br/>(Oct 23 - Nov 6)   | **HIGH**     | 34 hrs             | Public RSVP portal, Email templates, automation                                                                                                     |
+| [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8)          | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20)   | **HIGH**     | 42 hrs             | Fabric.js canvas, drag-drop tables, guest assignments, exports                                                                                      |
+| [Phase 7](#phase-7-venue-search--budget-tracking-week-9---part-1) | Venue & Budget             | Week 9.1<br/>(Nov 20-22)         | **MEDIUM**   | 18 hrs             | Google Places search, basic budget tracking                                                                                                         |
+| [Phase 8](#phase-8-testing-sprint--ui-polish-week-9---part-2)     | Testing Sprint             | Week 9.2<br/>(Nov 23-24)         | **CRITICAL** | 16 hrs             | Comprehensive test coverage, UI polish                                                                                                              |
+| [Phase 9](#phase-9-performance--final-polish-week-10)             | Performance & Polish       | Week 10<br/>(Nov 27 - Dec 1)     | **HIGH**     | 20 hrs             | Performance optimization, final bug fixes                                                                                                           |
+| [Phase 10](#phase-10-deployment--infrastructure-week-11)          | Deployment                 | Week 11<br/>(Dec 2 - Dec 6)      | **CRITICAL** | 40 hrs             | AWS infrastructure, CI/CD, production launch                                                                                                        |
+| [Phase 11](#phase-11-chat--ai-systems-weeks-12-13)                | Chat & AI Systems          | Weeks 12-13<br/>(Dec 7 - Dec 12) | **MEDIUM**   | 45 hrs             | WebSocket chat, Claude AI integration, rich messaging                                                                                               |
 
 **Total Project Duration**: 13 weeks | **Total Estimated Hours**: ~285 hours | **Target Completion**: December 12, 2025
 
 ### Quick Navigation
+
 - 🎯 [Risk Mitigation Strategy](#🚨-risk-mitigation-strategy)
 - 🧪 [Testing Methodology](#🧪-integrated-testing-methodology)
 - 📊 [Success Criteria](#📊-success-metrics)
@@ -80,27 +87,33 @@
 ---
 
 ## Phase 3: Event Forms & Detail Pages (Weeks 1-2)
+
 **Duration**: 2 weeks (September 25 - October 9, 2025)
 **Priority**: CRITICAL - Foundation for all other features
 
 ### Phase 3.1: Event Creation Form (Week 1)
+
 **Duration**: 3-4 days
 **Estimated Hours**: 20-26 hours (includes integrated testing)
 
 #### 3.1.1: Form Infrastructure Setup (Day 1 - 5 hours) ✅ **COMPLETED**
+
 **Development (3 hours)**: ✅ **COMPLETED**
+
 - [x] Create form validation schemas with Zod
 - [x] Set up multi-step form component structure
 - [x] Configure React Hook Form integration
 - [x] Add form persistence with localStorage
 
 **Testing (2 hours)**: ✅ **COMPLETED**
+
 - [x] Write validation schema unit tests (37/37 tests passing)
 - [x] Test form state persistence (28/31 FormContainer tests passing - 90%+ coverage)
 - [x] Test multi-step navigation logic
 - [x] Verify form cleanup on unmount
 
 **Files Created**: ✅ **ALL CREATED**
+
 ```
 ✅ frontend/src/lib/validations/event.ts
 ✅ frontend/src/lib/__tests__/validations/event.test.ts
@@ -112,19 +125,23 @@
 **Status**: ✅ **PHASE 3.1.1 COMPLETE** - Build passing, TypeScript compiled, production-ready
 
 #### 3.1.2: Basic Information Step (Day 2 - 5 hours) ✅ **COMPLETED**
+
 **Development (3 hours)**: ✅ **COMPLETED**
+
 - [x] Build event name and description fields with character counting
 - [x] Add event type selection with icons (13 event types with Lucide React icons)
 - [x] Implement form validation feedback with real-time error clearing
 - [x] Add form step navigation integration
 
 **Testing (2 hours)**: ✅ **COMPLETED**
+
 - [x] Test field validation and error messages (34/34 BasicInfoStep tests passing)
 - [x] Test event type selection interactions (28/28 EventTypeSelector tests passing)
 - [x] Test form step navigation and React Hook Form integration
 - [x] Test accessibility (ARIA labels, keyboard navigation, screen reader support)
 
 **Files Created**: ✅ **ALL CREATED**
+
 ```
 ✅ frontend/src/components/events/EventForm/BasicInfoStep.tsx
 ✅ frontend/src/components/events/EventForm/__tests__/BasicInfoStep.test.tsx
@@ -135,7 +152,9 @@
 **Status**: ✅ **PHASE 3.1.2 COMPLETE** - 62/62 tests passing, TypeScript compliant, production-ready
 
 #### 3.1.3: Date & Time Step (Day 3 - 5 hours) ✅ **COMPLETED**
+
 **Development (3 hours)**: ✅ **COMPLETED**
+
 - [x] Create date/time picker components with date-fns integration
 - [x] Add comprehensive timezone selection (all IANA timezones grouped by region)
 - [x] Implement start/end date validation with automatic constraints
@@ -146,6 +165,7 @@
 - [x] Form persistence and validation integration
 
 **Testing (2 hours)**: ✅ **COMPLETED**
+
 - [x] All tests passing (84/84 tests - 100% success rate)
 - [x] DateTimeStep tests (13/13 passing) - UI rendering, toggle, preview, quick dates
 - [x] DateTimePicker tests (34/34 passing) - Date/time modes, validation, clear functionality
@@ -154,11 +174,13 @@
 - [x] Form integration and React Hook Form compatibility tested
 
 **Deployment**: ✅ **COMPLETED**
+
 - [x] Production build passes without errors ('npm run build' successful)
 - [x] All TypeScript compilation successful
 - [x] All ESLint checks passing
 
 **Files Created**: ✅ **ALL CREATED AND TESTED**
+
 ```
 ✅ frontend/src/components/events/EventForm/DateTimeStep.tsx
 ✅ frontend/src/components/events/EventForm/__tests__/DateTimeStep.test.tsx
@@ -171,7 +193,9 @@
 **Status**: ✅ **PHASE 3.1.3 COMPLETE** - All components functional, tests passing, production-ready
 
 #### 3.1.4: Settings & Submission (Day 4 - 5 hours)
+
 **Development (3 hours)**: ✅ **COMPLETED**
+
 - [x] Add privacy settings (public/private) - Custom Switch component with Eye/EyeOff icons
 - [x] Guest limit and budget fields - Number inputs with validation (1-10,000 guests, $0-$10M budget)
 - [x] Save as draft functionality - Integrated with existing FormContainer localStorage persistence
@@ -180,6 +204,7 @@
 - [x] This is a Typescript Project, watch for types, no 'any' types - All TypeScript compilation successful
 
 **Testing (2 hours)**: ✅ **COMPLETED**
+
 - [x] Run tests as they are written, so that by end of day all tests pass - 59/59 tests passing
 - [x] Test privacy toggle functionality - Full accessibility with ARIA labels
 - [x] Test numeric field validation (guest limit, budget) - Input validation and error display
@@ -188,9 +213,11 @@
 - [x] Test error handling and success states - Error display and navigation tested
 
 **Deployment**: ✅ **COMPLETED**
+
 - [x] Run 'npm run build' to ensure production build passes without errors - Build successful, all routes generated
 
 **Files Created**: ✅ **ALL CREATED AND TESTED**
+
 ```
 ✅ frontend/src/components/events/EventForm/SettingsStep.tsx (Enhanced existing with card layout)
 ✅ frontend/src/components/events/EventForm/__tests__/SettingsStep.test.tsx (44 comprehensive tests)
@@ -199,6 +226,7 @@
 ```
 
 **Status**: ✅ **PHASE 3.1.4 COMPLETE** - All features implemented with:
+
 - Card-based UI layout with Material Design principles
 - Privacy toggle with custom Switch component and visual feedback
 - Guest management with pluralization and summary display
@@ -211,7 +239,9 @@
 - Production build successful
 
 #### 3.1.5: Form Integration Testing (Day 5 - 2 hours) ✅ **COMPLETED**
+
 **Integration Testing**: ✅ **COMPLETED**
+
 - [x] This is a Typescript Project, watch for types, no 'any' types - All TypeScript compilation successful, strict compliance maintained
 - [x] Run tests as they are written, so that ALL tests pass - 12/12 integration tests passing (100% success rate)
 - [x] Test complete form flow (all steps) - Multi-step navigation and validation tested
@@ -222,6 +252,7 @@
 - [x] Run 'npm run build' to ensure production build passes without errors - Production build successful
 
 **Testing Categories Covered**: ✅ **ALL IMPLEMENTED**
+
 - **Form Rendering & Basic Flow** (2 tests) - Initial state, input handling, step progression
 - **Data Persistence & Auto-save** (2 tests) - localStorage integration, data restoration
 - **API Integration** (2 tests) - Success callbacks, error handling, submission flow
@@ -230,11 +261,13 @@
 - **Step Management** (1 test) - Step persistence and navigation tracking
 
 **Files Created**: ✅ **ALL CREATED AND TESTED**
+
 ```
 ✅ frontend/src/components/events/EventForm/__tests__/EventForm.integration.test.tsx
 ```
 
 **Status**: ✅ **PHASE 3.1.5 COMPLETE** - Comprehensive integration testing with:
+
 - 12 integration tests covering complete form workflow
 - Robust mock setup for all dependencies (React Query, Router, Toast, API)
 - Complex UI interaction testing with proper element selectors
@@ -244,11 +277,14 @@
 - Production build successful with no TypeScript errors
 
 ### Phase 3.2: Event Detail Pages & Events List (Week 2)
+
 **Duration**: 5-6 days
 **Estimated Hours**: 21-25 hours (with smoke testing only)
 
 #### 3.2.1: Event Detail Layout (Day 1 - 4 hours) ✅ **COMPLETED**
+
 **Development (3.5 hours)**: ✅ **COMPLETED**
+
 - [x] Create event detail page structure with dynamic routing
 - [x] Add breadcrumb navigation component
 - [x] Implement event header with title, date, type, status badges
@@ -256,11 +292,13 @@
 - [x] Implement loading skeleton for data fetching
 
 **Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+
 - [x] Verify page loads with valid event ID
 - [x] Test navigation to/from event detail
 - [x] Confirm action buttons are clickable
 
 **Files Created**: ✅ **ALL CREATED**
+
 ```
 ✅ frontend/src/app/events/[id]/page.tsx
 ✅ frontend/src/components/events/EventDetailHeader.tsx
@@ -273,7 +311,9 @@
 **Status**: ✅ **PHASE 3.2.1 COMPLETE** - All components implemented, 24 smoke tests passing (100% pass rate), TypeScript compilation successful, production build ready
 
 #### 3.2.2: Event Tabs Interface (Day 2 - 4.5 hours) ✅ **COMPLETED**
+
 **Development (4 hours)**: ✅ **COMPLETED**
+
 - [x] Create tabbed interface component with React state management
 - [x] Implement Overview tab displaying all event details
 - [x] Add Guests tab placeholder with count badge
@@ -283,11 +323,13 @@
 - [x] Add loading and error states for each tab
 
 **Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+
 - [x] Verify tab switching works correctly
 - [x] Test that tab state persists on refresh
 - [x] Confirm data loads in Overview tab
 
 **Files Created**: ✅ **ALL CREATED**
+
 ```
 ✅ frontend/src/components/events/EventTabs.tsx
 ✅ frontend/src/components/events/EventOverviewTab.tsx
@@ -299,6 +341,7 @@
 ```
 
 **Additional Fixes Completed**:
+
 - [x] Fixed EventType enum alignment (added CELEBRATION type)
 - [x] Fixed EventStatus enum alignment (added ACTIVE status for backward compatibility)
 - [x] Updated EventTypeSelector component with all event types and icons
@@ -308,6 +351,7 @@
 - [x] Successfully tested event creation through UI with Playwright
 
 **Status**: ✅ **PHASE 3.2.2 COMPLETE** - All components implemented with:
+
 - Tabbed interface with 5 tabs (Overview, Guests, Budget, Timeline, Settings)
 - URL parameter persistence for active tab
 - Keyboard navigation support (Left/Right arrows)
@@ -320,7 +364,9 @@
 - Production build ready
 
 #### 3.2.3: Event Editing System (Day 3 - 4.5 hours) ✅ **COMPLETED**
+
 **Development (4 hours)**: ✅ **COMPLETED**
+
 - [x] Create edit page route `/events/[id]/edit`
 - [x] Reuse EventForm component with edit mode
 - [x] Pre-populate form with existing event data
@@ -329,11 +375,13 @@
 - [x] Add success toast and redirect to detail page
 
 **Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+
 - [x] Verify form pre-populates correctly
 - [x] Test successful edit and save
 - [x] Confirm optimistic updates work
 
 **Files Created/Updated**: ✅ **ALL CREATED AND TESTED**
+
 ```
 ✅ frontend/src/app/events/[id]/edit/page.tsx
 ✅ frontend/src/components/events/EventEditForm.tsx
@@ -347,6 +395,7 @@
 ```
 
 **Critical Bug Fixes Completed**:
+
 - [x] Fixed null-handling in all Zod validation schemas
 - [x] Created reusable `optionalStringSchema` and `optionalPositiveNumberSchema` helpers
 - [x] Updated all form schemas to handle null values from React Hook Form
@@ -357,6 +406,7 @@
 - [x] Verified complete edit flow works end-to-end (all 4 steps navigable)
 
 **Status**: ✅ **PHASE 3.2.3 COMPLETE** - All features implemented with:
+
 - Edit page route with proper URL structure
 - EventForm enhanced to support both create and edit modes (conditional schemas for past dates)
 - API data transformation for form pre-population (date/time extraction in HH:mm format)
@@ -371,7 +421,9 @@
 - Production build passing without errors
 
 #### 3.2.4: Event Actions & Dialogs (Day 4 - 4 hours) ✅ **COMPLETED**
+
 **Development (3.5 hours)**: ✅ **COMPLETED**
+
 - [x] Create delete confirmation dialog with AlertDialog
 - [x] Implement event deletion with cascade handling
 - [x] Add event duplication functionality with name customization
@@ -380,12 +432,14 @@
 - [x] Implement toast notifications for all actions
 
 **Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
+
 - [x] Test delete flow end-to-end
 - [x] Verify duplication creates new event
 - [x] Confirm status changes persist
 - [x] Test share functionality (clipboard, email, native)
 
 **Files Created**: ✅ **ALL CREATED**
+
 ```
 ✅ frontend/src/components/events/DeleteEventDialog.tsx
 ✅ frontend/src/components/events/DuplicateEventDialog.tsx
@@ -395,6 +449,7 @@
 ```
 
 **Status**: ✅ **PHASE 3.2.4 COMPLETE** - All features implemented with:
+
 - Dedicated delete dialog showing event impact (guests, budget, timeline)
 - Duplicate dialog with optional name customization and copy summary
 - Advanced share button with multiple options (link, email, native API)
@@ -404,33 +459,56 @@
 - TypeScript compilation successful
 - Production build passing without errors
 
-#### 3.2.5: Event Detail Smoke Testing (30 minutes)
-**Basic Integration Checks**:
-- [ ] Navigate through complete event detail flow
-- [ ] Create → View → Edit → Delete an event
-- [ ] Verify all tabs load without errors
-- [ ] Test on mobile viewport
-- [ ] Ensure TypeScript build passes
+#### 3.2.5: Event Detail Smoke Testing (30 minutes) ✅ **COMPLETED**
 
-**Files to Create**:
+**Basic Integration Checks**: ✅ **ALL COMPLETED**
+
+- [x] Navigate through complete event detail flow
+- [x] Create → View → Edit → Delete an event
+- [x] Verify all tabs load without errors
+- [x] Test on mobile viewport
+- [x] Ensure TypeScript build passes
+
+**Files Created**: ✅ **ALL CREATED AND TESTED**
+
 ```
-frontend/src/__tests__/smoke/event-detail.test.tsx
+✅ frontend/e2e/event-detail-flow.spec.ts (25 comprehensive E2E tests)
+✅ frontend/src/__tests__/smoke/event-detail.test.tsx (24/24 tests passing - updated)
 ```
+
+**Status**: ✅ **PHASE 3.2.5 COMPLETE** - All smoke tests implemented with:
+
+- Comprehensive E2E test coverage with Playwright (25 test scenarios)
+  - Event Creation Flow (4 tests)
+  - Event Detail Page (6 tests)
+  - Event Editing Flow (4 tests)
+  - Event Actions (4 tests)
+  - Mobile Responsiveness (3 tests)
+  - Theme Support (3 tests - light, dark, system)
+- Unit smoke tests fixed and passing (24/24 tests - 100% pass rate)
+- Production build successful with no TypeScript errors
+- All enum mismatches resolved between frontend and backend
+- Mobile viewport testing included (375x667 - iPhone SE)
+- Theme context integration verified (light/dark/system modes)
+- TypeScript strict compliance maintained (no `any` types)
 
 #### 3.2.6: Events List Page (Day 5 - 3 hours)
+
 **Development (2.5 hours)**:
-- [ ] Create `/events` page route with full-page layout
-- [ ] Implement events list view reusing EventList component
-- [ ] Add filtering sidebar with EventFilters component
-- [ ] Create view mode toggle (grid/list) with persistence
-- [ ] Add pagination controls for large event lists
-- [ ] Implement sort options (date, name, status, type)
-- [ ] Add search functionality with debouncing
-- [ ] Create "Create New Event" FAB button
-- [ ] Add breadcrumb navigation
-- [ ] Implement empty state for no events
+
+- [x] Create `/events` page route with full-page layout
+- [x] Implement events list view reusing EventList component
+- [x] Add filtering sidebar with EventFilters component
+- [x] Create view mode toggle (grid/list) with persistence
+- [x] Add pagination controls for large event lists
+- [x] Implement sort options (date, name, status, type)
+- [x] Add search functionality with debouncing
+- [x] Create "Create New Event" FAB button
+- [x] Add breadcrumb navigation
+- [x] Implement empty state for no events
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify page loads and displays all events
 - [ ] Test filtering and search functionality
 - [ ] Confirm view mode toggle persists
@@ -439,6 +517,7 @@ frontend/src/__tests__/smoke/event-detail.test.tsx
 - [ ] Test mobile responsiveness
 
 **Files to Create**:
+
 ```
 frontend/src/app/events/page.tsx
 frontend/src/components/events/EventsPageHeader.tsx
@@ -446,6 +525,7 @@ frontend/src/__tests__/smoke/events-list.test.tsx
 ```
 
 **Features**:
+
 - Full-page dedicated events list (separate from dashboard)
 - Advanced filtering (type, status, date range, search)
 - Grid/List view toggle with localStorage persistence
@@ -460,16 +540,20 @@ frontend/src/__tests__/smoke/events-list.test.tsx
 ---
 
 ## Phase 4: Guest Management System (Weeks 3-4)
+
 **Duration**: 10 days (October 9 - October 23, 2025)
 **Priority**: HIGH - Core functionality for event planning
 **Estimated Hours**: 28-32 hours (with smoke testing only)
 
 ### Phase 4.1: Guest Backend Enhancement (Days 1-3)
+
 **Duration**: 3 days
 **Estimated Hours**: 12-14 hours
 
 #### 4.1.1: Guest API Endpoints (Day 1 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create comprehensive guest CRUD endpoints
 - [ ] Add pagination and sorting support
 - [ ] Implement guest search (name, email, phone)
@@ -478,11 +562,13 @@ frontend/src/__tests__/smoke/events-list.test.tsx
 - [ ] Add guest-event relationship management
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test CRUD operations work
 - [ ] Verify search returns results
 - [ ] Confirm bulk operations execute
 
 **Files to Create/Update**:
+
 ```
 backend/app/api/v1/guests.py
 backend/app/schemas/guest.py
@@ -490,7 +576,9 @@ backend/app/models/guest.py
 ```
 
 #### 4.1.2: RSVP Token System (Day 2 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Generate unique 8-character alphanumeric tokens
 - [ ] Create token validation endpoints (no auth required)
 - [ ] Build invitation link generator with event details
@@ -499,11 +587,13 @@ backend/app/models/guest.py
 - [ ] Add QR code generation for tokens
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify tokens are unique
 - [ ] Test token validation endpoint
 - [ ] Confirm QR codes generate
 
 **Files to Create**:
+
 ```
 backend/app/services/rsvp_service.py
 backend/app/utils/token_generator.py
@@ -511,7 +601,9 @@ backend/app/utils/qr_generator.py
 ```
 
 #### 4.1.3: CSV Import Backend (Day 3 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create CSV parsing endpoint with pandas
 - [ ] Support multiple CSV formats (name variations)
 - [ ] Implement smart duplicate detection (email/phone matching)
@@ -520,11 +612,13 @@ backend/app/utils/qr_generator.py
 - [ ] Handle large files (1000+ guests) efficiently
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test CSV upload and parsing
 - [ ] Verify duplicate detection works
 - [ ] Confirm preview generates correctly
 
 **Files to Create**:
+
 ```
 backend/app/services/csv_import_service.py
 backend/app/utils/csv_parser.py
@@ -532,11 +626,14 @@ backend/tests/fixtures/sample_guests.csv
 ```
 
 ### Phase 4.2: Guest Management UI (Days 4-7)
+
 **Duration**: 4 days
 **Estimated Hours**: 16-18 hours
 
 #### 4.2.1: Guest List Interface (Day 4 - 5 hours)
+
 **Development (4.5 hours)**:
+
 - [ ] Create guest list page with data table
 - [ ] Implement sortable columns (name, email, RSVP status)
 - [ ] Add inline editing for quick updates
@@ -547,11 +644,13 @@ backend/tests/fixtures/sample_guests.csv
 - [ ] Create pagination controls
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify guest list loads and displays
 - [ ] Test inline editing saves
 - [ ] Confirm bulk actions work
 
 **Files to Create**:
+
 ```
 frontend/src/app/events/[id]/guests/page.tsx
 frontend/src/components/guests/GuestList.tsx
@@ -560,7 +659,9 @@ frontend/src/components/guests/GuestFilters.tsx
 ```
 
 #### 4.2.2: Guest Forms & Modals (Day 5 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create "Add Guest" modal with form
 - [ ] Include fields: name, email, phone, dietary restrictions, plus-one
 - [ ] Build inline edit functionality for table cells
@@ -570,11 +671,13 @@ frontend/src/components/guests/GuestFilters.tsx
 - [ ] Add notes and special requirements fields
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test adding new guest
 - [ ] Verify validation works
 - [ ] Confirm edit saves correctly
 
 **Files to Create**:
+
 ```
 frontend/src/components/guests/AddGuestModal.tsx
 frontend/src/components/guests/GuestDetailsDrawer.tsx
@@ -582,7 +685,9 @@ frontend/src/components/guests/QuickAddGuest.tsx
 ```
 
 #### 4.2.3: CSV Import Wizard (Day 6 - 5 hours)
+
 **Development (4.5 hours)**:
+
 - [ ] Create multi-step import wizard modal
 - [ ] Step 1: File upload with drag-and-drop
 - [ ] Step 2: Column mapping interface
@@ -592,11 +697,13 @@ frontend/src/components/guests/QuickAddGuest.tsx
 - [ ] Handle errors gracefully with retry
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Upload sample CSV file
 - [ ] Verify preview shows correctly
 - [ ] Confirm import completes
 
 **Files to Create**:
+
 ```
 frontend/src/components/guests/CSVImportWizard.tsx
 frontend/src/components/guests/ImportPreview.tsx
@@ -604,7 +711,9 @@ frontend/src/components/ui/FileUpload.tsx
 ```
 
 #### 4.2.4: Guest Analytics Dashboard (Day 7 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create guest statistics cards (total, confirmed, pending, declined)
 - [ ] Build RSVP status pie/donut chart
 - [ ] Add dietary restrictions summary
@@ -613,11 +722,13 @@ frontend/src/components/ui/FileUpload.tsx
 - [ ] Add print-friendly guest list view
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify statistics calculate correctly
 - [ ] Test export functionality
 - [ ] Check print view renders
 
 **Files to Create**:
+
 ```
 frontend/src/components/guests/GuestOverview.tsx
 frontend/src/components/guests/RSVPChart.tsx
@@ -627,16 +738,20 @@ frontend/src/components/guests/ExportGuests.tsx
 ---
 
 ## Phase 5: RSVP & Email Systems (Weeks 5-6)
+
 **Duration**: 10 days (October 23 - November 6, 2025)
 **Priority**: HIGH - Essential for guest communication
 **Estimated Hours**: 32-36 hours (with smoke testing only)
 
 ### Phase 5.1: RSVP System (Days 1-5)
+
 **Duration**: 5 days
 **Estimated Hours**: 18-20 hours
 
 #### 5.1.1: Public RSVP Backend (Day 1 - 5 hours)
+
 **Development (4.5 hours)**:
+
 - [ ] Create public RSVP endpoints (no auth required)
 - [ ] Implement token validation middleware
 - [ ] Add RSVP status management (attending, not attending, maybe)
@@ -646,11 +761,13 @@ frontend/src/components/guests/ExportGuests.tsx
 - [ ] Implement rate limiting for public endpoints
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test public endpoint access
 - [ ] Verify token validation works
 - [ ] Confirm RSVP saves successfully
 
 **Files to Create**:
+
 ```
 backend/app/api/v1/rsvp.py
 backend/app/models/rsvp.py
@@ -659,7 +776,9 @@ backend/app/middleware/rsvp_auth.py
 ```
 
 #### 5.1.2: RSVP Frontend Portal (Day 2 - 6 hours)
+
 **Development (5.5 hours)**:
+
 - [ ] Create beautiful public RSVP page `/rsvp/[token]`
 - [ ] Display event details (name, date, location, description)
 - [ ] Build multi-step RSVP form:
@@ -673,11 +792,13 @@ backend/app/middleware/rsvp_auth.py
 - [ ] Make fully mobile responsive
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test token validation on page load
 - [ ] Verify form submission works
 - [ ] Check mobile responsiveness
 
 **Files to Create**:
+
 ```
 frontend/src/app/rsvp/[token]/page.tsx
 frontend/src/components/rsvp/RSVPForm.tsx
@@ -686,7 +807,9 @@ frontend/src/components/rsvp/RSVPSteps.tsx
 ```
 
 #### 5.1.3: RSVP Management Dashboard (Day 3 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Add RSVP widget to event dashboard
 - [ ] Create real-time RSVP status tracker
 - [ ] Build RSVP timeline showing recent responses
@@ -696,11 +819,13 @@ frontend/src/components/rsvp/RSVPSteps.tsx
 - [ ] Add RSVP export functionality
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify RSVP stats display correctly
 - [ ] Test reminder sending
 - [ ] Confirm export works
 
 **Files to Create**:
+
 ```
 frontend/src/components/events/RSVPDashboard.tsx
 frontend/src/components/events/RSVPTimeline.tsx
@@ -708,7 +833,9 @@ frontend/src/components/events/RSVPReminders.tsx
 ```
 
 #### 5.1.4: RSVP Customization (Day 4 - 3 hours)
+
 **Development (2.5 hours)**:
+
 - [ ] Create RSVP settings in event form
 - [ ] Add custom questions builder
 - [ ] Configure meal options
@@ -717,21 +844,26 @@ frontend/src/components/events/RSVPReminders.tsx
 - [ ] Customize RSVP confirmation email
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test custom questions appear in RSVP form
 - [ ] Verify settings save correctly
 
 **Files to Create**:
+
 ```
 frontend/src/components/events/RSVPSettings.tsx
 frontend/src/components/events/CustomQuestions.tsx
 ```
 
 ### Phase 5.2: Email Integration (Days 6-10)
+
 **Duration**: 5 days
 **Estimated Hours**: 14-16 hours
 
 #### 5.2.1: Email Service Setup (Day 6 - 3 hours)
+
 **Development (2.5 hours)**:
+
 - [ ] Configure AWS SES or SendGrid (choose based on ease)
 - [ ] Create email service wrapper
 - [ ] Set up email queue with Redis
@@ -740,10 +872,12 @@ frontend/src/components/events/CustomQuestions.tsx
 - [ ] Handle bounces and complaints
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Send test email successfully
 - [ ] Verify queue processes
 
 **Files to Create**:
+
 ```
 backend/app/services/email_service.py
 backend/app/core/email_config.py
@@ -751,7 +885,9 @@ backend/app/tasks/email_tasks.py
 ```
 
 #### 5.2.2: Email Templates (Day 7 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create responsive HTML email templates with MJML
 - [ ] Design invitation template with event details
 - [ ] Build RSVP reminder template
@@ -761,10 +897,12 @@ backend/app/tasks/email_tasks.py
 - [ ] Support plain text fallbacks
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Preview templates render correctly
 - [ ] Test personalization works
 
 **Files to Create**:
+
 ```
 backend/app/templates/emails/invitation.mjml
 backend/app/templates/emails/reminder.mjml
@@ -773,7 +911,9 @@ backend/app/utils/template_renderer.py
 ```
 
 #### 5.2.3: Email Campaign Interface (Day 8 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create "Send Invitations" interface
 - [ ] Add recipient selection (all, specific groups)
 - [ ] Build email preview with test send
@@ -782,10 +922,12 @@ backend/app/utils/template_renderer.py
 - [ ] Show delivery stats (sent, opened, clicked)
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Send test invitation
 - [ ] Verify tracking updates
 
 **Files to Create**:
+
 ```
 frontend/src/components/events/SendInvitations.tsx
 frontend/src/components/events/EmailPreview.tsx
@@ -793,7 +935,9 @@ frontend/src/components/events/EmailTracking.tsx
 ```
 
 #### 5.2.4: Automated Email Flows (Day 9 - 3 hours)
+
 **Development (2.5 hours)**:
+
 - [ ] Set up automatic RSVP confirmations
 - [ ] Configure reminder emails (1 week, 1 day before)
 - [ ] Create thank you email post-event
@@ -801,10 +945,12 @@ frontend/src/components/events/EmailTracking.tsx
 - [ ] Implement unsubscribe handling
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Trigger automatic emails
 - [ ] Test unsubscribe works
 
 **Files to Create**:
+
 ```
 backend/app/services/email_automation.py
 backend/app/models/email_preferences.py
@@ -813,16 +959,20 @@ backend/app/models/email_preferences.py
 ---
 
 ## Phase 6: Interactive Seating Charts (Weeks 7-8)
+
 **Duration**: 10 days (November 6 - November 20, 2025)
 **Priority**: HIGH - Key differentiator feature for event planning
 **Estimated Hours**: 40-44 hours (with smoke testing only)
 
 ### Phase 6.1: Backend Infrastructure & Canvas Setup (Days 1-5)
+
 **Duration**: 5 days
 **Estimated Hours**: 20-22 hours
 
 #### 6.1.1: Seating Chart Data Models (Day 1 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create seating arrangement database schema
 - [ ] Design table models (round, rectangular, square, custom)
 - [ ] Add seat assignment tracking
@@ -831,10 +981,12 @@ backend/app/models/email_preferences.py
 - [ ] Add seating chart metadata (venue dimensions, capacity)
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify models create successfully
 - [ ] Test CRUD operations work
 
 **Files to Create**:
+
 ```
 backend/app/models/seating_chart.py
 backend/app/models/table_layout.py
@@ -843,7 +995,9 @@ backend/app/schemas/seating.py
 ```
 
 #### 6.1.2: Seating Chart API Endpoints (Day 2 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create seating chart CRUD endpoints
 - [ ] Build table management endpoints (add, move, delete)
 - [ ] Implement seat assignment endpoints
@@ -852,10 +1006,12 @@ backend/app/schemas/seating.py
 - [ ] Build export endpoints (PDF, image)
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test API endpoints respond
 - [ ] Verify save/load works
 
 **Files to Create**:
+
 ```
 backend/app/api/v1/seating.py
 backend/app/services/seating_service.py
@@ -863,7 +1019,9 @@ backend/app/utils/seating_algorithms.py
 ```
 
 #### 6.1.3: Fabric.js Canvas Setup (Day 3 - 5 hours)
+
 **Development (4.5 hours)**:
+
 - [ ] Install and configure Fabric.js
 - [ ] Create base canvas component
 - [ ] Implement zoom and pan controls
@@ -873,11 +1031,13 @@ backend/app/utils/seating_algorithms.py
 - [ ] Add rotation and resize handles
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Verify canvas renders
 - [ ] Test drag-and-drop works
 - [ ] Confirm shapes display correctly
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/SeatingCanvas.tsx
 frontend/src/components/seating/CanvasControls.tsx
@@ -885,7 +1045,9 @@ frontend/src/utils/fabric-shapes.ts
 ```
 
 #### 6.1.4: Table Management Interface (Day 4 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create table properties panel
 - [ ] Add table numbering system
 - [ ] Configure seats per table
@@ -894,11 +1056,13 @@ frontend/src/utils/fabric-shapes.ts
 - [ ] Create bulk table operations
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test table properties update
 - [ ] Verify numbering works
 - [ ] Confirm templates apply
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/TableProperties.tsx
 frontend/src/components/seating/TableTemplates.tsx
@@ -906,7 +1070,9 @@ frontend/src/components/seating/TableToolbar.tsx
 ```
 
 #### 6.1.5: Guest Assignment System (Day 5 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create guest list sidebar with drag-drop
 - [ ] Build seat assignment interface
 - [ ] Add guest search and filtering
@@ -915,11 +1081,13 @@ frontend/src/components/seating/TableToolbar.tsx
 - [ ] Add "unseated guests" indicator
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Drag guest to table
 - [ ] Verify assignment saves
 - [ ] Test conflict warnings
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/GuestSidebar.tsx
 frontend/src/components/seating/SeatAssignment.tsx
@@ -927,11 +1095,14 @@ frontend/src/components/seating/SeatingConflicts.tsx
 ```
 
 ### Phase 6.2: Advanced Seating Features (Days 6-10)
+
 **Duration**: 5 days
 **Estimated Hours**: 20-22 hours
 
 #### 6.2.1: Smart Seating Suggestions (Day 6 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Build relationship mapping (family, friends, colleagues)
 - [ ] Create seating rules engine (must sit together, keep apart)
 - [ ] Implement auto-arrange algorithm with constraints
@@ -940,11 +1111,13 @@ frontend/src/components/seating/SeatingConflicts.tsx
 - [ ] Build conflict resolution interface
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test auto-arrange generates layout
 - [ ] Verify rules are respected
 - [ ] Check suggestions appear
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/SeatingRules.tsx
 frontend/src/components/seating/AutoArrange.tsx
@@ -952,7 +1125,9 @@ frontend/src/components/seating/SeatingOptimizer.tsx
 ```
 
 #### 6.2.2: Venue Layout Integration (Day 7 - 5 hours)
+
 **Development (4.5 hours)**:
+
 - [ ] Create venue floor plan upload
 - [ ] Build venue dimensions configuration
 - [ ] Add room boundaries and obstacles
@@ -961,11 +1136,13 @@ frontend/src/components/seating/SeatingOptimizer.tsx
 - [ ] Add accessibility paths visualization
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Upload floor plan image
 - [ ] Verify obstacles affect layout
 - [ ] Test special areas placement
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/VenueLayout.tsx
 frontend/src/components/seating/FloorPlanUpload.tsx
@@ -973,7 +1150,9 @@ frontend/src/components/seating/SpecialAreas.tsx
 ```
 
 #### 6.2.3: Export and Sharing Features (Day 8 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Build PDF export with guest names
 - [ ] Create high-res image export
 - [ ] Generate print-friendly version
@@ -982,11 +1161,13 @@ frontend/src/components/seating/SpecialAreas.tsx
 - [ ] Build guest seating list export
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Export PDF successfully
 - [ ] Verify print layout works
 - [ ] Test share link generates
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/ExportSeating.tsx
 frontend/src/components/seating/PrintView.tsx
@@ -994,7 +1175,9 @@ frontend/src/utils/seating-export.ts
 ```
 
 #### 6.2.4: Mobile and Tablet Views (Day 9 - 4 hours)
+
 **Development (3.5 hours)**:
+
 - [ ] Create read-only mobile view
 - [ ] Build guest lookup interface
 - [ ] Add "Find My Seat" feature
@@ -1003,11 +1186,13 @@ frontend/src/utils/seating-export.ts
 - [ ] Add mobile-friendly guest list
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test mobile view renders
 - [ ] Verify guest lookup works
 - [ ] Check tablet interactions
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/MobileSeatingView.tsx
 frontend/src/components/seating/FindMySeat.tsx
@@ -1015,7 +1200,9 @@ frontend/src/components/seating/ResponsiveToolbar.tsx
 ```
 
 #### 6.2.5: Seating Chart Polish & Integration (Day 10 - 3 hours)
+
 **Development (2.5 hours)**:
+
 - [ ] Add undo/redo functionality
 - [ ] Create keyboard shortcuts
 - [ ] Implement autosave with versioning
@@ -1024,11 +1211,13 @@ frontend/src/components/seating/ResponsiveToolbar.tsx
 - [ ] Integrate with event details page
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Test undo/redo works
 - [ ] Verify autosave functions
 - [ ] Check integration with events
 
 **Files to Create**:
+
 ```
 frontend/src/components/seating/SeatingHistory.tsx
 frontend/src/components/seating/SeatingHelp.tsx
@@ -1038,16 +1227,20 @@ frontend/src/hooks/useSeatingChart.ts
 ---
 
 ## Phase 7: Venue Search & Budget Tracking (Week 9 - Part 1)
+
 **Duration**: 3 days (November 20 - November 22, 2025)
 **Priority**: MEDIUM - Adds significant value
 **Estimated Hours**: 16-18 hours (with smoke testing only)
 
 ### Phase 7.1: Venue Search System (Days 1-2)
+
 **Duration**: 2 days
 **Estimated Hours**: 10-12 hours
 
 #### 7.1.1: Google Places API Integration (Day 1 - 6 hours)
+
 **Development (5.5 hours)**:
+
 - [ ] Set up Google Places API credentials
 - [ ] Create venue search backend service
 - [ ] Implement caching to reduce API calls
@@ -1056,10 +1249,12 @@ frontend/src/hooks/useSeatingChart.ts
 - [ ] Create manual venue entry option
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Search returns venues
 - [ ] Details load correctly
 
 **Files to Create**:
+
 ```
 backend/app/services/venue_service.py
 backend/app/api/v1/venues.py
@@ -1067,7 +1262,9 @@ backend/app/schemas/venue.py
 ```
 
 #### 7.1.2: Venue Search UI (Day 2 - 6 hours)
+
 **Development (5.5 hours)**:
+
 - [ ] Create venue search interface
 - [ ] Build results cards with photos
 - [ ] Add map view with markers
@@ -1076,10 +1273,12 @@ backend/app/schemas/venue.py
 - [ ] Add saved venues list
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Search UI functions
 - [ ] Venue saves to event
 
 **Files to Create**:
+
 ```
 frontend/src/components/venues/VenueSearch.tsx
 frontend/src/components/venues/VenueCard.tsx
@@ -1087,11 +1286,14 @@ frontend/src/components/venues/VenueMap.tsx
 ```
 
 ### Phase 7.2: Budget Tracking System (Day 3)
+
 **Duration**: 1 day
 **Estimated Hours**: 6 hours
 
 #### 7.2.1: Basic Budget Management (Day 3 - 6 hours)
+
 **Development (5.5 hours)**:
+
 - [ ] Create budget/expense database models
 - [ ] Build expense CRUD endpoints
 - [ ] Create budget overview dashboard
@@ -1102,10 +1304,12 @@ frontend/src/components/venues/VenueMap.tsx
 - [ ] Create spending alerts
 
 **Smoke Testing (0.5 hours)**:
+
 - [ ] Add expense successfully
 - [ ] Budget calculations correct
 
 **Files to Create**:
+
 ```
 backend/app/models/budget.py
 backend/app/api/v1/budget.py
@@ -1117,15 +1321,19 @@ frontend/src/components/budget/BudgetChart.tsx
 ---
 
 ## Phase 8: Testing Sprint & UI Polish (Week 9 - Part 2)
+
 **Duration**: 2 days (November 23 - November 24, 2025)
 **Priority**: CRITICAL - Quality assurance
 **Estimated Hours**: 16 hours
 
 ### Phase 8.1: Comprehensive Testing Backfill (Day 4)
+
 **Duration**: 1 day (8 hours)
 
 #### Critical Test Coverage
+
 **Development (8 hours)**:
+
 - [ ] Write integration tests for Event Detail Pages
 - [ ] Add critical tests for Guest Management
 - [ ] Create RSVP flow end-to-end tests
@@ -1136,6 +1344,7 @@ frontend/src/components/budget/BudgetChart.tsx
 - [ ] Add authentication flow tests
 
 **Files to Create**:
+
 ```
 frontend/src/__tests__/integration/critical-workflows.test.tsx
 frontend/src/__tests__/integration/error-handling.test.tsx
@@ -1143,10 +1352,13 @@ backend/tests/integration/test_complete_flows.py
 ```
 
 ### Phase 8.2: UI Polish & Mobile Optimization (Day 5)
+
 **Duration**: 1 day (8 hours)
 
 #### UI/UX Improvements
+
 **Development (8 hours)**:
+
 - [ ] Add loading skeletons throughout app
 - [ ] Implement consistent error messages
 - [ ] Add success feedback animations
@@ -1157,6 +1369,7 @@ backend/tests/integration/test_complete_flows.py
 - [ ] Add help tooltips
 
 **Files to Update**:
+
 ```
 frontend/src/components/ui/LoadingStates.tsx
 frontend/src/components/ui/ErrorBoundary.tsx
@@ -1166,14 +1379,17 @@ frontend/src/styles/responsive.css
 ---
 
 ## Phase 9: Performance & Final Polish (Week 10)
+
 **Duration**: 5 days (November 27 - December 1, 2025)
 **Priority**: HIGH - Production readiness
 **Estimated Hours**: 20 hours
 
 ### Phase 9.1: Performance Optimization (Days 1-2)
+
 **Duration**: 2 days (8 hours)
 
 **Development (8 hours)**:
+
 - [ ] Implement code splitting for all routes
 - [ ] Optimize images with next/image
 - [ ] Add lazy loading for heavy components
@@ -1184,6 +1400,7 @@ frontend/src/styles/responsive.css
 - [ ] Add performance monitoring
 
 **Files to Update**:
+
 ```
 frontend/next.config.js
 backend/app/core/cache.py
@@ -1191,9 +1408,11 @@ frontend/src/utils/lazy-load.ts
 ```
 
 ### Phase 9.2: Final Bug Fixes & Polish (Days 3-5)
+
 **Duration**: 3 days (12 hours)
 
 **Development (12 hours)**:
+
 - [ ] Fix all critical bugs from testing
 - [ ] Polish UI inconsistencies
 - [ ] Add missing error handling
@@ -1206,14 +1425,17 @@ frontend/src/utils/lazy-load.ts
 ---
 
 ## Phase 10: Deployment & Infrastructure (Week 11)
+
 **Duration**: 5 days (December 2 - December 6, 2025)
 **Priority**: CRITICAL - Production deployment
 **Estimated Hours**: 40 hours
 
 ### Phase 10.1: AWS Infrastructure Setup (Days 1-2)
+
 **Duration**: 2 days (16 hours)
 
 **Development (16 hours)**:
+
 - [ ] Set up AWS account and IAM roles
 - [ ] Configure VPC and security groups
 - [ ] Set up RDS PostgreSQL instance
@@ -1226,6 +1448,7 @@ frontend/src/utils/lazy-load.ts
 - [ ] Set up CloudWatch monitoring
 
 **Files to Create**:
+
 ```
 infrastructure/terraform/main.tf
 infrastructure/terraform/variables.tf
@@ -1234,9 +1457,11 @@ infrastructure/terraform/outputs.tf
 ```
 
 ### Phase 10.2: CI/CD Pipeline (Day 3)
+
 **Duration**: 1 day (8 hours)
 
 **Development (8 hours)**:
+
 - [ ] Configure GitHub Actions workflow
 - [ ] Set up automated testing in CI
 - [ ] Create staging deployment pipeline
@@ -1247,6 +1472,7 @@ infrastructure/terraform/outputs.tf
 - [ ] Add health checks
 
 **Files to Create**:
+
 ```
 .github/workflows/ci.yml
 .github/workflows/staging.yml
@@ -1255,9 +1481,11 @@ scripts/deploy.sh
 ```
 
 ### Phase 10.3: Production Testing (Day 4)
+
 **Duration**: 1 day (8 hours)
 
 **Testing (8 hours)**:
+
 - [ ] Run full test suite in production
 - [ ] Performance testing with load
 - [ ] Security vulnerability scanning
@@ -1268,9 +1496,11 @@ scripts/deploy.sh
 - [ ] Test rollback procedures
 
 ### Phase 10.4: Documentation & Launch (Day 5)
+
 **Duration**: 1 day (8 hours)
 
 **Documentation & Demo (8 hours)**:
+
 - [ ] Create user documentation
 - [ ] Document API endpoints
 - [ ] Write deployment guide
@@ -1283,15 +1513,19 @@ scripts/deploy.sh
 ---
 
 ## Phase 11: Chat & AI Systems (Weeks 12-13)
+
 **Duration**: 10 days (December 7 - December 12, 2025)
 **Priority**: MEDIUM - Advanced feature enhancement
 **Estimated Hours**: 40-45 hours
 
 ### Phase 11.1: Chat Infrastructure (Days 1-5)
+
 **Duration**: 5 days (20 hours)
 
 #### 11.1.1: WebSocket & Database Setup (Day 1 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Set up WebSocket server with Socket.io
 - [ ] Create message storage schema
 - [ ] Implement connection management
@@ -1299,6 +1533,7 @@ scripts/deploy.sh
 - [ ] Create chat room logic
 
 **Files to Create**:
+
 ```
 backend/app/websocket/server.py
 backend/app/models/chat_message.py
@@ -1306,7 +1541,9 @@ backend/app/services/chat_service.py
 ```
 
 #### 11.1.2: Chat API Endpoints (Day 2 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Create message CRUD endpoints
 - [ ] Build conversation management
 - [ ] Add event chat rooms
@@ -1314,13 +1551,16 @@ backend/app/services/chat_service.py
 - [ ] Create message search
 
 **Files to Create**:
+
 ```
 backend/app/api/v1/chat.py
 backend/app/schemas/chat.py
 ```
 
 #### 11.1.3: Basic Chat UI (Day 3 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Create chat interface layout
 - [ ] Build message list component
 - [ ] Add message input
@@ -1328,6 +1568,7 @@ backend/app/schemas/chat.py
 - [ ] Add typing indicators
 
 **Files to Create**:
+
 ```
 frontend/src/components/chat/ChatInterface.tsx
 frontend/src/components/chat/MessageList.tsx
@@ -1335,7 +1576,9 @@ frontend/src/components/chat/ChatInput.tsx
 ```
 
 #### 11.1.4: Claude AI Integration (Day 4 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Integrate Claude API
 - [ ] Create AI command detection (@ai)
 - [ ] Build prompt templates
@@ -1343,13 +1586,16 @@ frontend/src/components/chat/ChatInput.tsx
 - [ ] Implement response formatting
 
 **Files to Create**:
+
 ```
 backend/app/services/ai_service.py
 backend/app/utils/prompts.py
 ```
 
 #### 11.1.5: AI Assistant Features (Day 5 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Create planning suggestions
 - [ ] Add vendor recommendations
 - [ ] Build timeline generator
@@ -1357,16 +1603,20 @@ backend/app/utils/prompts.py
 - [ ] Add checklist creation
 
 **Files to Create**:
+
 ```
 frontend/src/components/chat/AIAssistant.tsx
 frontend/src/components/chat/AISuggestions.tsx
 ```
 
 ### Phase 11.2: Advanced Chat Features (Days 6-10)
+
 **Duration**: 5 days (20-25 hours)
 
 #### 11.2.1: Event Chat Rooms (Day 6 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Create event-specific rooms
 - [ ] Add participant management
 - [ ] Implement permissions
@@ -1374,13 +1624,16 @@ frontend/src/components/chat/AISuggestions.tsx
 - [ ] Add notification system
 
 **Files to Create**:
+
 ```
 frontend/src/components/chat/EventChatRoom.tsx
 frontend/src/components/chat/ChatRoomList.tsx
 ```
 
 #### 11.2.2: Rich Messaging (Day 7 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Add file attachments
 - [ ] Implement image preview
 - [ ] Create link previews
@@ -1388,13 +1641,16 @@ frontend/src/components/chat/ChatRoomList.tsx
 - [ ] Build message editing
 
 **Files to Create**:
+
 ```
 frontend/src/components/chat/RichMessage.tsx
 frontend/src/components/chat/FileUpload.tsx
 ```
 
 #### 11.2.3: Mobile Chat Experience (Day 8 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Optimize for mobile screens
 - [ ] Add push notifications setup
 - [ ] Create mobile-first UI
@@ -1402,7 +1658,9 @@ frontend/src/components/chat/FileUpload.tsx
 - [ ] Add PWA features
 
 #### 11.2.4: Chat Analytics & History (Day 9 - 4 hours)
+
 **Development (4 hours)**:
+
 - [ ] Build message search
 - [ ] Add chat export
 - [ ] Create activity dashboard
@@ -1410,7 +1668,9 @@ frontend/src/components/chat/FileUpload.tsx
 - [ ] Add moderation tools
 
 #### 11.2.5: Final Integration & Polish (Day 10 - 5 hours)
+
 **Development (5 hours)**:
+
 - [ ] Integrate chat with all pages
 - [ ] Add chat widget
 - [ ] Create help bot
@@ -1422,6 +1682,7 @@ frontend/src/components/chat/FileUpload.tsx
 ## 🧪 Hybrid Testing Methodology
 
 ### New Testing Philosophy
+
 - **Smoke Tests Only During Development**: Minimal tests to verify functionality works
 - **Dedicated Testing Sprint**: Week 9 for comprehensive test coverage
 - **Focus on Features First**: Build complete functionality before extensive testing
@@ -1430,12 +1691,14 @@ frontend/src/components/chat/FileUpload.tsx
 ### Testing Strategy by Phase
 
 #### Phase 3.2-8: Development with Smoke Tests (10-15% time)
+
 - **What to Test**: Basic functionality, happy path only
 - **When**: Immediately after feature completion
 - **Coverage Goal**: 20-30% during development
 - **Time Allocation**: 30 minutes per feature maximum
 
 #### Phase 8 (Week 9): Dedicated Testing Sprint
+
 - **Integration Tests**: Complete user workflows
 - **Unit Tests**: Critical business logic
 - **E2E Tests**: Main user journeys
@@ -1443,6 +1706,7 @@ frontend/src/components/chat/FileUpload.tsx
 - **Time Allocation**: 2 full days (16 hours)
 
 #### Phase 10-11: Final Testing
+
 - **Production Tests**: Real environment testing
 - **Performance Tests**: Load and stress testing
 - **Security Tests**: Vulnerability scanning
@@ -1451,6 +1715,7 @@ frontend/src/components/chat/FileUpload.tsx
 ### Testing Standards
 
 #### Test Quality Checklist
+
 - [ ] Tests are readable and maintainable
 - [ ] Tests cover both happy path and edge cases
 - [ ] Tests include proper error scenarios
@@ -1458,6 +1723,7 @@ frontend/src/components/chat/FileUpload.tsx
 - [ ] Tests run consistently in CI/CD pipeline
 
 #### Performance Testing Requirements
+
 - [ ] Page load times < 3 seconds
 - [ ] API response times < 500ms
 - [ ] Bundle size optimization
@@ -1465,6 +1731,7 @@ frontend/src/components/chat/FileUpload.tsx
 - [ ] Mobile performance optimization
 
 #### Accessibility Testing Standards
+
 - [ ] ARIA labels and semantic HTML
 - [ ] Keyboard navigation support
 - [ ] Screen reader compatibility
@@ -1474,12 +1741,14 @@ frontend/src/components/chat/FileUpload.tsx
 ### Continuous Integration Testing
 
 #### Pre-commit Hooks
+
 - [ ] Lint checking (ESLint, Black)
 - [ ] Type checking (TypeScript, mypy)
 - [ ] Basic unit test execution
 - [ ] Code formatting (Prettier, Black)
 
 #### CI Pipeline Testing (GitHub Actions)
+
 - [ ] Full test suite execution
 - [ ] Integration test execution
 - [ ] Security vulnerability scanning
@@ -1488,23 +1757,24 @@ frontend/src/components/chat/FileUpload.tsx
 
 ### Testing Time Allocation with Hybrid Approach
 
-| Phase | Development Time | Testing Time | Total Time | Approach |
-|-------|-----------------|--------------|------------|----------|
-| Phase 3.2 | 90% (16 hrs) | 10% (2 hrs) | 18 hrs | Smoke tests only |
-| Phase 4 | 90% (27 hrs) | 10% (3 hrs) | 30 hrs | Smoke tests only |
-| Phase 5 | 90% (31 hrs) | 10% (3 hrs) | 34 hrs | Smoke tests only |
-| Phase 6 | 90% (38 hrs) | 10% (4 hrs) | 42 hrs | Smoke tests only |
-| Phase 7 | 90% (16 hrs) | 10% (2 hrs) | 18 hrs | Smoke tests only |
-| Phase 8 | 0% (0 hrs) | 100% (16 hrs) | 16 hrs | **Testing Sprint** |
-| Phase 9 | 100% (20 hrs) | 0% (0 hrs) | 20 hrs | Performance focus |
-| Phase 10 | 80% (32 hrs) | 20% (8 hrs) | 40 hrs | Production tests |
-| Phase 11 | 85% (38 hrs) | 15% (7 hrs) | 45 hrs | Basic coverage |
+| Phase     | Development Time | Testing Time  | Total Time | Approach           |
+| --------- | ---------------- | ------------- | ---------- | ------------------ |
+| Phase 3.2 | 90% (16 hrs)     | 10% (2 hrs)   | 18 hrs     | Smoke tests only   |
+| Phase 4   | 90% (27 hrs)     | 10% (3 hrs)   | 30 hrs     | Smoke tests only   |
+| Phase 5   | 90% (31 hrs)     | 10% (3 hrs)   | 34 hrs     | Smoke tests only   |
+| Phase 6   | 90% (38 hrs)     | 10% (4 hrs)   | 42 hrs     | Smoke tests only   |
+| Phase 7   | 90% (16 hrs)     | 10% (2 hrs)   | 18 hrs     | Smoke tests only   |
+| Phase 8   | 0% (0 hrs)       | 100% (16 hrs) | 16 hrs     | **Testing Sprint** |
+| Phase 9   | 100% (20 hrs)    | 0% (0 hrs)    | 20 hrs     | Performance focus  |
+| Phase 10  | 80% (32 hrs)     | 20% (8 hrs)   | 40 hrs     | Production tests   |
+| Phase 11  | 85% (38 hrs)     | 15% (7 hrs)   | 45 hrs     | Basic coverage     |
 
 **Total Estimated Hours**: ~285 hours (approximately 22 hours per week for 13 weeks)
 
 ### Success Criteria for Testing
 
 #### Code Quality Metrics
+
 - Test coverage ≥ 90%
 - Zero critical security vulnerabilities
 - No TypeScript/linting errors
@@ -1512,6 +1782,7 @@ frontend/src/components/chat/FileUpload.tsx
 - All CI/CD pipeline checks passing
 
 #### User Experience Validation
+
 - All critical user flows tested
 - Mobile responsiveness verified
 - Accessibility standards met
@@ -1525,6 +1796,7 @@ This integrated testing approach ensures that quality is built into every aspect
 ## 🚨 Risk Mitigation Strategy
 
 ### Checkpoint Assessments with Hybrid Approach
+
 - **Week 2**: If behind, skip remaining tests completely
 - **Week 4**: If behind on guests, simplify CSV to basic upload
 - **Week 6**: If behind on email, use SendGrid instead of AWS SES
@@ -1533,12 +1805,14 @@ This integrated testing approach ensures that quality is built into every aspect
 - **Week 11**: If deployment issues, use Vercel/Heroku as backup
 
 ### Time Savings from Hybrid Testing
+
 - **Saved ~80-100 hours** by deferring comprehensive testing
 - **Reallocated time** to Interactive Seating Charts feature
 - **Added Chat/AI** as bonus features after deployment
 - **More features** delivered with same timeline
 
 ### Critical Path Priority (Updated)
+
 1. **Must Have**: Event CRUD, Guest management, RSVP, Email, **Seating Charts**
 2. **Should Have**: Venue search, Budget tracking, Mobile optimization
 3. **Nice to Have**: Chat system, AI assistant, Advanced analytics
@@ -1548,6 +1822,7 @@ This integrated testing approach ensures that quality is built into every aspect
 ## 📊 Success Metrics
 
 ### Technical Metrics
+
 - All critical user flows working
 - No TypeScript errors
 - 90%+ test coverage maintained
@@ -1555,6 +1830,7 @@ This integrated testing approach ensures that quality is built into every aspect
 - Under 3-second load times
 
 ### Functional Metrics
+
 - Users can create and manage events
 - Guest management and RSVP system operational
 - Email invitations working
@@ -1562,6 +1838,7 @@ This integrated testing approach ensures that quality is built into every aspect
 - Successful deployment to production
 
 ### Timeline Metrics
+
 - Weekly milestones met
 - Daily task completion tracked
 - Buffer time utilized appropriately
@@ -1572,17 +1849,20 @@ This integrated testing approach ensures that quality is built into every aspect
 ## 🛠️ Daily Development Approach
 
 ### Task Structure
+
 - **Each checkbox = 2-4 hours maximum**
 - **Complete one task before moving to next**
 - **Test immediately after implementation**
 - **Update roadmap with progress daily**
 
 ### Development Rhythm
+
 - **Morning (3-4 hours)**: Core feature development
 - **Afternoon (2-3 hours)**: Testing and refinement
 - **Evening (1 hour)**: Documentation and next-day planning
 
 ### Weekly Review
+
 - **Friday afternoon**: Assess week's progress
 - **Identify blockers** and adjust next week's plan
 - **Update timeline** based on actual vs estimated hours
@@ -1595,35 +1875,41 @@ This integrated testing approach ensures that quality is built into every aspect
 By December 12, 2025, the Party-Time application will have:
 
 ✅ **Core Functionality (Weeks 1-6)**
+
 - Complete event management system with detail pages
 - Guest list management with CSV import
 - Public RSVP system with custom forms
 - Email invitation system with templates
 
 ✅ **Differentiator Features (Weeks 7-8)**
+
 - **Interactive Seating Charts** with Fabric.js
 - Drag-and-drop table arrangements
 - Guest-to-seat assignments
 - PDF/Image exports
 
 ✅ **Additional Features (Week 9)**
+
 - Google Places venue search
 - Basic budget tracking
 - Comprehensive test coverage (70-80%)
 - Mobile-responsive interface
 
 ✅ **Production Ready (Weeks 10-11)**
+
 - AWS cloud deployment
 - CI/CD pipeline
 - Performance optimized
 - Security best practices
 
 ✅ **Bonus Features (Weeks 12-13)**
+
 - Real-time chat system
 - Claude AI event planning assistant
 - Rich messaging capabilities
 
 ✅ **Quality Standards**
+
 - Hybrid testing approach (smoke + sprint)
 - Type-safe TypeScript implementation
 - Accessible user interface
