@@ -1,9 +1,8 @@
 "use client"
 
-import { useSession, signOut } from "next-auth/react"
+import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState, useCallback, useMemo } from "react"
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader"
 import { DashboardLayout, DashboardStatsSection, DashboardMainContent, DashboardFiltersSection, DashboardSection } from "@/components/dashboard/DashboardLayout"
 import { DashboardSections } from "@/components/dashboard/DashboardSections"
 import { StatsCards } from "@/components/dashboard/StatsCards"
