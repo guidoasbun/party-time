@@ -5,7 +5,7 @@
  * Phase 3.2.6: Events List Page
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { Plus } from "lucide-react";
@@ -15,10 +15,8 @@ import { EventsPageHeader } from "@/components/events/EventsPageHeader";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Button } from "@/components/ui/Button";
 import { useEvents } from "@/hooks/api/useEvents";
-import { useEventFilters } from "@/hooks/useEventFilters";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
 import {
-  EventSearchParams,
   EventFilters as EventFiltersType,
 } from "@/types/event.types";
 import { SortOption, SortDirection } from "@/types/preferences.types";
@@ -56,59 +54,126 @@ function EventsPageContent() {
     },
   });
 
-  // Event filters
-  const { filters, debouncedFilters, clearFilters, hasActiveFilters } =
-    useEventFilters({
-      persistToLocalStorage: true,
-      storageKey: "events-page-filters",
-      syncWithUrl: false, // Disable URL sync to avoid SSR issues
-    });
+  // Controlled filters state (like demo page)
+  const [filters, setFilters] = useState<EventFiltersType>({
+    search: '',
+    types: [],
+    statuses: [],
+    date_range: {},
+    location: '',
+    budget_range: {},
+    guest_count_range: {}
+  });
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-
-  // Build search params for API
-  const searchParams: EventSearchParams = {
-    page: currentPage,
-    limit: preferences.itemsPerPage,
-    search: debouncedFilters.search,
-    event_types:
-      debouncedFilters.types.length > 0 ? debouncedFilters.types : undefined,
-    statuses:
-      debouncedFilters.statuses.length > 0
-        ? debouncedFilters.statuses
-        : undefined,
-    start_date: debouncedFilters.date_range?.start,
-    end_date: debouncedFilters.date_range?.end,
-    location: debouncedFilters.location,
-    min_budget: debouncedFilters.budget_range?.min,
-    max_budget: debouncedFilters.budget_range?.max,
-    min_guests: debouncedFilters.guest_count_range?.min,
-    max_guests: debouncedFilters.guest_count_range?.max,
-    sort_by: preferences.sortBy,
-    sort_direction: preferences.sortDirection,
-  };
-
-  // Fetch events
+  // Fetch ALL events from API (no filters on API side)
   const {
     data: eventsData,
     isLoading,
     error,
     refetch,
-  } = useEvents(searchParams);
+  } = useEvents({
+    page: 1,
+    limit: 1000, // Get all events
+  });
 
-  // // Debug logging
-  // useEffect(() => {
-  //   console.log('[EventsPage] Events data:', eventsData)
-  //   console.log('[EventsPage] Is loading:', isLoading)
-  //   console.log('[EventsPage] Error:', error)
-  //   console.log('[EventsPage] Search params:', searchParams)
-  // }, [eventsData, isLoading, error, searchParams])
+  // Client-side filtering (same logic as demo page)
+  const filteredEvents = useMemo(() => {
+    if (!eventsData?.items) return [];
 
-  // Reset to page 1 when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [debouncedFilters]);
+    return eventsData.items.filter(event => {
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        const matchesSearch =
+          (event.name?.toLowerCase() || '').includes(searchLower) ||
+          (event.venue_name?.toLowerCase() || '').includes(searchLower) ||
+          (event.planner_name?.toLowerCase() || '').includes(searchLower);
+        if (!matchesSearch) return false;
+      }
+
+      // Type filter
+      if (filters.types.length > 0 && !filters.types.includes(event.type)) {
+        return false;
+      }
+
+      // Status filter
+      if (filters.statuses.length > 0 && !filters.statuses.includes(event.status)) {
+        return false;
+      }
+
+      // Date range filter
+      if (filters.date_range.start || filters.date_range.end) {
+        const eventDate = new Date(event.start_date).toISOString().split('T')[0];
+        if (filters.date_range.start && eventDate < filters.date_range.start) {
+          return false;
+        }
+        if (filters.date_range.end && eventDate > filters.date_range.end) {
+          return false;
+        }
+      }
+
+      // Location filter
+      if (filters.location) {
+        const venueName = event.venue_name?.toLowerCase() || '';
+        if (!venueName.includes(filters.location.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Budget range filter
+      if (filters.budget_range?.min || filters.budget_range?.max) {
+        const budget = event.budget_total || 0;
+        if (filters.budget_range.min && budget < filters.budget_range.min) {
+          return false;
+        }
+        if (filters.budget_range.max && budget > filters.budget_range.max) {
+          return false;
+        }
+      }
+
+      // Guest count range filter
+      if (filters.guest_count_range?.min || filters.guest_count_range?.max) {
+        const guestCount = event.guest_count || 0;
+        if (filters.guest_count_range.min && guestCount < filters.guest_count_range.min) {
+          return false;
+        }
+        if (filters.guest_count_range.max && guestCount > filters.guest_count_range.max) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [eventsData?.items, filters]);
+
+  // Check if there are active filters
+  const hasActiveFilters = useMemo(() => {
+    return (
+      !!filters.search ||
+      filters.types.length > 0 ||
+      filters.statuses.length > 0 ||
+      !!filters.date_range.start ||
+      !!filters.date_range.end ||
+      !!filters.location ||
+      !!filters.budget_range?.min ||
+      !!filters.budget_range?.max ||
+      !!filters.guest_count_range?.min ||
+      !!filters.guest_count_range?.max
+    );
+  }, [filters]);
+
+  // Clear all filters
+  const clearFilters = useCallback(() => {
+    setFilters({
+      search: '',
+      types: [],
+      statuses: [],
+      date_range: {},
+      location: '',
+      budget_range: {},
+      guest_count_range: {}
+    });
+  }, []);
 
   // Fetch user information
   useEffect(() => {
@@ -157,7 +222,6 @@ function EventsPageContent() {
     (sortBy: SortOption, sortDirection: SortDirection) => {
       setSortBy(sortBy);
       setSortDirection(sortDirection);
-      setCurrentPage(1); // Reset to first page when sorting changes
     },
     [setSortBy, setSortDirection]
   );
@@ -165,12 +229,6 @@ function EventsPageContent() {
   const handleFilterToggle = useCallback(() => {
     setShowFilters(!preferences.showFilters);
   }, [preferences.showFilters, setShowFilters]);
-
-  const handlePageChange = useCallback((page: number) => {
-    setCurrentPage(page);
-    // Scroll to top on page change
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
 
   const handleCreateEvent = useCallback(() => {
     router.push("/events/new");
@@ -189,11 +247,6 @@ function EventsPageContent() {
     },
     [router]
   );
-
-  const handleFiltersChange = useCallback((_newFilters: EventFiltersType) => {
-    // Filters are already managed by useEventFilters
-    // This callback is for any additional actions when filters change
-  }, []);
 
   const handleRetry = useCallback(() => {
     refetch();
@@ -243,7 +296,7 @@ function EventsPageContent() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {/* Page Header */}
           <EventsPageHeader
-            totalEvents={eventsData?.total || 0}
+            totalEvents={filteredEvents.length}
             viewMode={preferences.viewMode}
             onViewModeChange={handleViewModeChange}
             sortBy={preferences.sortBy}
@@ -270,7 +323,7 @@ function EventsPageContent() {
                 <div className="sticky top-6">
                   <EventFilters
                     value={filters}
-                    onChange={handleFiltersChange}
+                    onChange={setFilters}
                     compact={false}
                     showAdvanced={true}
                     enableAnimations={true}
@@ -291,7 +344,7 @@ function EventsPageContent() {
                 <div className="lg:hidden mb-6">
                   <EventFilters
                     value={filters}
-                    onChange={handleFiltersChange}
+                    onChange={setFilters}
                     compact={true}
                     showAdvanced={false}
                     enableAnimations={true}
@@ -301,24 +354,12 @@ function EventsPageContent() {
 
               {/* Event List */}
               <EventList
-                events={eventsData?.items || []}
+                events={filteredEvents}
                 viewMode={preferences.viewMode}
                 onViewModeChange={handleViewModeChange}
                 isLoading={isLoading}
                 error={error?.message || null}
                 onRetry={handleRetry}
-                pagination={
-                  eventsData
-                    ? {
-                        page: eventsData.page,
-                        limit: eventsData.limit,
-                        total: eventsData.total,
-                        has_next: eventsData.has_next,
-                        has_previous: eventsData.has_previous,
-                      }
-                    : undefined
-                }
-                onPageChange={handlePageChange}
                 onView={handleViewEvent}
                 onEdit={handleEditEvent}
                 onCreateEvent={handleCreateEvent}
