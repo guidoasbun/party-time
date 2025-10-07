@@ -80,8 +80,12 @@ apiClient.interceptors.request.use(
       if (process.env.NODE_ENV !== 'test' || process.env.TEST_ENABLE_AUTH === 'true') {
         // Add authentication token
         const session = await getSession()
+        console.log('[API Client] Session:', session)
         if (session?.idToken) {
           config.headers.Authorization = `Bearer ${session.idToken}`
+          console.log('[API Client] Added Authorization header')
+        } else {
+          console.warn('[API Client] No idToken in session - request will be unauthorized')
         }
       }
 
