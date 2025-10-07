@@ -440,6 +440,7 @@ export function EventFilters({
 
       {/* Event Types */}
       <div className={cn(
+        "relative z-10",
         enableAnimations && enableStaggeredSections && [
           getAnimationClass('animate-slideInUp'),
           'animate-delay-200'
