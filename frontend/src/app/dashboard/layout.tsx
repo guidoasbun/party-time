@@ -35,7 +35,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
     if (status === "authenticated" && session?.idToken) {
       const fetchUserInfo = async () => {
         try {
-          const response = await fetch("http://localhost:8000/api/v1/auth/me", {
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
             headers: {
               "Authorization": `Bearer ${session.idToken}`,
               "Content-Type": "application/json",
