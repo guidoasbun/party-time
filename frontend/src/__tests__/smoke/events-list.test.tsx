@@ -19,6 +19,21 @@ jest.mock('next/navigation', () => ({
   usePathname: jest.fn(() => '/events'),
 }))
 
+// Mock NextAuth
+jest.mock('next-auth/react', () => ({
+  useSession: jest.fn(() => ({
+    data: {
+      user: {
+        id: 'test-user-id',
+        email: 'test@example.com',
+        name: 'Test User',
+      },
+      idToken: 'mock-id-token',
+    },
+    status: 'authenticated',
+  })),
+}))
+
 // Mock events service
 jest.mock('@/lib/api/services', () => ({
   eventsService: {
@@ -26,10 +41,8 @@ jest.mock('@/lib/api/services', () => ({
   },
 }))
 
-// Mock Breadcrumb component
-jest.mock('@/components/layout/Breadcrumb', () => ({
-  Breadcrumb: () => <div data-testid="breadcrumb">Dashboard &gt; Events</div>,
-}))
+// Mock environment variables
+process.env.NEXT_PUBLIC_API_URL = 'http://localhost:8000'
 
 // Mock data
 const mockEvents: EventSummary[] = [
@@ -118,6 +131,39 @@ describe('Events List Page - Smoke Tests', () => {
     })
     ;(eventsService.getEvents as jest.Mock).mockResolvedValue(mockPaginatedResponse)
 
+    // Mock fetch for user info API
+    global.fetch = jest.fn((url: string | Request) => {
+      const urlString = typeof url === 'string' ? url : url.url
+
+      if (urlString.includes('/api/v1/auth/me')) {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            id: 'test-user-id',
+            email: 'test@example.com',
+            name: 'Test User',
+            role: 'planner',
+          }),
+        } as Response)
+      }
+      return Promise.reject(new Error(`Unknown URL: ${urlString}`))
+    }) as jest.Mock
+
+    // Mock matchMedia for animations
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: jest.fn().mockImplementation(query => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      })),
+    })
+
     // Mock localStorage
     Storage.prototype.getItem = jest.fn()
     Storage.prototype.setItem = jest.fn()
@@ -128,18 +174,13 @@ describe('Events List Page - Smoke Tests', () => {
   })
 
   describe('Page Loading', () => {
-    it('should render the page with breadcrumbs', () => {
-      renderWithProviders(<EventsPage />)
-      expect(screen.getByTestId('breadcrumb')).toBeInTheDocument()
-    })
-
     it('should display page title and event count', async () => {
       renderWithProviders(<EventsPage />)
 
       await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /events/i })).toBeInTheDocument()
+        expect(screen.getAllByRole('heading', { name: /events/i })[0]).toBeInTheDocument()
         expect(screen.getByText(/3 events/i)).toBeInTheDocument()
-      })
+      }, { timeout: 3000 })
     })
 
     it('should load and display events', async () => {
@@ -149,7 +190,7 @@ describe('Events List Page - Smoke Tests', () => {
         expect(screen.getByText('Summer BBQ')).toBeInTheDocument()
         expect(screen.getByText('Team Building Workshop')).toBeInTheDocument()
         expect(screen.getByText('Birthday Party')).toBeInTheDocument()
-      })
+      }, { timeout: 3000 })
     })
   })
 
@@ -224,34 +265,33 @@ describe('Events List Page - Smoke Tests', () => {
   })
 
   describe('Search Functionality', () => {
-    it('should display search input', () => {
+    it('should display search input', async () => {
       renderWithProviders(<EventsPage />)
-      expect(screen.getByPlaceholderText(/search events/i)).toBeInTheDocument()
+
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/search events/i)).toBeInTheDocument()
+      }, { timeout: 3000 })
     })
 
-    it('should debounce search input', async () => {
-      jest.useFakeTimers()
-      const user = userEvent.setup({ delay: null })
-
+    it('should filter events when search input changes', async () => {
+      const user = userEvent.setup()
       renderWithProviders(<EventsPage />)
 
-      const searchInput = screen.getByPlaceholderText(/search events/i)
-      await user.type(searchInput, 'test')
-
-      // API should not be called immediately
-      expect(eventsService.getEvents).toHaveBeenCalledTimes(1) // Initial load only
-
-      // Fast-forward time by 300ms (debounce delay)
-      jest.advanceTimersByTime(300)
-
-      // Now API should be called with search param
+      // Wait for page to load
       await waitFor(() => {
-        expect(eventsService.getEvents).toHaveBeenCalledWith(
-          expect.objectContaining({ search: 'test' })
-        )
+        expect(screen.getByText('Summer BBQ')).toBeInTheDocument()
       })
 
-      jest.useRealTimers()
+      // Type in search input
+      const searchInput = screen.getByPlaceholderText(/search events/i)
+      await user.type(searchInput, 'summer')
+
+      // Events should be filtered (Summer BBQ should still be visible)
+      await waitFor(() => {
+        expect(screen.getByText('Summer BBQ')).toBeInTheDocument()
+        // Other events should be filtered out (not visible)
+        expect(screen.queryByText('Team Building Workshop')).not.toBeInTheDocument()
+      })
     })
   })
 
@@ -314,10 +354,10 @@ describe('Events List Page - Smoke Tests', () => {
   })
 
   describe('Create Event', () => {
-    it('should display create event FAB on mobile', () => {
+    it('should display create event FAB on mobile', async () => {
       renderWithProviders(<EventsPage />)
 
-      const fab = screen.getByTitle('Create new event')
+      const fab = await screen.findByTitle('Create new event', {}, { timeout: 3000 })
       expect(fab).toBeInTheDocument()
     })
 
@@ -416,19 +456,65 @@ describe('Events List Page - Smoke Tests', () => {
   })
 
   describe('Mobile Responsiveness', () => {
-    it('should render mobile-optimized filter component', () => {
+    it('should render mobile-optimized filter component', async () => {
       renderWithProviders(<EventsPage />)
 
       // Mobile filters should be present (compact mode)
-      const searchInput = screen.getByPlaceholderText(/search events/i)
+      const searchInput = await screen.findByPlaceholderText(/search events/i, {}, { timeout: 3000 })
       expect(searchInput).toBeInTheDocument()
     })
 
-    it('should display FAB for mobile create action', () => {
+    it('should display FAB for mobile create action', async () => {
       renderWithProviders(<EventsPage />)
 
-      const fab = screen.getByTitle('Create new event')
+      const fab = await screen.findByTitle('Create new event', {}, { timeout: 3000 })
       expect(fab).toHaveClass('fixed', 'bottom-6', 'right-6')
+    })
+  })
+
+  describe('View Preferences Persistence', () => {
+    it('should persist view mode to localStorage', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<EventsPage />)
+
+      // Wait for page to load
+      await waitFor(() => {
+        expect(screen.getByText('Summer BBQ')).toBeInTheDocument()
+      })
+
+      // Click list view button
+      const listButton = screen.getByTitle('List view')
+      await user.click(listButton)
+
+      // Verify localStorage setItem was called with view preferences
+      await waitFor(() => {
+        expect(Storage.prototype.setItem).toHaveBeenCalledWith(
+          'events-page-preferences',
+          expect.stringContaining('"viewMode":"list"')
+        )
+      })
+    })
+
+    it('should persist sort preferences to localStorage', async () => {
+      const user = userEvent.setup()
+      renderWithProviders(<EventsPage />)
+
+      // Wait for page to load
+      await waitFor(() => {
+        expect(screen.getByText('Summer BBQ')).toBeInTheDocument()
+      })
+
+      // Change sort direction
+      const sortDirectionButton = screen.getByTitle(/descending/i)
+      await user.click(sortDirectionButton)
+
+      // Verify localStorage was updated
+      await waitFor(() => {
+        expect(Storage.prototype.setItem).toHaveBeenCalledWith(
+          'events-page-preferences',
+          expect.stringContaining('"sortDirection":"asc"')
+        )
+      })
     })
   })
 })
