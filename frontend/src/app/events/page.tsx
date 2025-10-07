@@ -41,6 +41,7 @@ function EventsPageContent() {
     setSortBy,
     setSortDirection,
     setShowFilters,
+    setCompactMode,
   } = useViewPreferences({
     persistToLocalStorage: true,
     storageKey: "events-page-preferences",
@@ -51,6 +52,7 @@ function EventsPageContent() {
       showFilters: true,
       sortBy: "date",
       sortDirection: "desc",
+      compactMode: false,
     },
   });
 
@@ -230,6 +232,10 @@ function EventsPageContent() {
     setShowFilters(!preferences.showFilters);
   }, [preferences.showFilters, setShowFilters]);
 
+  const handleCompactModeToggle = useCallback(() => {
+    setCompactMode(!preferences.compactMode);
+  }, [preferences.compactMode, setCompactMode]);
+
   const handleCreateEvent = useCallback(() => {
     router.push("/events/new");
   }, [router]);
@@ -309,6 +315,30 @@ function EventsPageContent() {
             onCreateEvent={handleCreateEvent}
           />
 
+          {/* Compact Mode Toggle */}
+          {preferences.showFilters && (
+            <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <input
+                  id="compact-mode"
+                  type="checkbox"
+                  checked={preferences.compactMode}
+                  onChange={handleCompactModeToggle}
+                  className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                />
+                <label
+                  htmlFor="compact-mode"
+                  className="text-sm font-medium text-foreground cursor-pointer select-none"
+                >
+                  Compact Mode
+                </label>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Toggle between full and compact filter layouts
+              </div>
+            </div>
+          )}
+
           {/* Main Content - Two Column Layout */}
           <div className="mt-6 sm:mt-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Filters Sidebar - Desktop */}
@@ -324,8 +354,8 @@ function EventsPageContent() {
                   <EventFilters
                     value={filters}
                     onChange={setFilters}
-                    compact={false}
-                    showAdvanced={true}
+                    compact={preferences.compactMode}
+                    showAdvanced={!preferences.compactMode}
                     enableAnimations={true}
                   />
                 </div>
@@ -345,8 +375,8 @@ function EventsPageContent() {
                   <EventFilters
                     value={filters}
                     onChange={setFilters}
-                    compact={true}
-                    showAdvanced={false}
+                    compact={preferences.compactMode}
+                    showAdvanced={!preferences.compactMode}
                     enableAnimations={true}
                   />
                 </div>

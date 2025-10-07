@@ -11,6 +11,7 @@ import { EventList } from "@/components/events/EventList"
 import { EventFilters } from "@/components/events/EventFilters"
 import { FAB } from "@/components/ui/FAB"
 import { useEvents } from "@/hooks/api/useEvents"
+import { useViewPreferences } from "@/hooks/useViewPreferences"
 import { UserProfileResponse } from "@/types/auth.types"
 import { EventFilters as EventFiltersType } from "@/types/event.types"
 
@@ -21,7 +22,6 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filtersCollapsed, setFiltersCollapsed] = useState(false)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [dashboardView, setDashboardView] = useState<'overview' | 'events'>('overview')
   const [eventFilters, setEventFilters] = useState<EventFiltersType>({
     search: '',
@@ -31,6 +31,21 @@ export default function DashboardPage() {
     location: '',
     budget_range: {},
     guest_count_range: {}
+  })
+
+  // View preferences with persistence
+  const {
+    preferences,
+    setViewMode,
+    setCompactMode,
+  } = useViewPreferences({
+    persistToLocalStorage: true,
+    storageKey: "dashboard-preferences",
+    syncWithUrl: false,
+    defaultPreferences: {
+      viewMode: "grid",
+      compactMode: false,
+    },
   })
 
   // Fetch ALL events from API (no filters)
@@ -152,6 +167,10 @@ export default function DashboardPage() {
     router.push('/events/new')
   }
 
+  const handleCompactModeToggle = useCallback(() => {
+    setCompactMode(!preferences.compactMode)
+  }, [preferences.compactMode, setCompactMode])
+
   const handleEditEvent = (eventId: string) => {
     router.push(`/events/${eventId}/edit`)
   }
@@ -263,6 +282,30 @@ export default function DashboardPage() {
               <StatsCards />
             </DashboardStatsSection>
 
+            {/* Compact Mode Toggle - only show when filters are not collapsed */}
+            {!filtersCollapsed && (
+              <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <input
+                    id="dashboard-compact-mode"
+                    type="checkbox"
+                    checked={preferences.compactMode}
+                    onChange={handleCompactModeToggle}
+                    className="h-4 w-4 rounded border-border text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 cursor-pointer"
+                  />
+                  <label
+                    htmlFor="dashboard-compact-mode"
+                    className="text-sm font-medium text-foreground cursor-pointer select-none"
+                  >
+                    Compact Mode
+                  </label>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Toggle between full and compact filter layouts
+                </div>
+              </div>
+            )}
+
             {/* Filters Section */}
             <DashboardFiltersSection
               isCollapsed={filtersCollapsed}
@@ -271,7 +314,8 @@ export default function DashboardPage() {
               <EventFilters
                 value={eventFilters}
                 onChange={setEventFilters}
-                compact={filtersCollapsed}
+                compact={preferences.compactMode}
+                showAdvanced={!preferences.compactMode}
               />
             </DashboardFiltersSection>
 
@@ -288,7 +332,7 @@ export default function DashboardPage() {
                   onDelete={handleDeleteEvent}
                   onView={handleViewEvent}
                   onCreateEvent={handleCreateEvent}
-                  viewMode={viewMode}
+                  viewMode={preferences.viewMode}
                   onViewModeChange={setViewMode}
                   isLoading={eventsLoading}
                   error={eventsError?.message || null}
