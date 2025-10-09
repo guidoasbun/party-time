@@ -39,6 +39,9 @@ class Guest(Base):
     # RSVP tracking
     rsvp_token = Column(String(255), unique=True, nullable=False, default=lambda: secrets.token_hex(32))
     rsvp_status = Column(SQLEnum(RsvpStatus), nullable=False, default=RsvpStatus.PENDING)
+    token_expires_at = Column(DateTime(timezone=True))
+    token_first_accessed_at = Column(DateTime(timezone=True))
+    token_last_accessed_at = Column(DateTime(timezone=True))
     
     # Plus one handling
     plus_one_allowed = Column(Boolean, nullable=False, default=False)

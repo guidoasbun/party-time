@@ -63,6 +63,9 @@ class Guest(GuestBase):
 class GuestWithToken(Guest):
     """Schema for guest with RSVP token (internal use)."""
     rsvp_token: str
+    token_expires_at: Optional[datetime] = None
+    token_first_accessed_at: Optional[datetime] = None
+    token_last_accessed_at: Optional[datetime] = None
 
 
 class GuestSummary(BaseModel):
@@ -87,3 +90,39 @@ class GuestBulkCreate(BaseModel):
     """Schema for bulk guest creation (CSV import)."""
     guests: List[GuestBase]
     send_invitations: bool = False
+
+
+class InvitationLinkData(BaseModel):
+    """Schema for invitation link information."""
+    rsvp_url: str
+    token: str
+    formatted_token: str
+    shareable_text: str
+    sharing_links: dict[str, str]
+    qr_code_url: Optional[str] = None
+
+
+class TokenValidationResult(BaseModel):
+    """Schema for token validation response."""
+    is_valid: bool
+    error_message: Optional[str] = None
+    guest_name: Optional[str] = None
+    event_name: Optional[str] = None
+
+
+class RSVPEventDetails(BaseModel):
+    """Schema for public event details (for RSVP page)."""
+    model_config = ConfigDict(from_attributes=True)
+
+    guest: dict[str, str | bool]  # first_name, last_name, email, plus_one_allowed
+    event: dict[str, str]  # name, description, start_date, end_date, venue_name, venue_address
+    rsvp_deadline: Optional[str] = None
+    custom_message: Optional[str] = None
+
+
+class QRCodeOptions(BaseModel):
+    """Schema for QR code generation options."""
+    box_size: int = 10
+    border: int = 4
+    theme: str = "light"
+    format: str = "png"

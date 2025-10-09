@@ -3,7 +3,7 @@
  */
 
 import { api, withRetry } from '@/lib/api-client'
-import { 
+import {
   Guest,
   GuestCreate,
   GuestUpdate,
@@ -17,7 +17,11 @@ import {
   RsvpStatus,
   PaginatedResponse,
   UUID,
-  API_ENDPOINTS
+  API_ENDPOINTS,
+  InvitationLinkData,
+  TokenValidationResult,
+  RSVPEventDetails,
+  QRCodeOptions
 } from '@/types'
 
 /**
@@ -528,6 +532,179 @@ export class GuestsService {
       [RsvpStatus.MAYBE]: 'Maybe'
     }
     return statusLabels[status] || 'Unknown'
+  }
+
+  /**
+   * RSVP Token Management Methods
+   */
+
+  /**
+   * Get invitation link and sharing info for a guest
+   */
+  async getInvitationLink(eventId: UUID, guestId: UUID): Promise<InvitationLinkData> {
+    return api.get<InvitationLinkData>(
+      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/invitation-link`,
+      undefined,
+      withRetry({ attempts: 2 })
+    )
+  }
+
+  /**
+   * Get QR code for guest RSVP link
+   */
+  async getQRCode(
+    eventId: UUID,
+    guestId: UUID,
+    options?: QRCodeOptions
+  ): Promise<Blob> {
+    const params: Record<string, string> = {
+      box_size: String(options?.box_size || 10),
+      border: String(options?.border || 4),
+      theme: options?.theme || 'light',
+      format: options?.format || 'png'
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(params)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+        }
+      }
+    )
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch QR code')
+    }
+
+    return response.blob()
+  }
+
+  /**
+   * Get QR code as base64 data URI
+   */
+  async getQRCodeBase64(
+    eventId: UUID,
+    guestId: UUID,
+    options?: QRCodeOptions
+  ): Promise<string> {
+    const params = {
+      box_size: options?.box_size || 10,
+      border: options?.border || 4,
+      theme: options?.theme || 'light',
+      format: 'base64'
+    }
+
+    const response = await api.get<{ qr_code: string }>(
+      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/qr-code`,
+      params,
+      withRetry({ attempts: 2 })
+    )
+
+    return response.qr_code
+  }
+
+  /**
+   * Regenerate RSVP token for a guest
+   */
+  async regenerateToken(eventId: UUID, guestId: UUID): Promise<Guest> {
+    return api.post<Guest, never>(
+      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/regenerate-token`,
+      undefined as never
+    )
+  }
+
+  /**
+   * Validate RSVP token (public endpoint)
+   */
+  async validateToken(token: string): Promise<TokenValidationResult> {
+    return api.get<TokenValidationResult>(
+      `/api/v1/rsvp/${token}/validate`,
+      undefined,
+      withRetry({ attempts: 2 })
+    )
+  }
+
+  /**
+   * Get event details for RSVP page (public endpoint)
+   */
+  async getEventDetailsForRSVP(token: string): Promise<RSVPEventDetails> {
+    return api.get<RSVPEventDetails>(
+      `/api/v1/rsvp/${token}/event-details`,
+      undefined,
+      withRetry({ attempts: 2 })
+    )
+  }
+
+  /**
+   * Copy text to clipboard
+   */
+  async copyToClipboard(text: string): Promise<boolean> {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        return true
+      } else {
+        // Fallback for non-secure contexts
+        const textArea = document.createElement('textarea')
+        textArea.value = text
+        textArea.style.position = 'fixed'
+        textArea.style.left = '-999999px'
+        document.body.appendChild(textArea)
+        textArea.select()
+        const success = document.execCommand('copy')
+        document.body.removeChild(textArea)
+        return success
+      }
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error)
+      return false
+    }
+  }
+
+  /**
+   * Download QR code as file
+   */
+  async downloadQRCode(
+    eventId: UUID,
+    guestId: UUID,
+    guestName: string,
+    options?: QRCodeOptions
+  ): Promise<void> {
+    try {
+      const blob = await this.getQRCode(eventId, guestId, options)
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `rsvp-qr-${guestName.replace(/\s+/g, '-').toLowerCase()}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to download QR code:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Open sharing dialog for invitation
+   */
+  openShareDialog(
+    platform: string,
+    sharingUrl: string
+  ): void {
+    const width = 600
+    const height = 400
+    const left = (window.screen.width - width) / 2
+    const top = (window.screen.height - height) / 2
+
+    window.open(
+      sharingUrl,
+      'share',
+      `width=${width},height=${height},left=${left},top=${top}`
+    )
   }
 }
 

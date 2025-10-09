@@ -180,6 +180,49 @@ export interface RSVPResponse {
   event_name: string
 }
 
+// RSVP Token Management
+export interface InvitationLinkData {
+  rsvp_url: string
+  token: string
+  formatted_token: string
+  shareable_text: string
+  sharing_links: Record<string, string>
+  qr_code_url?: string
+}
+
+export interface TokenValidationResult {
+  is_valid: boolean
+  error_message?: string
+  guest_name?: string
+  event_name?: string
+}
+
+export interface RSVPEventDetails {
+  guest: {
+    first_name: string
+    last_name: string
+    email: string
+    plus_one_allowed: boolean
+  }
+  event: {
+    name: string
+    description?: string
+    start_date: string
+    end_date?: string
+    venue_name?: string
+    venue_address?: string
+  }
+  rsvp_deadline?: string
+  custom_message?: string
+}
+
+export interface QRCodeOptions {
+  box_size?: number
+  border?: number
+  theme?: 'light' | 'dark'
+  format?: 'png' | 'base64'
+}
+
 // Guest communication
 export interface GuestMessage {
   id: UUID
