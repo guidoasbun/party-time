@@ -84,23 +84,28 @@ async def get_guests(
     limit: int = Query(100, ge=1, le=1000, description="Number of guests to return"),
     rsvp_status: Optional[RsvpStatus] = Query(None, description="Filter by RSVP status"),
     plus_one_only: Optional[bool] = Query(None, description="Filter by plus one allowed"),
+    search: Optional[str] = Query(None, description="Search by name, email, or phone"),
+    has_dietary_restrictions: Optional[bool] = Query(None, description="Filter by dietary restrictions presence"),
+    sort_by: str = Query("first_name", description="Field to sort by"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get guests for an event."""
+    """Get guests for an event with filtering, searching, and sorting."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         # Verify event ownership or public access
         event = await crud_event.get_event_by_id(db, event_id)
         if not event:
             raise HTTPException(status_code=404, detail="Event not found")
-        
+
         if event.planner_id != user_id and not event.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
-        
+
         guests = await crud_guest.get_guests_by_event(
-            db, event_id, skip, limit, rsvp_status, plus_one_only
+            db, event_id, skip, limit, rsvp_status, plus_one_only,
+            search, has_dietary_restrictions, sort_by, sort_order
         )
         return guests
     except HTTPException:
@@ -158,19 +163,46 @@ async def get_guests_with_dietary_restrictions(
 ):
     """Get guests with dietary restrictions for an event."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         # Verify event ownership
         event = await crud_event.get_event_by_id(db, event_id)
         if not event or event.planner_id != user_id:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
         guests = await crud_guest.get_guests_with_dietary_restrictions(db, event_id)
         return guests
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve dietary restrictions: {str(e)}")
+
+
+@router.get("/{event_id}/guests/search", response_model=List[Guest])
+async def search_guests(
+    event_id: UUID,
+    q: str = Query(..., min_length=1, description="Search query"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum results to return"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Search guests by name, email, or phone."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Perform search
+        guests = await crud_guest.search_guests(db, event_id, q, limit)
+
+        return guests
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to search guests: {str(e)}")
 
 
 @router.get("/{event_id}/guests/{guest_id}", response_model=Guest)
@@ -355,25 +387,103 @@ async def send_invitation(
 ):
     """Mark invitation as sent for a guest."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         # Verify event ownership
         event = await crud_event.get_event_by_id(db, event_id)
         if not event or event.planner_id != user_id:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
         # Verify guest belongs to event
         guest = await crud_guest.get_guest_by_id(db, guest_id)
         if not guest or guest.event_id != event_id:
             raise HTTPException(status_code=404, detail="Guest not found")
-        
+
         updated_guest = await crud_guest.mark_invitation_sent(db, guest_id)
-        
+
         # TODO: In Phase 2.3, integrate with email service to actually send invitation
         # For now, just mark as sent
-        
+
         return updated_guest
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send invitation: {str(e)}")
+
+
+@router.post("/{event_id}/guests/bulk-delete", status_code=200)
+async def bulk_delete_guests(
+    event_id: UUID,
+    guest_ids: List[UUID] = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Delete multiple guests at once."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Verify all guests belong to this event
+        for guest_id in guest_ids:
+            guest = await crud_guest.get_guest_by_id(db, guest_id)
+            if not guest or guest.event_id != event_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Guest {guest_id} not found or does not belong to this event"
+                )
+
+        # Perform bulk delete
+        deleted_count = await crud_guest.bulk_delete_guests(db, guest_ids)
+
+        return {
+            "message": f"Successfully deleted {deleted_count} guests",
+            "deleted_count": deleted_count
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete guests: {str(e)}")
+
+
+@router.patch("/{event_id}/guests/bulk-update", status_code=200)
+async def bulk_update_guest_status(
+    event_id: UUID,
+    guest_ids: List[UUID] = Body(..., embed=True),
+    rsvp_status: RsvpStatus = Body(..., embed=True),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Update RSVP status for multiple guests at once."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Verify all guests belong to this event
+        for guest_id in guest_ids:
+            guest = await crud_guest.get_guest_by_id(db, guest_id)
+            if not guest or guest.event_id != event_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Guest {guest_id} not found or does not belong to this event"
+                )
+
+        # Perform bulk update
+        updated_count = await crud_guest.bulk_update_guests_status(db, guest_ids, rsvp_status)
+
+        return {
+            "message": f"Successfully updated {updated_count} guests to {rsvp_status.value}",
+            "updated_count": updated_count,
+            "new_status": rsvp_status.value
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update guests: {str(e)}")

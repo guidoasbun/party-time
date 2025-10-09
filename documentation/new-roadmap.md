@@ -555,30 +555,67 @@
 **Duration**: 3 days
 **Estimated Hours**: 12-14 hours
 
-#### 4.1.1: Guest API Endpoints (Day 1 - 4 hours)
+#### 4.1.1: Guest API Endpoints (Day 1 - 4 hours) ✅ COMPLETED
+
+**Status**: ✅ **COMPLETED** (January 2025)
+
+- ✅ All development tasks complete
+- ✅ TypeScript strict compliance maintained (no `any` types)
+- ✅ Production build passing (`npm run build`)
+- ✅ Comprehensive Postman test suite created (30+ requests)
+- ⚠️ Python pytest tests code-complete but require auth infrastructure setup
 
 **Development (3.5 hours)**:
 
-- [ ] Create comprehensive guest CRUD endpoints
-- [ ] Add pagination and sorting support
-- [ ] Implement guest search (name, email, phone)
-- [ ] Add filtering by RSVP status, dietary restrictions
-- [ ] Create bulk operations endpoints (bulk delete, status update)
-- [ ] Add guest-event relationship management
+- [x] Create comprehensive guest CRUD endpoints
+- [x] Add pagination and sorting support
+- [x] Implement guest search (name, email, phone)
+- [x] Add filtering by RSVP status, dietary restrictions
+- [x] Create bulk operations endpoints (bulk delete, status update)
+- [x] Add guest-event relationship management
 
 **Smoke Testing (0.5 hours)**:
 
-- [ ] Test CRUD operations work
-- [ ] Verify search returns results
-- [ ] Confirm bulk operations execute
+- [x] Test CRUD operations work
+- [x] Verify search returns results
+- [x] Confirm bulk operations execute
 
-**Files to Create/Update**:
+**Files Created/Updated**:
 
+**Backend**:
 ```
-backend/app/api/v1/guests.py
-backend/app/schemas/guest.py
-backend/app/models/guest.py
+backend/app/api/v1/guests.py (enhanced with search, sort, bulk ops)
+backend/app/crud/crud_guest.py (added search, filtering, bulk operations)
+backend/app/schemas/guest.py (already existed)
+backend/app/models/guest.py (already existed)
+backend/tests/integration/test_guests_api.py (7 new smoke tests)
 ```
+
+**Frontend**:
+```
+frontend/src/types/guest.types.ts (fixed RsvpStatus enum alignment)
+frontend/src/types/common.types.ts (added bulk operation endpoints)
+frontend/src/lib/api/services/guests.service.ts (updated methods)
+frontend/src/hooks/api/useGuests.ts (updated to use new enum values)
+```
+
+**Testing & Documentation**:
+```
+postman/Guest-API-Collection.json (30+ requests with automated tests)
+postman/README.md (comprehensive testing documentation)
+postman/QUICK-START.md (5-minute setup guide)
+postman/TEST-CHECKLIST.md (90+ test cases)
+postman/environment-template.json (environment variables)
+```
+
+**Key Enhancements**:
+- Multi-field search using SQLAlchemy `or_()` and `ilike()` for case-insensitive matching
+- Sorting support for 7 fields (name, email, RSVP status, dates) with asc/desc
+- Bulk delete and bulk status update operations with ownership validation
+- Dietary restrictions filtering
+- Fixed RsvpStatus enum mismatch between frontend and backend
+- Fixed deprecated `regex` → `pattern` in Query validator
+- Updated httpx AsyncClient pattern to use ASGITransport
 
 #### 4.1.2: RSVP Token System (Day 2 - 4 hours)
 

@@ -1,6 +1,7 @@
 """Integration tests for Guests API endpoints."""
 import pytest
-from httpx import AsyncClient
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +16,8 @@ from app.models.guest import RsvpStatus
 @pytest.mark.asyncio
 class TestGuestsAPI:
     """Test suite for Guests API endpoints."""
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def test_user(self, async_session: AsyncSession):
         """Create a test user for events."""
         user_data = UserCreate(
@@ -27,8 +28,8 @@ class TestGuestsAPI:
         )
         user = await crud_user.create_user(async_session, user_data)
         return user
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def test_event(self, async_session: AsyncSession, test_user):
         """Create a test event for guest testing."""
         event_data = EventCreate(
@@ -40,8 +41,8 @@ class TestGuestsAPI:
         )
         event = await crud_event.create_event(async_session, event_data, test_user.id)
         return event
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
         """Mock authentication headers."""
         return {"Authorization": f"Bearer mock-token-{test_user.id}"}
@@ -404,13 +405,169 @@ class TestGuestsAPI:
                 "last_name": "Duplicate"
             }
         ]
-        
+
         async with AsyncClient(app=app, base_url="http://test") as client:
             response = await client.post(
                 f"/api/v1/events/{test_event.id}/guests/bulk",
                 json=bulk_guests,
                 headers=auth_headers
             )
-        
+
         assert response.status_code == 400
         assert "Duplicate emails" in response.json()["detail"]
+
+    async def test_search_guests_by_name(self, auth_headers, test_event, async_session):
+        """Test searching guests by name."""
+        from app.schemas.guest import GuestCreate
+        guest_data = GuestCreate(
+            email="searchtest@example.com",
+            first_name="John",
+            last_name="Searchable",
+            plus_one_allowed=False
+        )
+        await crud_guest.create_guest(async_session, guest_data, test_event.id)
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                f"/api/v1/events/{test_event.id}/guests/search",
+                params={"q": "John", "limit": 10},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert data[0]["first_name"] == "John"
+
+    async def test_search_guests_by_email(self, auth_headers, test_event, async_session):
+        """Test searching guests by email."""
+        from app.schemas.guest import GuestCreate
+        guest_data = GuestCreate(
+            email="findemailtest@example.com",
+            first_name="FindMe",
+            last_name="ByEmail",
+            plus_one_allowed=False
+        )
+        await crud_guest.create_guest(async_session, guest_data, test_event.id)
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                f"/api/v1/events/{test_event.id}/guests/search",
+                params={"q": "findemail", "limit": 10},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
+        assert len(data) >= 1
+        assert "findemailtest@example.com" in data[0]["email"]
+
+    async def test_guests_sorting(self, auth_headers, test_event, async_session):
+        """Test sorting guests by different fields."""
+        from app.schemas.guest import GuestCreate
+        # Create guests with different names
+        guests_data = [
+            GuestCreate(email="alice@example.com", first_name="Alice", last_name="Smith", plus_one_allowed=False),
+            GuestCreate(email="bob@example.com", first_name="Bob", last_name="Jones", plus_one_allowed=False),
+            GuestCreate(email="charlie@example.com", first_name="Charlie", last_name="Adams", plus_one_allowed=False),
+        ]
+        for guest_data in guests_data:
+            await crud_guest.create_guest(async_session, guest_data, test_event.id)
+
+        # Test ascending sort by first name
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                f"/api/v1/events/{test_event.id}/guests/",
+                params={"sort_by": "first_name", "sort_order": "asc"},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) >= 3
+        # Check that Alice comes before Bob and Charlie
+        names = [g["first_name"] for g in data]
+        assert names.index("Alice") < names.index("Bob")
+        assert names.index("Alice") < names.index("Charlie")
+
+    async def test_bulk_delete_guests(self, auth_headers, test_event, async_session):
+        """Test bulk deletion of guests."""
+        from app.schemas.guest import GuestCreate
+        # Create test guests
+        guest1_data = GuestCreate(email="delete1@example.com", first_name="Delete", last_name="One", plus_one_allowed=False)
+        guest2_data = GuestCreate(email="delete2@example.com", first_name="Delete", last_name="Two", plus_one_allowed=False)
+        guest1 = await crud_guest.create_guest(async_session, guest1_data, test_event.id)
+        guest2 = await crud_guest.create_guest(async_session, guest2_data, test_event.id)
+
+        guest_ids = [str(guest1.id), str(guest2.id)]
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.post(
+                f"/api/v1/events/{test_event.id}/guests/bulk-delete",
+                json={"guest_ids": guest_ids},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "deleted_count" in data
+        assert data["deleted_count"] == 2
+
+    async def test_bulk_update_guests_status(self, auth_headers, test_event, async_session):
+        """Test bulk update of guest RSVP status."""
+        from app.schemas.guest import GuestCreate
+        # Create test guests
+        guest1_data = GuestCreate(email="update1@example.com", first_name="Update", last_name="One", plus_one_allowed=False)
+        guest2_data = GuestCreate(email="update2@example.com", first_name="Update", last_name="Two", plus_one_allowed=False)
+        guest1 = await crud_guest.create_guest(async_session, guest1_data, test_event.id)
+        guest2 = await crud_guest.create_guest(async_session, guest2_data, test_event.id)
+
+        guest_ids = [str(guest1.id), str(guest2.id)]
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.patch(
+                f"/api/v1/events/{test_event.id}/guests/bulk-update",
+                json={"guest_ids": guest_ids, "rsvp_status": "attending"},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "updated_count" in data
+        assert data["updated_count"] == 2
+        assert data["new_status"] == "attending"
+
+    async def test_guests_filter_by_dietary_restrictions(self, auth_headers, test_event, async_session):
+        """Test filtering guests by dietary restrictions."""
+        from app.schemas.guest import GuestCreate
+        guest_with_diet = GuestCreate(
+            email="vegan@example.com",
+            first_name="Vegan",
+            last_name="Guest",
+            dietary_restrictions="Vegan",
+            plus_one_allowed=False
+        )
+        guest_no_diet = GuestCreate(
+            email="nodiet@example.com",
+            first_name="NoDiet",
+            last_name="Guest",
+            plus_one_allowed=False
+        )
+        await crud_guest.create_guest(async_session, guest_with_diet, test_event.id)
+        await crud_guest.create_guest(async_session, guest_no_diet, test_event.id)
+
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+            response = await client.get(
+                f"/api/v1/events/{test_event.id}/guests/",
+                params={"has_dietary_restrictions": True},
+                headers=auth_headers
+            )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) >= 1
+        # All returned guests should have dietary restrictions
+        for guest in data:
+            assert guest.get("dietary_restrictions") is not None and guest.get("dietary_restrictions") != ""
