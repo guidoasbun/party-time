@@ -274,7 +274,7 @@ export class GuestsService {
       guest: GuestSummary
       event_name: string
     }, GuestRSVPUpdate>(
-      API_ENDPOINTS.GUESTS.RSVP(token),
+      API_ENDPOINTS.GUESTS.RSVP_SUBMIT(token),
       data
     )
   }
@@ -322,7 +322,7 @@ export class GuestsService {
       rsvp_deadline?: string
       custom_message?: string
     }>(
-      `${API_ENDPOINTS.GUESTS.RSVP(token)}/details`,
+      API_ENDPOINTS.GUESTS.RSVP_DETAILS(token),
       undefined,
       withRetry({ attempts: 2 })
     )

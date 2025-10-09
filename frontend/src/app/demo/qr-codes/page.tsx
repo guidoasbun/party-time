@@ -25,7 +25,7 @@ import {
 } from 'lucide-react'
 
 export default function QRCodesDemo() {
-  const { data: session, status } = useSession()
+  const { status } = useSession()
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [selectedGuestId, setSelectedGuestId] = useState<string | null>(null)
   const [guests, setGuests] = useState<Guest[]>([])
@@ -41,8 +41,7 @@ export default function QRCodesDemo() {
   // Fetch user's events
   const {
     data: eventsData,
-    isLoading: eventsLoading,
-    error: eventsError
+    isLoading: eventsLoading
   } = useEvents({ page: 1, limit: 100 })
 
   const events = eventsData?.items || []
@@ -111,46 +110,18 @@ export default function QRCodesDemo() {
     fetchInvitationData()
   }, [selectedEventId, selectedGuestId])
 
-  const handleEventChange = (eventId: string) => {
-    setSelectedEventId(eventId)
+  const handleEventChange = (eventId: string | string[]) => {
+    const id = Array.isArray(eventId) ? eventId[0] : eventId
+    setSelectedEventId(id)
     setSelectedGuestId(null)
     setInvitationData(null)
   }
 
-  const handleCopy = (text: string, label: string) => {
-    console.log(`Copied ${label}:`, text)
-    // In production, this would show a toast notification
-  }
-
-  const handleShare = (platform: string, url: string) => {
-    console.log(`Sharing to ${platform}:`, url)
-    window.open(url, '_blank')
-  }
-
-  const handleDownload = (blob: Blob, filename: string) => {
-    console.log(`Downloading QR code:`, filename)
-    // The QRCodeDisplay component handles the actual download
-  }
-
-  const handleTokenRegenerate = async () => {
-    if (!selectedEventId || !selectedGuestId) return
-
-    try {
-      await guestsService.regenerateToken(selectedEventId, selectedGuestId)
-      // Refetch invitation data
-      const data = await guestsService.getInvitationLink(selectedEventId, selectedGuestId)
-      setInvitationData(data)
-      setShowRegenerateDialog(false)
-    } catch (err) {
-      console.error('Error regenerating token:', err)
-      setError('Failed to regenerate token. Please try again.')
-    }
-  }
 
   // Event selector options
   const eventOptions = events.map(event => ({
     value: event.id,
-    label: `${event.name} (${event.event_type})`
+    label: `${event.name} (${event.type})`
   }))
 
   return (
@@ -261,11 +232,11 @@ export default function QRCodesDemo() {
                   <div>
                     <p className="font-semibold text-foreground">{selectedEvent.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      {selectedEvent.event_type} • {new Date(selectedEvent.start_datetime).toLocaleDateString()}
+                      {selectedEvent.type} • {new Date(selectedEvent.start_date).toLocaleDateString()}
                     </p>
                   </div>
-                  {selectedEvent.location && (
-                    <p className="text-sm text-muted-foreground">{selectedEvent.location}</p>
+                  {selectedEvent.venue_name && (
+                    <p className="text-sm text-muted-foreground">{selectedEvent.venue_name}</p>
                   )}
                 </div>
               </div>
@@ -390,7 +361,6 @@ export default function QRCodesDemo() {
                     eventId={selectedEventId}
                     guestId={selectedGuestId}
                     guestName={`${selectedGuest.first_name} ${selectedGuest.last_name}`}
-                    onDownload={handleDownload}
                   />
                 </Card>
 
@@ -405,8 +375,6 @@ export default function QRCodesDemo() {
                   </p>
                   <InvitationLinkDisplay
                     invitationData={invitationData}
-                    onCopy={handleCopy}
-                    onShare={handleShare}
                   />
                 </Card>
               </div>
@@ -416,9 +384,17 @@ export default function QRCodesDemo() {
             <RegenerateTokenDialog
               isOpen={showRegenerateDialog}
               onClose={() => setShowRegenerateDialog(false)}
-              onConfirm={handleTokenRegenerate}
+              eventId={selectedEventId}
+              guestId={selectedGuestId}
               guestName={`${selectedGuest.first_name} ${selectedGuest.last_name}`}
-              currentToken={invitationData?.formatted_token || ''}
+              onSuccess={async () => {
+                // Refetch invitation data
+                if (selectedEventId && selectedGuestId) {
+                  const data = await guestsService.getInvitationLink(selectedEventId, selectedGuestId)
+                  setInvitationData(data)
+                }
+                setShowRegenerateDialog(false)
+              }}
             />
           </>
         )}

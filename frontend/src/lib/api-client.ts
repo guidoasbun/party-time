@@ -172,49 +172,43 @@ apiClient.interceptors.response.use(
 
     return response;
   },
-  (error: AxiosError | Error) => {
+  (error: unknown) => {
+    const axiosError = error as AxiosError;
+    const genericError = error as Error;
+
     // Clean up cancel token
     const requestId = isAxiosError(error)
-      ? error.config?.metadata?.requestId
+      ? axiosError.config?.metadata?.requestId
       : undefined;
     if (requestId) {
       cancelTokens.delete(requestId);
     }
 
     // Handle request cancellation
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (
-      axios.isCancel(error) ||
-      (isAxiosError(error) && (error as any).code === "ERR_CANCELED")
-    ) {
+    if (axios.isCancel(error) || (isAxiosError(error) && axiosError.code === "ERR_CANCELED")) {
       return Promise.reject(new Error("Request cancelled"));
     }
 
     // Handle timeout
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (
-      (isAxiosError(error) && (error as any).code === "ECONNABORTED") ||
-      ((error as any).message && (error as any).message.includes("timeout"))
+      (isAxiosError(error) && axiosError.code === "ECONNABORTED") ||
+      (genericError.message && genericError.message.includes("timeout"))
     ) {
       return Promise.reject(new TimeoutException());
     }
 
     // Handle network errors
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (isAxiosError(error) && !(error as any).response) {
+    if (isAxiosError(error) && !axiosError.response) {
       return Promise.reject(new NetworkException("Network connection failed"));
     }
 
     // Handle 5xx server errors only (4xx are handled in success interceptor)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    if (!isAxiosError(error) || !(error as any).response) {
+    if (!isAxiosError(error) || !axiosError.response) {
       return Promise.reject(error);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const status = (error as any).response.status;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const errorData = (error as any).response.data as ApiError;
+    const status = axiosError.response.status;
+    const errorData = axiosError.response.data as ApiError;
 
     if (status >= 500) {
       console.error("Server error:", errorData);
@@ -334,37 +328,38 @@ export const createApiClient = (config?: ApiClientConfig) => {
       }
       return response;
     },
-    (error: AxiosError | Error) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const requestId = (error as any).config?.metadata?.requestId;
+    (error: unknown) => {
+      const axiosError = error as AxiosError;
+      const genericError = error as Error;
+
+      const requestId = isAxiosError(error) ? axiosError.config?.metadata?.requestId : undefined;
       if (requestId) {
         cancelTokens.delete(requestId);
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (axios.isCancel(error) || (error as any).code === "ERR_CANCELED") {
+      if (axios.isCancel(error) || (isAxiosError(error) && axiosError.code === "ERR_CANCELED")) {
         return Promise.reject(new Error("Request cancelled"));
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (
-        (error as any).code === "ECONNABORTED" ||
-        (error as any).message?.includes("timeout")
+        (isAxiosError(error) && axiosError.code === "ECONNABORTED") ||
+        (genericError.message && genericError.message.includes("timeout"))
       ) {
         return Promise.reject(new TimeoutException());
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (!(error as any).response) {
+      if (isAxiosError(error) && !axiosError.response) {
         return Promise.reject(
           new NetworkException("Network connection failed")
         );
       }
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const status = (error as any).response.status;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errorData = (error as any).response.data as ApiError;
+      if (!isAxiosError(error) || !axiosError.response) {
+        return Promise.reject(error);
+      }
+
+      const status = axiosError.response.status;
+      const errorData = axiosError.response.data as ApiError;
 
       const apiError = new ApiException(
         typeof errorData?.detail === "string"
@@ -522,7 +517,7 @@ export const api = {
 
 // Utility functions
 export const createRequestId = (prefix = "req") => {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 };
 
 // Health check
