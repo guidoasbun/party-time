@@ -1,0 +1,1040 @@
+{
+  "info": {
+    "name": "Party-Time Guest API - Phase 4.1.1",
+    "_postman_id": "guest-api-collection-v1",
+    "description": "Comprehensive test collection for Guest Management API endpoints including CRUD operations, search, sorting, filtering, and bulk operations.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "api_version",
+      "value": "v1",
+      "type": "string"
+    },
+    {
+      "key": "event_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "guest_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rsvp_token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Setup & Authentication",
+      "item": [
+        {
+          "name": "Login (Get Auth Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set(\"auth_token\", response.access_token);",
+                  "    console.log(\"Auth token saved:\", response.access_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"your-email@example.com\",\n  \"password\": \"your-password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "auth", "login"]
+            },
+            "description": "Authenticate and get a JWT token for subsequent requests"
+          }
+        },
+        {
+          "name": "Create Test Event",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Event created successfully\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set(\"event_id\", response.id);",
+                  "    console.log(\"Event ID saved:\", response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Event for Guests\",\n  \"description\": \"Testing guest management features\",\n  \"type\": \"birthday\",\n  \"start_date\": \"2024-12-15T18:00:00\",\n  \"end_date\": \"2024-12-15T22:00:00\",\n  \"location\": \"123 Party Street\",\n  \"venue_name\": \"Party Hall\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events"]
+            },
+            "description": "Create a test event to associate guests with"
+          }
+        }
+      ],
+      "description": "Setup requests to authenticate and create test data"
+    },
+    {
+      "name": "2. CRUD Operations",
+      "item": [
+        {
+          "name": "Create Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has guest data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('email');",
+                  "    pm.expect(response).to.have.property('first_name');",
+                  "    pm.expect(response).to.have.property('last_name');",
+                  "    pm.expect(response).to.have.property('rsvp_status');",
+                  "    pm.expect(response.rsvp_status).to.eql('pending');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set(\"guest_id\", response.id);",
+                  "    console.log(\"Guest ID saved:\", response.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"phone\": \"+1234567890\",\n  \"plus_one_allowed\": true,\n  \"dietary_restrictions\": \"Vegetarian\",\n  \"notes\": \"VIP guest\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"]
+            },
+            "description": "Create a new guest for an event"
+          }
+        },
+        {
+          "name": "Get All Guests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is an array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test(\"Guests have required fields\", function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 0) {",
+                  "        pm.expect(response[0]).to.have.property('id');",
+                  "        pm.expect(response[0]).to.have.property('email');",
+                  "        pm.expect(response[0]).to.have.property('rsvp_status');",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"]
+            },
+            "description": "Get all guests for an event"
+          }
+        },
+        {
+          "name": "Get Single Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has guest data\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response.id).to.eql(pm.collectionVariables.get('guest_id'));",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/{{guest_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "{{guest_id}}"]
+            },
+            "description": "Get a specific guest by ID"
+          }
+        },
+        {
+          "name": "Update Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Guest updated successfully\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.first_name).to.eql('Jane');",
+                  "    pm.expect(response.dietary_restrictions).to.eql('Vegan');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Jane\",\n  \"dietary_restrictions\": \"Vegan\",\n  \"notes\": \"Updated VIP guest\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/{{guest_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "{{guest_id}}"]
+            },
+            "description": "Update guest information"
+          }
+        },
+        {
+          "name": "Delete Guest",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 204\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/{{guest_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "{{guest_id}}"]
+            },
+            "description": "Delete a guest"
+          }
+        }
+      ],
+      "description": "Basic CRUD operations for guest management"
+    },
+    {
+      "name": "3. Search & Filtering",
+      "item": [
+        {
+          "name": "Search Guests by Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Search returns array\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/search?q=John&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "John",
+                  "description": "Search query"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Maximum results"
+                }
+              ]
+            },
+            "description": "Search guests by name, email, or phone"
+          }
+        },
+        {
+          "name": "Filter by RSVP Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All guests have correct status\", function () {",
+                  "    const response = pm.response.json();",
+                  "    response.forEach(guest => {",
+                  "        pm.expect(guest.rsvp_status).to.eql('attending');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?rsvp_status=attending",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "rsvp_status",
+                  "value": "attending",
+                  "description": "Filter by RSVP status: pending, attending, not_attending, maybe"
+                }
+              ]
+            },
+            "description": "Filter guests by RSVP status"
+          }
+        },
+        {
+          "name": "Filter by Dietary Restrictions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All guests have dietary restrictions\", function () {",
+                  "    const response = pm.response.json();",
+                  "    response.forEach(guest => {",
+                  "        pm.expect(guest.dietary_restrictions).to.not.be.null;",
+                  "        pm.expect(guest.dietary_restrictions).to.not.eql('');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?has_dietary_restrictions=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "has_dietary_restrictions",
+                  "value": "true",
+                  "description": "Filter guests with dietary restrictions"
+                }
+              ]
+            },
+            "description": "Filter guests who have dietary restrictions"
+          }
+        },
+        {
+          "name": "Filter by Plus One Allowed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All guests have plus one allowed\", function () {",
+                  "    const response = pm.response.json();",
+                  "    response.forEach(guest => {",
+                  "        pm.expect(guest.plus_one_allowed).to.be.true;",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?plus_one_only=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "plus_one_only",
+                  "value": "true",
+                  "description": "Filter guests with plus one allowed"
+                }
+              ]
+            },
+            "description": "Filter guests who are allowed to bring a plus one"
+          }
+        },
+        {
+          "name": "Search with Multiple Filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?search=john&rsvp_status=attending&has_dietary_restrictions=true",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "john",
+                  "description": "Search term"
+                },
+                {
+                  "key": "rsvp_status",
+                  "value": "attending",
+                  "description": "RSVP status filter"
+                },
+                {
+                  "key": "has_dietary_restrictions",
+                  "value": "true",
+                  "description": "Dietary restrictions filter"
+                }
+              ]
+            },
+            "description": "Combine search with multiple filters"
+          }
+        }
+      ],
+      "description": "Search and filtering capabilities"
+    },
+    {
+      "name": "4. Sorting & Pagination",
+      "item": [
+        {
+          "name": "Sort by First Name (Ascending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Guests sorted by first name\", function () {",
+                  "    const response = pm.response.json();",
+                  "    if (response.length > 1) {",
+                  "        for (let i = 0; i < response.length - 1; i++) {",
+                  "            pm.expect(response[i].first_name <= response[i+1].first_name).to.be.true;",
+                  "        }",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?sort_by=first_name&sort_order=asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "first_name",
+                  "description": "Sort field: first_name, last_name, email, rsvp_status, created_at, invitation_sent_at, rsvp_responded_at"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "asc",
+                  "description": "Sort order: asc or desc"
+                }
+              ]
+            },
+            "description": "Sort guests by first name in ascending order"
+          }
+        },
+        {
+          "name": "Sort by RSVP Status (Descending)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?sort_by=rsvp_status&sort_order=desc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "sort_by",
+                  "value": "rsvp_status",
+                  "description": "Sort by RSVP status"
+                },
+                {
+                  "key": "sort_order",
+                  "value": "desc",
+                  "description": "Descending order"
+                }
+              ]
+            },
+            "description": "Sort guests by RSVP status in descending order"
+          }
+        },
+        {
+          "name": "Pagination - Page 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Returns correct number of items\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.length).to.be.at.most(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests?skip=0&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0",
+                  "description": "Number of guests to skip"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Number of guests to return"
+                }
+              ]
+            },
+            "description": "Get first page of guests (10 per page)"
+          }
+        }
+      ],
+      "description": "Sorting and pagination options"
+    },
+    {
+      "name": "5. Bulk Operations",
+      "item": [
+        {
+          "name": "Create Bulk Guests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"All guests created\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.be.an('array');",
+                  "    pm.expect(response.length).to.eql(3);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    const guestIds = response.map(g => g.id);",
+                  "    pm.collectionVariables.set(\"bulk_guest_ids\", JSON.stringify(guestIds));",
+                  "    console.log(\"Bulk guest IDs saved:\", guestIds);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\n  {\n    \"email\": \"alice@example.com\",\n    \"first_name\": \"Alice\",\n    \"last_name\": \"Smith\",\n    \"plus_one_allowed\": false\n  },\n  {\n    \"email\": \"bob@example.com\",\n    \"first_name\": \"Bob\",\n    \"last_name\": \"Jones\",\n    \"plus_one_allowed\": true\n  },\n  {\n    \"email\": \"charlie@example.com\",\n    \"first_name\": \"Charlie\",\n    \"last_name\": \"Adams\",\n    \"dietary_restrictions\": \"Gluten-free\",\n    \"plus_one_allowed\": false\n  }\n]"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/bulk",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "bulk"]
+            },
+            "description": "Create multiple guests in a single request"
+          }
+        },
+        {
+          "name": "Bulk Update Guest Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bulk update successful\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('updated_count');",
+                  "    pm.expect(response).to.have.property('new_status');",
+                  "    pm.expect(response.new_status).to.eql('attending');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guest_ids\": [\"guest-id-1\", \"guest-id-2\", \"guest-id-3\"],\n  \"rsvp_status\": \"attending\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/bulk-update",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "bulk-update"]
+            },
+            "description": "Update RSVP status for multiple guests. Replace guest IDs with actual IDs from your database."
+          }
+        },
+        {
+          "name": "Bulk Delete Guests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Bulk delete successful\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('deleted_count');",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"guest_ids\": [\"guest-id-1\", \"guest-id-2\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/bulk-delete",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "bulk-delete"]
+            },
+            "description": "Delete multiple guests at once. Replace guest IDs with actual IDs from your database."
+          }
+        }
+      ],
+      "description": "Bulk operations for efficient guest management"
+    },
+    {
+      "name": "6. Guest Statistics",
+      "item": [
+        {
+          "name": "Get Guest Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Stats have required fields\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('event_id');",
+                  "    pm.expect(response).to.have.property('total_invited');",
+                  "    pm.expect(response).to.have.property('rsvp_responses');",
+                  "    pm.expect(response).to.have.property('response_rate');",
+                  "    pm.expect(response.rsvp_responses).to.have.property('attending');",
+                  "    pm.expect(response.rsvp_responses).to.have.property('not_attending');",
+                  "    pm.expect(response.rsvp_responses).to.have.property('maybe');",
+                  "    pm.expect(response.rsvp_responses).to.have.property('pending');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/stats",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "stats"]
+            },
+            "description": "Get guest statistics for an event including RSVP breakdown and response rate"
+          }
+        },
+        {
+          "name": "Get Dietary Restrictions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"All guests have dietary restrictions\", function () {",
+                  "    const response = pm.response.json();",
+                  "    response.forEach(guest => {",
+                  "        pm.expect(guest.dietary_restrictions).to.not.be.null;",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/dietary-restrictions",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "dietary-restrictions"]
+            },
+            "description": "Get list of all guests with dietary restrictions"
+          }
+        }
+      ],
+      "description": "Guest statistics and special requirements"
+    },
+    {
+      "name": "7. RSVP Management (Public)",
+      "item": [
+        {
+          "name": "Get RSVP Token (Admin Only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set(\"rsvp_token\", response.rsvp_token);",
+                  "    console.log(\"RSVP token saved:\", response.rsvp_token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/{{guest_id}}/rsvp-token",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "{{guest_id}}", "rsvp-token"]
+            },
+            "description": "Get RSVP token for a guest (for testing/development)"
+          }
+        },
+        {
+          "name": "Get Guest by RSVP Token (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Guest data returned\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('id');",
+                  "    pm.expect(response).to.have.property('email');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/rsvp/{{rsvp_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "rsvp", "{{rsvp_token}}"]
+            },
+            "description": "Public endpoint to get guest info by RSVP token (no auth required)"
+          }
+        },
+        {
+          "name": "Submit RSVP Response (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"RSVP updated\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.rsvp_status).to.eql('attending');",
+                  "    pm.expect(response.rsvp_responded_at).to.not.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rsvp_status\": \"attending\",\n  \"plus_one_name\": \"Jane Smith\",\n  \"dietary_restrictions\": \"Vegan\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/rsvp/{{rsvp_token}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "rsvp", "{{rsvp_token}}"]
+            },
+            "description": "Public endpoint for guests to submit their RSVP (no auth required)"
+          }
+        },
+        {
+          "name": "Mark Invitation Sent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Invitation marked as sent\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.invitation_sent_at).to.not.be.null;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/{{api_version}}/events/{{event_id}}/guests/{{guest_id}}/send-invitation",
+              "host": ["{{base_url}}"],
+              "path": ["api", "{{api_version}}", "events", "{{event_id}}", "guests", "{{guest_id}}", "send-invitation"]
+            },
+            "description": "Mark invitation as sent for a guest"
+          }
+        }
+      ],
+      "description": "RSVP management including public endpoints"
+    }
+  ]
+}

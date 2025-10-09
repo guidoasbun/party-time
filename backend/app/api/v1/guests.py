@@ -163,19 +163,46 @@ async def get_guests_with_dietary_restrictions(
 ):
     """Get guests with dietary restrictions for an event."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         # Verify event ownership
         event = await crud_event.get_event_by_id(db, event_id)
         if not event or event.planner_id != user_id:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
         guests = await crud_guest.get_guests_with_dietary_restrictions(db, event_id)
         return guests
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve dietary restrictions: {str(e)}")
+
+
+@router.get("/{event_id}/guests/search", response_model=List[Guest])
+async def search_guests(
+    event_id: UUID,
+    q: str = Query(..., min_length=1, description="Search query"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum results to return"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Search guests by name, email, or phone."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Perform search
+        guests = await crud_guest.search_guests(db, event_id, q, limit)
+
+        return guests
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to search guests: {str(e)}")
 
 
 @router.get("/{event_id}/guests/{guest_id}", response_model=Guest)
@@ -460,30 +487,3 @@ async def bulk_update_guest_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update guests: {str(e)}")
-
-
-@router.get("/{event_id}/guests/search", response_model=List[Guest])
-async def search_guests(
-    event_id: UUID,
-    q: str = Query(..., min_length=1, description="Search query"),
-    limit: int = Query(10, ge=1, le=100, description="Maximum results to return"),
-    db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user)
-):
-    """Search guests by name, email, or phone."""
-    user_id = UUID(current_user["user_id"])
-
-    try:
-        # Verify event ownership
-        event = await crud_event.get_event_by_id(db, event_id)
-        if not event or event.planner_id != user_id:
-            raise HTTPException(status_code=404, detail="Event not found or access denied")
-
-        # Perform search
-        guests = await crud_guest.search_guests(db, event_id, q, limit)
-
-        return guests
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to search guests: {str(e)}")
