@@ -1,6 +1,7 @@
 """Integration tests for Guests API endpoints."""
 import pytest
-from httpx import AsyncClient
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
 from uuid import uuid4
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,8 +16,8 @@ from app.models.guest import RsvpStatus
 @pytest.mark.asyncio
 class TestGuestsAPI:
     """Test suite for Guests API endpoints."""
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def test_user(self, async_session: AsyncSession):
         """Create a test user for events."""
         user_data = UserCreate(
@@ -27,8 +28,8 @@ class TestGuestsAPI:
         )
         user = await crud_user.create_user(async_session, user_data)
         return user
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def test_event(self, async_session: AsyncSession, test_user):
         """Create a test event for guest testing."""
         event_data = EventCreate(
@@ -40,8 +41,8 @@ class TestGuestsAPI:
         )
         event = await crud_event.create_event(async_session, event_data, test_user.id)
         return event
-    
-    @pytest.fixture
+
+    @pytest_asyncio.fixture
     async def auth_headers(self, test_user):
         """Mock authentication headers."""
         return {"Authorization": f"Bearer mock-token-{test_user.id}"}
@@ -426,7 +427,7 @@ class TestGuestsAPI:
         )
         await crud_guest.create_guest(async_session, guest_data, test_event.id)
 
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
                 f"/api/v1/events/{test_event.id}/guests/search",
                 params={"q": "John", "limit": 10},
@@ -450,7 +451,7 @@ class TestGuestsAPI:
         )
         await crud_guest.create_guest(async_session, guest_data, test_event.id)
 
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
                 f"/api/v1/events/{test_event.id}/guests/search",
                 params={"q": "findemail", "limit": 10},
@@ -476,7 +477,7 @@ class TestGuestsAPI:
             await crud_guest.create_guest(async_session, guest_data, test_event.id)
 
         # Test ascending sort by first name
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
                 f"/api/v1/events/{test_event.id}/guests/",
                 params={"sort_by": "first_name", "sort_order": "asc"},
@@ -502,7 +503,7 @@ class TestGuestsAPI:
 
         guest_ids = [str(guest1.id), str(guest2.id)]
 
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.post(
                 f"/api/v1/events/{test_event.id}/guests/bulk-delete",
                 json={"guest_ids": guest_ids},
@@ -525,7 +526,7 @@ class TestGuestsAPI:
 
         guest_ids = [str(guest1.id), str(guest2.id)]
 
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.patch(
                 f"/api/v1/events/{test_event.id}/guests/bulk-update",
                 json={"guest_ids": guest_ids, "rsvp_status": "attending"},
@@ -557,7 +558,7 @@ class TestGuestsAPI:
         await crud_guest.create_guest(async_session, guest_with_diet, test_event.id)
         await crud_guest.create_guest(async_session, guest_no_diet, test_event.id)
 
-        async with AsyncClient(app=app, base_url="http://test") as client:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
             response = await client.get(
                 f"/api/v1/events/{test_event.id}/guests/",
                 params={"has_dietary_restrictions": True},

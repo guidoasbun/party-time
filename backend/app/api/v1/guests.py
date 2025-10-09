@@ -87,7 +87,7 @@ async def get_guests(
     search: Optional[str] = Query(None, description="Search by name, email, or phone"),
     has_dietary_restrictions: Optional[bool] = Query(None, description="Filter by dietary restrictions presence"),
     sort_by: str = Query("first_name", description="Field to sort by"),
-    sort_order: str = Query("asc", regex="^(asc|desc)$", description="Sort order"),
+    sort_order: str = Query("asc", pattern="^(asc|desc)$", description="Sort order"),
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
