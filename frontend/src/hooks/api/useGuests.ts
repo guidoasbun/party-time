@@ -353,8 +353,8 @@ export function useGuestManagement(eventId: string, params?: GuestSearchParams) 
   }
 
   const getConfirmedGuestsCount = () => {
-    const confirmed = getGuestsByStatus(RsvpStatus.CONFIRMED)
-    return confirmed.reduce((count, guest) => {
+    const attending = getGuestsByStatus(RsvpStatus.ATTENDING)
+    return attending.reduce((count, guest) => {
       return count + 1 + (guest.plus_one_name ? 1 : 0)
     }, 0)
   }

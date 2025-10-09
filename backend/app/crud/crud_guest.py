@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_
+from sqlalchemy import select, update, delete, and_, or_
 
 from app.models.guest import Guest, RsvpStatus
 from app.schemas.guest import GuestCreate, GuestUpdate, GuestBulkCreate
@@ -76,26 +76,81 @@ async def get_guest_by_event_and_email(db: AsyncSession, event_id: UUID, email: 
 
 
 async def get_guests_by_event(
-    db: AsyncSession, 
+    db: AsyncSession,
     event_id: UUID,
     skip: int = 0,
     limit: int = 100,
     rsvp_status: Optional[RsvpStatus] = None,
-    plus_one_only: Optional[bool] = None
+    plus_one_only: Optional[bool] = None,
+    search: Optional[str] = None,
+    has_dietary_restrictions: Optional[bool] = None,
+    sort_by: str = "first_name",
+    sort_order: str = "asc"
 ) -> List[Guest]:
-    """Get guests for an event with filtering."""
+    """Get guests for an event with filtering, searching, and sorting."""
     query = select(Guest).where(Guest.event_id == event_id)
-    
+
+    # Apply RSVP status filter
     if rsvp_status:
         query = query.where(Guest.rsvp_status == rsvp_status)
-    
+
+    # Apply plus-one filter
     if plus_one_only is not None:
         if plus_one_only:
             query = query.where(Guest.plus_one_allowed == True)
         else:
             query = query.where(Guest.plus_one_allowed == False)
-    
-    query = query.offset(skip).limit(limit).order_by(Guest.first_name, Guest.last_name)
+
+    # Apply dietary restrictions filter
+    if has_dietary_restrictions is not None:
+        if has_dietary_restrictions:
+            query = query.where(
+                and_(
+                    Guest.dietary_restrictions.isnot(None),
+                    Guest.dietary_restrictions != ""
+                )
+            )
+        else:
+            query = query.where(
+                and_(
+                    Guest.dietary_restrictions.is_(None)
+                )
+            )
+
+    # Apply search filter (name, email, phone)
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                Guest.first_name.ilike(search_term),
+                Guest.last_name.ilike(search_term),
+                Guest.email.ilike(search_term),
+                Guest.phone.ilike(search_term)
+            )
+        )
+
+    # Apply sorting
+    valid_sort_fields = {
+        "first_name": Guest.first_name,
+        "last_name": Guest.last_name,
+        "email": Guest.email,
+        "rsvp_status": Guest.rsvp_status,
+        "created_at": Guest.created_at,
+        "invitation_sent_at": Guest.invitation_sent_at,
+        "rsvp_responded_at": Guest.rsvp_responded_at
+    }
+
+    sort_column = valid_sort_fields.get(sort_by, Guest.first_name)
+    if sort_order.lower() == "desc":
+        query = query.order_by(sort_column.desc())
+    else:
+        query = query.order_by(sort_column.asc())
+
+    # Add secondary sort by last_name if primary is first_name
+    if sort_by == "first_name":
+        query = query.order_by(Guest.last_name.asc())
+
+    query = query.offset(skip).limit(limit)
     result = await db.execute(query)
     return result.scalars().all()
 
@@ -193,9 +248,55 @@ async def get_attending_guests_count(db: AsyncSession, event_id: UUID) -> int:
         )
     )
     guests = result.scalars().all()
-    
+
     # Count main guests plus their plus ones
     total_count = len(guests)
     plus_ones_count = sum(1 for guest in guests if guest.plus_one_name)
-    
+
     return total_count + plus_ones_count
+
+
+async def bulk_delete_guests(db: AsyncSession, guest_ids: List[UUID]) -> int:
+    """Delete multiple guests by IDs."""
+    result = await db.execute(
+        delete(Guest).where(Guest.id.in_(guest_ids))
+    )
+    return result.rowcount
+
+
+async def bulk_update_guests_status(
+    db: AsyncSession,
+    guest_ids: List[UUID],
+    rsvp_status: RsvpStatus
+) -> int:
+    """Update RSVP status for multiple guests."""
+    result = await db.execute(
+        update(Guest)
+        .where(Guest.id.in_(guest_ids))
+        .values(rsvp_status=rsvp_status, rsvp_responded_at=datetime.utcnow())
+    )
+    return result.rowcount
+
+
+async def search_guests(
+    db: AsyncSession,
+    event_id: UUID,
+    search_term: str,
+    limit: int = 10
+) -> List[Guest]:
+    """Search guests by name, email, or phone."""
+    search_pattern = f"%{search_term}%"
+    query = select(Guest).where(
+        and_(
+            Guest.event_id == event_id,
+            or_(
+                Guest.first_name.ilike(search_pattern),
+                Guest.last_name.ilike(search_pattern),
+                Guest.email.ilike(search_pattern),
+                Guest.phone.ilike(search_pattern)
+            )
+        )
+    ).limit(limit)
+
+    result = await db.execute(query)
+    return result.scalars().all()

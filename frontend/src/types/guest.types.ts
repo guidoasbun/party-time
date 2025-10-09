@@ -7,9 +7,9 @@ import { UUID, Timestamps, ListQueryParams } from './common.types'
 // RSVP status enum matching backend
 export enum RsvpStatus {
   PENDING = 'pending',
-  CONFIRMED = 'confirmed', 
-  DECLINED = 'declined',
-  TENTATIVE = 'tentative'
+  ATTENDING = 'attending',
+  NOT_ATTENDING = 'not_attending',
+  MAYBE = 'maybe'
 }
 
 // Base guest types
@@ -74,10 +74,10 @@ export interface GuestSummary {
 // Guest statistics
 export interface GuestStats {
   total_guests: number
-  confirmed_guests: number
-  declined_guests: number
+  attending_guests: number
+  not_attending_guests: number
   pending_guests: number
-  tentative_guests: number
+  maybe_guests: number
   plus_ones_allowed: number
   plus_ones_confirmed: number
   dietary_restrictions_count: number
@@ -128,13 +128,12 @@ export interface GuestImportResult {
 
 // Guest search and filtering
 export interface GuestSearchParams extends ListQueryParams {
-  rsvp_status?: RsvpStatus[]
-  plus_one_allowed?: boolean
+  rsvp_status?: RsvpStatus
+  plus_one_only?: boolean
   has_dietary_restrictions?: boolean
-  invitation_sent?: boolean
-  responded?: boolean
-  email?: string
-  name?: string
+  search?: string
+  sort_by?: string
+  sort_order?: 'asc' | 'desc'
   [key: string]: unknown
 }
 
@@ -293,8 +292,9 @@ export interface GuestPreferences {
 export interface GuestAnalytics {
   response_timeline: Array<{
     date: string
-    confirmed: number
-    declined: number
+    attending: number
+    not_attending: number
+    maybe: number
     pending: number
   }>
   rsvp_trends: {

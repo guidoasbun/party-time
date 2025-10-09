@@ -94,18 +94,24 @@ export class GuestsService {
   }
 
   /**
-   * Bulk update guests
+   * Bulk update guests RSVP status
    */
-  async bulkUpdateGuests(eventId: UUID, data: GuestBulkUpdate): Promise<{
+  async bulkUpdateGuestsStatus(
+    eventId: UUID,
+    guestIds: UUID[],
+    rsvpStatus: RsvpStatus
+  ): Promise<{
+    message: string
     updated_count: number
-    errors: Array<{ guest_id: UUID; error: string }>
+    new_status: string
   }> {
     return api.patch<{
+      message: string
       updated_count: number
-      errors: Array<{ guest_id: UUID; error: string }>
-    }, GuestBulkUpdate>(
-      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/bulk`,
-      data
+      new_status: string
+    }, { guest_ids: UUID[]; rsvp_status: RsvpStatus }>(
+      API_ENDPOINTS.GUESTS.BULK_UPDATE(eventId),
+      { guest_ids: guestIds, rsvp_status: rsvpStatus }
     )
   }
 
@@ -113,14 +119,14 @@ export class GuestsService {
    * Bulk delete guests
    */
   async bulkDeleteGuests(eventId: UUID, guestIds: UUID[]): Promise<{
+    message: string
     deleted_count: number
-    errors: Array<{ guest_id: UUID; error: string }>
   }> {
     return api.post<{
+      message: string
       deleted_count: number
-      errors: Array<{ guest_id: UUID; error: string }>
     }, { guest_ids: UUID[] }>(
-      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/bulk-delete`,
+      API_ENDPOINTS.GUESTS.BULK_DELETE(eventId),
       { guest_ids: guestIds }
     )
   }
@@ -318,15 +324,18 @@ export class GuestsService {
   }
 
   /**
-   * Search guests
+   * Search guests by name, email, or phone
    */
-  async searchGuests(eventId: UUID, query: string): Promise<Guest[]> {
-    const response = await api.get<PaginatedResponse<Guest>>(
-      API_ENDPOINTS.GUESTS.LIST(eventId),
-      { search: query },
+  async searchGuests(
+    eventId: UUID,
+    query: string,
+    limit: number = 10
+  ): Promise<Guest[]> {
+    return api.get<Guest[]>(
+      API_ENDPOINTS.GUESTS.SEARCH(eventId),
+      { q: query, limit },
       withRetry({ attempts: 2 })
     )
-    return response.items
   }
 
   /**
@@ -466,30 +475,30 @@ export class GuestsService {
    */
   generateRSVPSummary(guests: Guest[]): {
     total: number
-    confirmed: number
-    declined: number
+    attending: number
+    not_attending: number
     pending: number
-    tentative: number
+    maybe: number
     responseRate: number
     plusOnesConfirmed: number
   } {
     const total = guests.length
-    const confirmed = guests.filter(g => g.rsvp_status === RsvpStatus.CONFIRMED).length
-    const declined = guests.filter(g => g.rsvp_status === RsvpStatus.DECLINED).length
+    const attending = guests.filter(g => g.rsvp_status === RsvpStatus.ATTENDING).length
+    const not_attending = guests.filter(g => g.rsvp_status === RsvpStatus.NOT_ATTENDING).length
     const pending = guests.filter(g => g.rsvp_status === RsvpStatus.PENDING).length
-    const tentative = guests.filter(g => g.rsvp_status === RsvpStatus.TENTATIVE).length
-    const responded = confirmed + declined + tentative
+    const maybe = guests.filter(g => g.rsvp_status === RsvpStatus.MAYBE).length
+    const responded = attending + not_attending + maybe
     const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0
-    const plusOnesConfirmed = guests.filter(g => 
-      g.rsvp_status === RsvpStatus.CONFIRMED && g.plus_one_name
+    const plusOnesConfirmed = guests.filter(g =>
+      g.rsvp_status === RsvpStatus.ATTENDING && g.plus_one_name
     ).length
 
     return {
       total,
-      confirmed,
-      declined,
+      attending,
+      not_attending,
       pending,
-      tentative,
+      maybe,
       responseRate,
       plusOnesConfirmed
     }
@@ -500,10 +509,10 @@ export class GuestsService {
    */
   getGuestStatusColor(status: RsvpStatus): string {
     const statusColors: Record<RsvpStatus, string> = {
-      [RsvpStatus.CONFIRMED]: '#10B981',  // green
-      [RsvpStatus.DECLINED]: '#EF4444',   // red
+      [RsvpStatus.ATTENDING]: '#10B981',  // green
+      [RsvpStatus.NOT_ATTENDING]: '#EF4444',   // red
       [RsvpStatus.PENDING]: '#F59E0B',    // amber
-      [RsvpStatus.TENTATIVE]: '#3B82F6'   // blue
+      [RsvpStatus.MAYBE]: '#3B82F6'   // blue
     }
     return statusColors[status] || '#6B7280'
   }
@@ -513,10 +522,10 @@ export class GuestsService {
    */
   getGuestStatusLabel(status: RsvpStatus): string {
     const statusLabels: Record<RsvpStatus, string> = {
-      [RsvpStatus.CONFIRMED]: 'Confirmed',
-      [RsvpStatus.DECLINED]: 'Declined',
+      [RsvpStatus.ATTENDING]: 'Attending',
+      [RsvpStatus.NOT_ATTENDING]: 'Not Attending',
       [RsvpStatus.PENDING]: 'Pending',
-      [RsvpStatus.TENTATIVE]: 'Tentative'
+      [RsvpStatus.MAYBE]: 'Maybe'
     }
     return statusLabels[status] || 'Unknown'
   }
