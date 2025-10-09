@@ -7,8 +7,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.core.auth import get_current_user
 from app.crud import crud_guest, crud_event
-from app.schemas.guest import Guest, GuestCreate, GuestUpdate, GuestBulkCreate, GuestRSVPUpdate
+from app.schemas.guest import (
+    Guest,
+    GuestCreate,
+    GuestUpdate,
+    GuestBulkCreate,
+    GuestRSVPUpdate,
+    InvitationLinkData,
+    TokenValidationResult,
+    RSVPEventDetails,
+    QRCodeOptions
+)
 from app.models.guest import RsvpStatus
+from app.services.rsvp_service import get_rsvp_service
 
 router = APIRouter()
 
@@ -487,3 +498,257 @@ async def bulk_update_guest_status(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update guests: {str(e)}")
+
+
+# RSVP Token Management Endpoints
+
+@router.get("/{event_id}/guests/{guest_id}/invitation-link", response_model=InvitationLinkData)
+async def get_invitation_link(
+    event_id: UUID,
+    guest_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get invitation link and sharing information for a guest."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Get guest
+        guest = await crud_guest.get_guest_by_id(db, guest_id)
+        if not guest or guest.event_id != event_id:
+            raise HTTPException(status_code=404, detail="Guest not found")
+
+        # Generate invitation link data
+        rsvp_service = get_rsvp_service()
+        rsvp_url = rsvp_service.generate_rsvp_url(guest.rsvp_token)
+        formatted_token = rsvp_service.format_token_for_display(guest.rsvp_token)
+
+        # Generate shareable text
+        event_date = event.start_date.strftime("%B %d, %Y at %I:%M %p") if event.start_date else "TBD"
+        guest_name = f"{guest.first_name} {guest.last_name}"
+        shareable_text = rsvp_service.generate_invitation_text(
+            guest_name=guest_name,
+            event_name=event.name,
+            event_date=event_date,
+            rsvp_url=rsvp_url
+        )
+
+        # Get sharing links
+        sharing_links = rsvp_service.get_sharing_links(rsvp_url, event.name)
+
+        return InvitationLinkData(
+            rsvp_url=rsvp_url,
+            token=guest.rsvp_token,
+            formatted_token=formatted_token,
+            shareable_text=shareable_text,
+            sharing_links=sharing_links,
+            qr_code_url=f"/api/v1/{event_id}/guests/{guest_id}/qr-code"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate invitation link: {str(e)}")
+
+
+@router.get("/{event_id}/guests/{guest_id}/qr-code")
+async def get_qr_code(
+    event_id: UUID,
+    guest_id: UUID,
+    box_size: int = Query(10, ge=5, le=50, description="Size of each QR box"),
+    border: int = Query(4, ge=1, le=10, description="Border size in boxes"),
+    theme: str = Query("light", pattern="^(light|dark)$", description="Color theme"),
+    format: str = Query("png", pattern="^(png|base64)$", description="Output format"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get QR code for guest RSVP link."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Get guest
+        guest = await crud_guest.get_guest_by_id(db, guest_id)
+        if not guest or guest.event_id != event_id:
+            raise HTTPException(status_code=404, detail="Guest not found")
+
+        # Generate QR code
+        rsvp_service = get_rsvp_service()
+
+        if format == "base64":
+            # Return base64-encoded image
+            qr_base64 = rsvp_service.generate_qr_code_base64(
+                token=guest.rsvp_token,
+                box_size=box_size,
+                border=border,
+                theme=theme
+            )
+            return {"qr_code": qr_base64}
+        else:
+            # Return binary image
+            from fastapi.responses import Response
+            qr_bytes = rsvp_service.generate_qr_code(
+                token=guest.rsvp_token,
+                box_size=box_size,
+                border=border,
+                theme=theme
+            )
+            return Response(content=qr_bytes, media_type="image/png")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
+
+
+@router.post("/{event_id}/guests/{guest_id}/regenerate-token", response_model=Guest)
+async def regenerate_token(
+    event_id: UUID,
+    guest_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Regenerate RSVP token for a guest (invalidates old token)."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Get guest
+        guest = await crud_guest.get_guest_by_id(db, guest_id)
+        if not guest or guest.event_id != event_id:
+            raise HTTPException(status_code=404, detail="Guest not found")
+
+        # Generate new token
+        from app.utils.token_generator import generate_rsvp_token
+        new_token = generate_rsvp_token()
+
+        # Ensure uniqueness (retry if collision)
+        max_retries = 10
+        for attempt in range(max_retries):
+            existing = await crud_guest.get_guest_by_rsvp_token(db, new_token)
+            if not existing:
+                break
+            new_token = generate_rsvp_token()
+            if attempt == max_retries - 1:
+                raise HTTPException(status_code=500, detail="Failed to generate unique token")
+
+        # Update guest with new token
+        guest.rsvp_token = new_token
+        guest.token_first_accessed_at = None  # Reset access tracking
+        guest.token_last_accessed_at = None
+
+        await db.commit()
+        await db.refresh(guest)
+
+        return guest
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to regenerate token: {str(e)}")
+
+
+@router.get("/rsvp/{rsvp_token}/validate", response_model=TokenValidationResult)
+async def validate_rsvp_token(
+    rsvp_token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Validate RSVP token (public endpoint)."""
+    try:
+        rsvp_service = get_rsvp_service()
+        is_valid, error_message = await rsvp_service.validate_token_access(db, rsvp_token)
+
+        if is_valid:
+            # Get guest and event info
+            guest = await crud_guest.get_guest_by_rsvp_token(db, rsvp_token)
+            if guest:
+                event = await crud_event.get_event_by_id(db, guest.event_id)
+                guest_name = f"{guest.first_name} {guest.last_name}"
+                event_name = event.name if event else None
+
+                return TokenValidationResult(
+                    is_valid=True,
+                    guest_name=guest_name,
+                    event_name=event_name
+                )
+
+        return TokenValidationResult(
+            is_valid=False,
+            error_message=error_message
+        )
+    except Exception as e:
+        return TokenValidationResult(
+            is_valid=False,
+            error_message=f"Validation failed: {str(e)}"
+        )
+
+
+@router.get("/rsvp/{rsvp_token}/event-details", response_model=RSVPEventDetails)
+async def get_rsvp_event_details(
+    rsvp_token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get event details for RSVP page (public endpoint)."""
+    try:
+        # Validate token
+        rsvp_service = get_rsvp_service()
+        is_valid, error_message = await rsvp_service.validate_token_access(db, rsvp_token)
+
+        if not is_valid:
+            raise HTTPException(status_code=404, detail=error_message or "Invalid token")
+
+        # Get guest
+        guest = await crud_guest.get_guest_by_rsvp_token(db, rsvp_token)
+        if not guest:
+            raise HTTPException(status_code=404, detail="Guest not found")
+
+        # Track first access
+        if not guest.token_first_accessed_at:
+            await rsvp_service.track_token_access(db, rsvp_token, is_first_access=True)
+        else:
+            await rsvp_service.track_token_access(db, rsvp_token, is_first_access=False)
+
+        # Get event
+        event = await crud_event.get_event_by_id(db, guest.event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+
+        # Build response
+        guest_data = {
+            "first_name": guest.first_name,
+            "last_name": guest.last_name,
+            "email": guest.email,
+            "plus_one_allowed": guest.plus_one_allowed
+        }
+
+        event_data = {
+            "name": event.name,
+            "description": event.description or "",
+            "start_date": event.start_date.isoformat() if event.start_date else "",
+            "end_date": event.end_date.isoformat() if event.end_date else "",
+            "venue_name": event.venue_name or "",
+            "venue_address": event.venue_address or ""
+        }
+
+        rsvp_deadline = event.rsvp_deadline.isoformat() if hasattr(event, 'rsvp_deadline') and event.rsvp_deadline else None
+
+        return RSVPEventDetails(
+            guest=guest_data,
+            event=event_data,
+            rsvp_deadline=rsvp_deadline,
+            custom_message=None  # Can be added later when custom messages are implemented
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve event details: {str(e)}")

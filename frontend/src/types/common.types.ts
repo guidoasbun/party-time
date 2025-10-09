@@ -133,7 +133,9 @@ export const API_ENDPOINTS = {
     GET: (eventId: string, guestId: string) => `/api/v1/events/${eventId}/guests/${guestId}`,
     UPDATE: (eventId: string, guestId: string) => `/api/v1/events/${eventId}/guests/${guestId}`,
     DELETE: (eventId: string, guestId: string) => `/api/v1/events/${eventId}/guests/${guestId}`,
-    RSVP: (token: string) => `/api/v1/events/guests/rsvp/${token}`,
+    RSVP_VALIDATE: (token: string) => `/api/v1/events/guests/rsvp/${token}/validate`,
+    RSVP_DETAILS: (token: string) => `/api/v1/events/guests/rsvp/${token}/event-details`,
+    RSVP_SUBMIT: (token: string) => `/api/v1/events/guests/rsvp/${token}`,
   },
   // Budget endpoints
   BUDGET: {
