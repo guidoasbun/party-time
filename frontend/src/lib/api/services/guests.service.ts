@@ -3,6 +3,7 @@
  */
 
 import { api, withRetry } from '@/lib/api-client'
+import { getSession } from 'next-auth/react'
 import {
   Guest,
   GuestCreate,
@@ -564,13 +565,19 @@ export class GuestsService {
       format: options?.format || 'png'
     }
 
+    // Get session for authentication
+    const session = await getSession()
+    const headers: Record<string, string> = {}
+
+    if (session?.idToken) {
+      headers['Authorization'] = `Bearer ${session.idToken}`
+    }
+
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(params)}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/events/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(params)}`,
       {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
-        }
+        headers
       }
     )
 
@@ -620,7 +627,7 @@ export class GuestsService {
    */
   async validateToken(token: string): Promise<TokenValidationResult> {
     return api.get<TokenValidationResult>(
-      `/api/v1/rsvp/${token}/validate`,
+      `/api/v1/events/guests/rsvp/${token}/validate`,
       undefined,
       withRetry({ attempts: 2 })
     )
@@ -631,7 +638,7 @@ export class GuestsService {
    */
   async getEventDetailsForRSVP(token: string): Promise<RSVPEventDetails> {
     return api.get<RSVPEventDetails>(
-      `/api/v1/rsvp/${token}/event-details`,
+      `/api/v1/events/guests/rsvp/${token}/event-details`,
       undefined,
       withRetry({ attempts: 2 })
     )
