@@ -15,6 +15,8 @@ import {
   GuestStats,
   GuestRSVPUpdate,
   GuestImportResult,
+  CSVImportPreview,
+  CSVImportResult,
   RsvpStatus,
   PaginatedResponse,
   UUID,
@@ -148,7 +150,7 @@ export class GuestsService {
   }
 
   /**
-   * Import guests from CSV/Excel file
+   * Import guests from CSV/Excel file (legacy method)
    */
   async importGuests(
     eventId: UUID,
@@ -169,6 +171,77 @@ export class GuestsService {
       file,
       onProgress
     )
+  }
+
+  /**
+   * Preview CSV import without executing
+   */
+  async previewCSVImport(
+    eventId: UUID,
+    file: File
+  ): Promise<CSVImportPreview> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const session = await getSession()
+    const headers: Record<string, string> = {}
+
+    if (session?.idToken) {
+      headers['Authorization'] = `Bearer ${session.idToken}`
+    }
+
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${API_ENDPOINTS.GUESTS.IMPORT_PREVIEW(eventId)}`,
+      {
+        method: 'POST',
+        headers,
+        body: formData
+      }
+    )
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Failed to preview CSV import')
+    }
+
+    return response.json()
+  }
+
+  /**
+   * Execute CSV import and create guests
+   */
+  async executeCSVImport(
+    eventId: UUID,
+    file: File,
+    skipDuplicates: boolean = true
+  ): Promise<CSVImportResult> {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    const session = await getSession()
+    const headers: Record<string, string> = {}
+
+    if (session?.idToken) {
+      headers['Authorization'] = `Bearer ${session.idToken}`
+    }
+
+    const url = new URL(
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${API_ENDPOINTS.GUESTS.IMPORT_EXECUTE(eventId)}`
+    )
+    url.searchParams.append('skip_duplicates', skipDuplicates.toString())
+
+    const response = await fetch(url.toString(), {
+      method: 'POST',
+      headers,
+      body: formData
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.detail || 'Failed to execute CSV import')
+    }
+
+    return response.json()
   }
 
   /**

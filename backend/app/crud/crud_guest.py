@@ -29,8 +29,10 @@ async def create_guest(db: AsyncSession, guest_data: GuestCreate, event_id: UUID
 
 async def create_guests_bulk(db: AsyncSession, guests_data: List[GuestCreate], event_id: UUID) -> List[Guest]:
     """Create multiple guests for an event."""
+    print(f"[CRUD] create_guests_bulk called with {len(guests_data)} guests for event {event_id}")
     db_guests = []
-    for guest_data in guests_data:
+    for idx, guest_data in enumerate(guests_data):
+        print(f"[CRUD] Creating guest {idx + 1}/{len(guests_data)}: {guest_data.email}")
         db_guest = Guest(
             event_id=event_id,
             email=guest_data.email,
@@ -42,14 +44,20 @@ async def create_guests_bulk(db: AsyncSession, guests_data: List[GuestCreate], e
             notes=guest_data.notes
         )
         db_guests.append(db_guest)
-    
+
+    print(f"[CRUD] Adding {len(db_guests)} guests to session")
     db.add_all(db_guests)
+
+    print(f"[CRUD] Flushing session to database")
     await db.flush()
-    
+
+    print(f"[CRUD] Refreshing guests to get generated IDs and tokens")
     # Refresh all guests to get generated IDs and tokens
-    for guest in db_guests:
+    for idx, guest in enumerate(db_guests):
         await db.refresh(guest)
-    
+        print(f"[CRUD] Guest {idx + 1} refreshed: ID={guest.id}, RSVP Token={guest.rsvp_token}")
+
+    print(f"[CRUD] create_guests_bulk completed successfully, returning {len(db_guests)} guests")
     return db_guests
 
 

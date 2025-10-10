@@ -136,6 +136,8 @@ export const API_ENDPOINTS = {
     RSVP_VALIDATE: (token: string) => `/api/v1/events/guests/rsvp/${token}/validate`,
     RSVP_DETAILS: (token: string) => `/api/v1/events/guests/rsvp/${token}/event-details`,
     RSVP_SUBMIT: (token: string) => `/api/v1/events/guests/rsvp/${token}`,
+    IMPORT_PREVIEW: (eventId: string) => `/api/v1/events/${eventId}/guests/import-preview`,
+    IMPORT_EXECUTE: (eventId: string) => `/api/v1/events/${eventId}/guests/import-execute`,
   },
   // Budget endpoints
   BUDGET: {

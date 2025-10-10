@@ -1,0 +1,16 @@
+Email,First Name,Last Name,Phone,Plus One,Dietary Restrictions,Notes
+unique.guest1@example.com,Unique,Guest1,555-111-1111,true,Vegetarian,First unique guest
+unique.guest2@example.com,Unique,Guest2,555-222-2222,false,Vegan,Second unique guest
+duplicate.email@example.com,First,Duplicate,555-333-3333,true,None,This email will be duplicated
+unique.guest3@example.com,Unique,Guest3,555-444-4444,yes,Gluten-free,Third unique guest
+unique.guest4@example.com,Unique,Guest4,555-555-5555,no,,Fourth unique guest
+duplicate.email@example.com,Second,Duplicate,555-666-6666,false,Kosher,DUPLICATE - same email as row 3
+unique.guest5@example.com,Unique,Guest5,555-777-7777,1,,Fifth unique guest
+another.dup@example.com,Another,Duplicate,555-888-8888,true,Halal,Will appear twice
+unique.guest6@example.com,Unique,Guest6,555-999-9999,0,,Sixth unique guest
+another.dup@example.com,Another,DuplicateAgain,555-000-0000,y,,DUPLICATE - same email as row 8
+triple.dup@example.com,Triple,First,555-111-2222,n,,Will appear three times
+unique.guest7@example.com,Unique,Guest7,555-222-3333,true,,Seventh unique guest
+triple.dup@example.com,Triple,Second,555-333-4444,false,,DUPLICATE - same email as row 11
+unique.guest8@example.com,Unique,Guest8,555-444-5555,yes,,Eighth unique guest
+triple.dup@example.com,Triple,Third,555-555-6666,1,Vegan,DUPLICATE - same email as row 11

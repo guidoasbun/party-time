@@ -115,6 +115,41 @@ export interface GuestImportData {
   send_invitations: boolean
 }
 
+// CSV Import types
+export interface DuplicateDetail {
+  row_number: number
+  email: string
+  first_name: string
+  last_name: string
+  reason: string
+}
+
+export interface ImportErrorDetail {
+  row_number: number
+  errors: string[]
+  data: Record<string, string>
+}
+
+export interface CSVImportPreview {
+  total_rows: number
+  valid_rows: number
+  duplicate_rows: number
+  error_rows: number
+  duplicates: DuplicateDetail[]
+  errors: ImportErrorDetail[]
+  sample_guests: Array<Record<string, string | boolean | null>>
+  column_mapping: Record<string, string>
+}
+
+export interface CSVImportResult {
+  success_count: number
+  error_count: number
+  skipped_count: number
+  created_guest_ids: string[]
+  errors: string[]
+}
+
+// Legacy interface for backward compatibility
 export interface GuestImportResult {
   success_count: number
   error_count: number

@@ -70,7 +70,12 @@ export type {
   GuestCreate,
   GuestUpdate,
   GuestSummary,
-  GuestBulkCreate
+  GuestBulkCreate,
+  GuestImportResult,
+  CSVImportPreview,
+  CSVImportResult,
+  DuplicateDetail,
+  ImportErrorDetail
 } from './guest.types'
 
 export type {
