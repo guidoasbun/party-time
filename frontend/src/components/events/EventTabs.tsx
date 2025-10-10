@@ -267,6 +267,8 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
 }
 
 function GuestsTabPlaceholder({ event }: { event: Event }) {
+  const router = useRouter()
+
   return (
     <div className="text-center py-12">
       <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
@@ -276,9 +278,13 @@ function GuestsTabPlaceholder({ event }: { event: Event }) {
       <p className="text-gray-600 dark:text-gray-400 mb-4">
         Current guest count: <span className="font-semibold">{event.guest_count || 0}</span>
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Full guest management features coming in Phase 4
-      </p>
+      <button
+        onClick={() => router.push(`/events/${event.id}/guests`)}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+      >
+        <Users className="w-4 h-4" />
+        Manage Guests
+      </button>
     </div>
   )
 }
