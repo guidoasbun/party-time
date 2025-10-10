@@ -126,3 +126,40 @@ class QRCodeOptions(BaseModel):
     border: int = 4
     theme: str = "light"
     format: str = "png"
+
+
+class DuplicateDetail(BaseModel):
+    """Schema for duplicate guest detail."""
+    row_number: int
+    email: str
+    first_name: str
+    last_name: str
+    reason: str
+
+
+class ImportError(BaseModel):
+    """Schema for import error detail."""
+    row_number: int
+    errors: List[str]
+    data: dict[str, str]
+
+
+class CSVImportPreview(BaseModel):
+    """Schema for CSV import preview response."""
+    total_rows: int
+    valid_rows: int
+    duplicate_rows: int
+    error_rows: int
+    duplicates: List[DuplicateDetail]
+    errors: List[ImportError]
+    sample_guests: List[dict[str, str | bool | None]]
+    column_mapping: dict[str, str]
+
+
+class CSVImportResult(BaseModel):
+    """Schema for CSV import execution result."""
+    success_count: int
+    error_count: int
+    skipped_count: int
+    created_guest_ids: List[str]
+    errors: List[str]

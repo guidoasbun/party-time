@@ -1,7 +1,7 @@
 """API endpoints for guest management."""
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from fastapi import APIRouter, Depends, HTTPException, Query, Body, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
@@ -16,10 +16,13 @@ from app.schemas.guest import (
     InvitationLinkData,
     TokenValidationResult,
     RSVPEventDetails,
-    QRCodeOptions
+    QRCodeOptions,
+    CSVImportPreview,
+    CSVImportResult
 )
 from app.models.guest import RsvpStatus
 from app.services.rsvp_service import get_rsvp_service
+from app.services.csv_import_service import csv_import_service
 
 router = APIRouter()
 
@@ -752,3 +755,113 @@ async def get_rsvp_event_details(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve event details: {str(e)}")
+
+
+# CSV Import Endpoints
+
+@router.post("/{event_id}/guests/import-preview", response_model=CSVImportPreview)
+async def preview_csv_import(
+    event_id: UUID,
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Preview CSV import without executing it.
+
+    Returns statistics, duplicates, and errors for review before import.
+    """
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Validate file type
+        if not file.filename or not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="File must be a CSV file")
+
+        # Read file content
+        file_content = await file.read()
+
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File size exceeds maximum allowed size of {max_size / (1024 * 1024):.0f}MB"
+            )
+
+        # Preview import
+        preview_result = await csv_import_service.preview_import(
+            db=db,
+            event_id=event_id,
+            file_content=file_content
+        )
+
+        return CSVImportPreview(**preview_result.to_dict())
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to preview CSV import: {str(e)}")
+
+
+@router.post("/{event_id}/guests/import-execute", response_model=CSVImportResult)
+async def execute_csv_import(
+    event_id: UUID,
+    file: UploadFile = File(...),
+    skip_duplicates: bool = Query(True, description="Skip duplicate emails"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Execute CSV import and create guests in database.
+
+    Imports all valid guests from CSV file, optionally skipping duplicates.
+    """
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Validate file type
+        if not file.filename or not file.filename.endswith('.csv'):
+            raise HTTPException(status_code=400, detail="File must be a CSV file")
+
+        # Read file content
+        file_content = await file.read()
+
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB
+        if len(file_content) > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File size exceeds maximum allowed size of {max_size / (1024 * 1024):.0f}MB"
+            )
+
+        # Execute import
+        print(f"[API] Starting CSV import for event {event_id}")
+        import_result = await csv_import_service.execute_import(
+            db=db,
+            event_id=event_id,
+            file_content=file_content,
+            skip_duplicates=skip_duplicates
+        )
+        print(f"[API] Import completed: {import_result.success_count} created, {import_result.error_count} errors, {import_result.skipped_count} skipped")
+
+        return CSVImportResult(**import_result.to_dict())
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Don't rollback here - service already handles transactions
+        print(f"[API ERROR] CSV import failed: {type(e).__name__}: {str(e)}")
+        import traceback
+        print(f"[API ERROR] Traceback: {traceback.format_exc()}")
+        raise HTTPException(status_code=500, detail=f"Failed to execute CSV import: {type(e).__name__}: {str(e)}")

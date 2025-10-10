@@ -1,8 +1,39 @@
-# Party-Time Guest API - Postman Testing Guide
+# Party-Time API - Postman Testing Collections
 
 ## Overview
 
+This directory contains comprehensive Postman test collections for the Party-Time API:
+
+- **Auth-RSVP**: Authentication and RSVP token system testing (Phase 4.1.2)
+- **Guest-API**: Guest management CRUD operations, search, filtering, bulk operations (Phase 4.1.1)
+- **CSV-Import**: CSV file upload, parsing, validation, and bulk import (Phase 4.1.3) ✨ NEW
+
+## Collections
+
+### 1. CSV Import Testing (Phase 4.1.3) ✨ NEW
+**Location**: `CSV-Import/`
+
+Test CSV upload and bulk guest import with:
+- Smart column detection (7+ naming conventions)
+- Duplicate detection (in-file and database)
+- Data validation with row-level errors
+- Import preview and execution
+
+**Quick Start**: See `CSV-Import/QUICK-START.md`
+
+### 2. Guest API Testing (Phase 4.1.1)
+**Location**: `Guest-API/`
+
 This Postman collection provides comprehensive testing for all Guest Management API endpoints implemented in **Phase 4.1.1**. The collection includes 30+ requests covering CRUD operations, search, filtering, sorting, bulk operations, and RSVP management.
+
+**Quick Start**: See `Guest-API/QUICK-START.md`
+
+### 3. Auth & RSVP Testing (Phase 4.1.2)
+**Location**: `Auth-RSVP/`
+
+Authentication and RSVP token system testing.
+
+**Quick Start**: See `Auth-RSVP/POSTMAN_TESTING_GUIDE.md`
 
 ## 📋 Prerequisites
 

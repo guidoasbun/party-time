@@ -1,0 +1,21 @@
+Email,First Name,Last Name,Phone,Plus One,Dietary Restrictions,Notes
+sarah.williams@example.com,Sarah,Williams,+1-555-101-2345,true,Gluten-free,Prefers aisle seat
+michael.chen@example.com,Michael,Chen,(555) 202-3456,yes,Vegan,VIP guest - table 1
+emily.rodriguez@example.com,Emily,Rodriguez,555.303.4567,1,Lactose intolerant,Bringing family
+james.patel@example.com,James,Patel,555-404-5678,false,Vegetarian,Early arrival requested
+olivia.kim@example.com,Olivia,Kim,+1 555 505 6789,no,,Confirmed attendance
+william.johnson@example.com,William,Johnson,5556067890,y,Kosher,Dietary - strictly kosher
+ava.martinez@example.com,Ava,Martinez,+1-555-707-8901,0,Nut allergy - severe,Emergency contact on file
+noah.anderson@example.com,Noah,Anderson,(555) 808-9012,n,Halal,Religious dietary needs
+sophia.thomas@example.com,Sophia,Thomas,555.909.0123,true,Shellfish allergy,Table near exit
+liam.jackson@example.com,Liam,Jackson,555-010-1234,1,Diabetic - sugar-free,Needs special menu
+isabella.white@example.com,Isabella,White,+1 555 111 2345,false,,RSVP by email only
+mason.harris@example.com,Mason,Harris,5551122345,yes,Pescatarian,Prefers fish options
+charlotte.martin@example.com,Charlotte,Martin,+1-555-131-4567,true,Celiac disease,Gluten-free strictly
+lucas.thompson@example.com,Lucas,Thompson,(555) 141-5678,no,None,Standard meal
+amelia.garcia@example.com,Amelia,Garcia,555.151.6789,y,,Plus one confirmed - spouse
+benjamin.lee@example.com,Benjamin,Lee,555-161-7890,0,Vegan + gluten-free,Multiple restrictions
+mia.walker@example.com,Mia,Walker,+1 555 171 8901,true,Dairy allergy,Bring EpiPen
+alexander.hall@example.com,Alexander,Hall,5551819012,n,,Single guest
+harper.allen@example.com,Harper,Allen,+1-555-191-0123,1,Organic only preference,Special request
+ethan.young@example.com,Ethan,Young,(555) 202-1234,false,Low-sodium diet,Medical requirement

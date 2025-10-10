@@ -1,0 +1,11 @@
+Email,First Name,Last Name,Phone,Plus One,Dietary Restrictions,Notes
+,John,MissingEmail,555-111-1111,true,,ERROR: Missing email (required field)
+invalid-email,Jane,InvalidEmail,555-222-2222,false,,ERROR: Invalid email format
+missing@first.com,,Smith,555-333-3333,yes,,ERROR: Missing first name (required field)
+missing@last.com,Bob,,555-444-4444,no,,ERROR: Missing last name (required field)
+valid@email.com,ThisFirstNameIsWayTooLongAndExceedsTheOneHundredCharacterLimitWhichWillCauseAValidationErrorBecauseTheFieldHasAMaximumLengthConstraintOf100Characters,Short,555-555-5555,true,,ERROR: First name exceeds 100 characters
+valid2@email.com,Valid,ThisLastNameIsAlsoWayTooLongAndExceedsTheOneHundredCharacterLimitSetInTheDatabaseSchemaAndWillThereforeCauseAValidationErrorWhenProcessed,555-666-6666,false,,ERROR: Last name exceeds 100 characters
+@@invalid@@,Test,User,555-777-7777,1,,ERROR: Invalid email format with special characters
+no-domain@,Another,Test,555-888-8888,y,,ERROR: Email missing domain
+test@,Missing,Domain,555-999-9999,n,,ERROR: Email incomplete
+.startswith.dot@email.com,Dot,Starter,555-000-0000,true,,ERROR: Email starts with dot (invalid)

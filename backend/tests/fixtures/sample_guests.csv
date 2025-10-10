@@ -1,0 +1,11 @@
+Email,First Name,Last Name,Phone,Plus One,Dietary Restrictions,Notes
+john.doe@example.com,John,Doe,+1-555-123-4567,true,Vegetarian,Prefers window seat
+jane.smith@example.com,Jane,Smith,555-234-5678,false,,Arriving early
+bob.wilson@example.com,Bob,Wilson,(555) 345-6789,yes,Gluten-free,VIP guest
+alice.johnson@example.com,Alice,Johnson,555.456.7890,1,Vegan,Needs accessibility access
+charlie.brown@example.com,Charlie,Brown,,false,Nut allergy,
+david.lee@example.com,David,Lee,+1 555 567 8901,true,,Bringing plus one
+emma.davis@example.com,Emma,Davis,5556789012,0,Lactose intolerant,
+frank.miller@example.com,Frank,Miller,555-789-0123,y,Kosher,Religious dietary requirements
+grace.taylor@example.com,Grace,Taylor,,true,Halal,
+henry.anderson@example.com,Henry,Anderson,555-890-1234,no,,RSVP confirmed
