@@ -26,8 +26,10 @@ export default function EventDetailPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <EventDetailSkeleton />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <EventDetailSkeleton />
+        </div>
       </div>
     );
   }
@@ -35,35 +37,37 @@ export default function EventDetailPage() {
   // Error state
   if (error || !event) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="space-y-6">
-          {/* Breadcrumb */}
-          <Breadcrumb />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <div className="space-y-6">
+            {/* Breadcrumb */}
+            <Breadcrumb />
 
-          {/* Error message */}
-          <ErrorMessage
-            title="Failed to load event"
-            message={
-              error?.message ||
-              "The event could not be found or you do not have permission to view it."
-            }
-            onRetry={
-              error
-                ? () => {
-                    void refetch();
-                  }
-                : undefined
-            }
-          />
+            {/* Error message */}
+            <ErrorMessage
+              title="Failed to load event"
+              message={
+                error?.message ||
+                "The event could not be found or you do not have permission to view it."
+              }
+              onRetry={
+                error
+                  ? () => {
+                      void refetch();
+                    }
+                  : undefined
+              }
+            />
 
-          {/* Back button */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => router.push("/dashboard")}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              ← Back to Dashboard
-            </button>
+            {/* Back button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
+              >
+                ← Back to Dashboard
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -71,30 +75,31 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="space-y-6">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb />
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="space-y-6">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb />
+          {/* Event Header */}
+          <EventDetailHeader event={event} />
 
-        {/* Event Header */}
-        <EventDetailHeader event={event} />
+          {/* Action Buttons Section */}
+          <div className="flex justify-end">
+            <EventActionButtons
+              eventId={event.id}
+              eventName={event.name}
+              onDeleteSuccess={() => {
+                router.push("/dashboard");
+              }}
+              onDuplicateSuccess={(newEventId) => {
+                router.push(`/events/${newEventId}`);
+              }}
+            />
+          </div>
 
-        {/* Action Buttons Section */}
-        <div className="flex justify-end">
-          <EventActionButtons
-            eventId={event.id}
-            eventName={event.name}
-            onDeleteSuccess={() => {
-              router.push("/dashboard");
-            }}
-            onDuplicateSuccess={(newEventId) => {
-              router.push(`/events/${newEventId}`);
-            }}
-          />
+          {/* Tabbed Interface - Phase 3.2.2 */}
+          <EventTabs event={event} />
         </div>
-
-        {/* Tabbed Interface - Phase 3.2.2 */}
-        <EventTabs event={event} />
       </div>
     </div>
   );
