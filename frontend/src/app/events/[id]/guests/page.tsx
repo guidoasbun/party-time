@@ -1,111 +1,134 @@
-'use client'
+"use client";
 
 /**
  * Guest List Page
  * Full-page guest management interface for event organizers
  */
 
-import React from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { Breadcrumb } from '@/components/layout/Breadcrumb'
-import { GuestList } from '@/components/guests/GuestList'
-import { ErrorMessage } from '@/components/ui/ErrorMessage'
-import { useQuery } from '@tanstack/react-query'
-import { guestsService } from '@/lib/api/services'
-import type { UUID, PaginatedResponse, Guest } from '@/types'
+import React from "react";
+import { useParams, useRouter } from "next/navigation";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { GuestList } from "@/components/guests/GuestList";
+import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { EventDetailHeader } from "@/components/events/EventDetailHeader";
+import { useQuery } from "@tanstack/react-query";
+import { guestsService } from "@/lib/api/services";
+import { useEvent } from "@/hooks/api/useEvents";
+import type { UUID, PaginatedResponse, Guest, Event } from "@/types";
 
 export default function GuestsPage() {
-  const params = useParams()
-  const router = useRouter()
-  const eventId = params?.id as UUID
+  const params = useParams();
+  const router = useRouter();
+  const eventId = params?.id as UUID;
+
+  // Fetch event data using React Query (cached for 5 minutes)
+  const {
+    data: event,
+    isLoading: isEventLoading,
+    error: eventError,
+    refetch: refetchEvent,
+  } = useEvent(eventId);
 
   // Fetch guests using React Query
   const {
     data: guestsResponse,
-    isLoading,
-    error,
-    refetch
+    isLoading: isGuestsLoading,
+    error: guestsError,
+    refetch: refetchGuests,
   } = useQuery<PaginatedResponse<Guest>>({
-    queryKey: ['guests', eventId],
+    queryKey: ["guests", eventId],
     queryFn: () => guestsService.getGuests(eventId),
     enabled: !!eventId,
-    staleTime: 2 * 60 * 1000 // 2 minutes
-  })
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
 
-  const guests = guestsResponse?.items || []
-  const totalCount = guestsResponse?.total || 0
+  const guests = guestsResponse?.items || [];
+  const totalCount = guestsResponse?.total || 0;
+  const isLoading = isEventLoading || isGuestsLoading;
+  const error = eventError || guestsError;
 
   // Error state
   if (error && !isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="space-y-6">
-          {/* Breadcrumb */}
-          <Breadcrumb />
+      <div className="min-h-screen bg-background text-foreground">
+        <div className="container mx-auto px-4 py-6 max-w-7xl">
+          <div className="space-y-6">
+            {/* Breadcrumb */}
+            <Breadcrumb />
 
-          {/* Error message */}
-          <ErrorMessage
-            title="Failed to load guests"
-            message={
-              error instanceof Error
-                ? error.message
-                : 'Unable to load guest list. Please try again.'
-            }
-            onRetry={() => {
-              void refetch()
-            }}
-          />
+            {/* Error message */}
+            <ErrorMessage
+              title="Failed to load data"
+              message={
+                error instanceof Error
+                  ? error.message
+                  : "Unable to load event or guest list. Please try again."
+              }
+              onRetry={() => {
+                void refetchEvent();
+                void refetchGuests();
+              }}
+            />
 
-          {/* Back button */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => router.push(`/events/${eventId}`)}
-              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              ← Back to Event Details
-            </button>
+            {/* Back button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => router.push(`/events/${eventId}`)}
+                className="text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                ← Back to Event Details
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-7xl">
-      <div className="space-y-6">
-        {/* Breadcrumb Navigation */}
-        <Breadcrumb />
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <div className="space-y-6">
+          {/* Breadcrumb Navigation */}
+          <Breadcrumb />
 
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-              Guest Management
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Manage your event guest list, RSVPs, and invitations
-            </p>
-          </div>
+          {/* Event Detail Header */}
+          {event && <EventDetailHeader event={event} />}
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push(`/events/${eventId}`)}
-              className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium transition-colors"
-            >
-              ← Back to Event
-            </button>
+          {/* Page Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Guest Management
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Manage your event guest list, RSVPs, and invitations
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => router.push(`/events/${eventId}`)}
+                className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
+              >
+                ← Back to Event
+              </button>
+            </div>
           </div>
-        </div>
 
         {/* Guest Statistics Cards */}
-        {!isLoading && guests.length > 0 && (
+        {!isGuestsLoading && guests.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Total Guests */}
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Guests</p>
-                  <p className="text-2xl font-bold text-foreground mt-1">{totalCount}</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Total Guests
+                  </p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {totalCount}
+                  </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
                   <svg
@@ -129,9 +152,11 @@ export default function GuestsPage() {
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Attending</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Attending
+                  </p>
                   <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                    {guests.filter((g) => g.rsvp_status === 'attending').length}
+                    {guests.filter((g) => g.rsvp_status === "attending").length}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
@@ -156,9 +181,11 @@ export default function GuestsPage() {
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Pending</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Pending
+                  </p>
                   <p className="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">
-                    {guests.filter((g) => g.rsvp_status === 'pending').length}
+                    {guests.filter((g) => g.rsvp_status === "pending").length}
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900 flex items-center justify-center">
@@ -183,9 +210,14 @@ export default function GuestsPage() {
             <div className="bg-card border border-border rounded-lg p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Declined</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Declined
+                  </p>
                   <p className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
-                    {guests.filter((g) => g.rsvp_status === 'not_attending').length}
+                    {
+                      guests.filter((g) => g.rsvp_status === "not_attending")
+                        .length
+                    }
                   </p>
                 </div>
                 <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
@@ -212,14 +244,15 @@ export default function GuestsPage() {
         <GuestList
           eventId={eventId}
           guests={guests}
-          isLoading={isLoading}
-          error={error ? (error as Error) : null}
+          isLoading={isGuestsLoading}
+          error={guestsError ? (guestsError as Error) : null}
           totalCount={totalCount}
           onRefresh={() => {
-            void refetch()
+            void refetchGuests();
           }}
         />
+        </div>
       </div>
     </div>
-  )
+  );
 }
