@@ -152,10 +152,10 @@ export function EventTabs({ event }: EventTabsProps) {
                   transition-colors whitespace-nowrap
                   ${
                     isActive
-                      ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:border-gray-300"
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                   }
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-card
+                  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card
                 `}
               >
                 <Icon className="w-4 h-4" />
@@ -166,8 +166,8 @@ export function EventTabs({ event }: EventTabsProps) {
                     px-2 py-0.5 rounded-full text-xs font-semibold
                     ${
                       isActive
-                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-                        : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400"
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
                     }
                   `}
                   >
