@@ -37,7 +37,7 @@ export function EventTabs({ event }: EventTabsProps) {
   const urlTab = searchParams?.get("tab") as TabId | null;
   const [activeTab, setActiveTab] = useState<TabId>(urlTab || "overview");
 
-  console.log(event);
+  // console.log(event);
 
   // Update active tab when URL changes
   useEffect(() => {
