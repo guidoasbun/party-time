@@ -48,17 +48,17 @@ class EventUpdate(BaseModel):
 class Event(EventBase):
     """Schema for event response."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     status: EventStatus
     planner_id: UUID
     created_at: datetime
     updated_at: datetime
-    
-    # Summary data (calculated fields)
-    guest_count: Optional[int] = 0
-    confirmed_guests: Optional[int] = 0
-    total_expenses: Optional[Decimal] = Decimal("0.00")
+
+    # Summary data (calculated fields - computed by model hybrid properties)
+    guest_count: int = 0
+    confirmed_guests: int = 0
+    total_expenses: Decimal = Decimal("0.00")
     
     @field_serializer('id', 'planner_id')
     def serialize_uuid(self, value: UUID) -> str:

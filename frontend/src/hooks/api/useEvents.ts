@@ -34,7 +34,7 @@ export const eventKeys = {
   lists: () => [...eventKeys.all, 'list'] as const,
   list: (params?: EventSearchParams) => [...eventKeys.lists(), params] as const,
   details: () => [...eventKeys.all, 'detail'] as const,
-  detail: (id: string) => [...eventKeys.details(), id] as const,
+  detail: (id: string, includeRelations?: boolean) => [...eventKeys.details(), id, { includeRelations }] as const,
   stats: () => [...eventKeys.all, 'stats'] as const,
   userStats: (userId: string) => [...eventKeys.stats(), userId] as const,
 }
@@ -97,11 +97,12 @@ export function useInfiniteEvents(
 
 export function useEvent(
   id: string,
+  includeRelations: boolean = true,
   options?: UseQueryOptions<Event, ApiException>
 ) {
   return useQuery({
-    queryKey: eventKeys.detail(id),
-    queryFn: () => eventsService.getEvent(id),
+    queryKey: eventKeys.detail(id, includeRelations),
+    queryFn: () => eventsService.getEvent(id, includeRelations),
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
     ...options,
@@ -276,8 +277,8 @@ export function useArchiveEvent(
 }
 
 // Composite hooks
-export function useEventManagement(eventId: string) {
-  const { data: event, isLoading: eventLoading, error: eventError } = useEvent(eventId)
+export function useEventManagement(eventId: string, includeRelations: boolean = true) {
+  const { data: event, isLoading: eventLoading, error: eventError } = useEvent(eventId, includeRelations)
   const { data: stats, isLoading: statsLoading } = useEventAnalytics(eventId)
   
   const updateMutation = useUpdateEvent({
@@ -384,7 +385,7 @@ export function useEventsOverview(params?: EventSearchParams) {
 
 // Form helpers
 export function useEventForm(eventId?: string) {
-  const eventQuery = useEvent(eventId || '', { 
+  const eventQuery = useEvent(eventId || '', false, {
     enabled: !!eventId
   } as UseQueryOptions<Event, ApiException>)
   const { data: event } = eventQuery

@@ -59,11 +59,14 @@ export class EventsService {
 
   /**
    * Get a single event by ID
+   * @param eventId - The event UUID
+   * @param includeRelations - Whether to include related data (guests, budget, expenses). Defaults to true.
    */
-  async getEvent(eventId: UUID): Promise<Event> {
+  async getEvent(eventId: UUID, includeRelations: boolean = true): Promise<Event> {
+    const params = includeRelations ? { include_relations: true } : undefined
     return api.get<Event>(
       API_ENDPOINTS.EVENTS.GET(eventId),
-      undefined,
+      params,
       withRetry({ attempts: 2 })
     )
   }
@@ -74,7 +77,7 @@ export class EventsService {
   async getEventWithDetails(eventId: UUID): Promise<EventWithDetails> {
     return api.get<EventWithDetails>(
       API_ENDPOINTS.EVENTS.GET(eventId),
-      { include_details: true },
+      { include_relations: true },
       withRetry({ attempts: 2 })
     )
   }
