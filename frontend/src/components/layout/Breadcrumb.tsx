@@ -39,13 +39,13 @@ export function Breadcrumb({
       ]
     : breadcrumbs
 
-  const defaultSeparator = separator || <ChevronRight className="h-4 w-4 text-gray-400" />
+  const defaultSeparator = separator || <ChevronRight className="h-4 w-4 text-muted-foreground" />
 
   return (
     <nav
       aria-label="Breadcrumb"
       className={cn(
-        "flex items-center space-x-1 text-sm text-gray-600",
+        "flex items-center space-x-1 text-sm text-muted-foreground",
         className
       )}
     >
@@ -63,13 +63,13 @@ export function Breadcrumb({
               )}
 
               {isEllipsis ? (
-                <span className="text-gray-400 px-1">...</span>
+                <span className="text-muted-foreground px-1">...</span>
               ) : item.href && !isLast ? (
                 <Link
                   href={item.href}
                   className={cn(
-                    "hover:text-gray-900 transition-colors duration-200",
-                    "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm px-1",
+                    "hover:text-foreground transition-colors duration-200",
+                    "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm px-1",
                     index === 0 && showHomeIcon && "flex items-center space-x-1"
                   )}
                 >
@@ -82,7 +82,7 @@ export function Breadcrumb({
                 <span
                   className={cn(
                     "px-1",
-                    isLast && "text-gray-900 font-medium",
+                    isLast && "text-foreground font-medium",
                     index === 0 && showHomeIcon && "flex items-center space-x-1"
                   )}
                   aria-current={isLast ? "page" : undefined}
@@ -117,8 +117,8 @@ export function BreadcrumbItem({
   const baseClasses = cn(
     "transition-colors duration-200",
     isActive
-      ? "text-gray-900 font-medium"
-      : "text-gray-600 hover:text-gray-900",
+      ? "text-foreground font-medium"
+      : "text-muted-foreground hover:text-foreground",
     className
   )
 
@@ -128,7 +128,7 @@ export function BreadcrumbItem({
         href={href}
         className={cn(
           baseClasses,
-          "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm px-1"
+          "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm px-1"
         )}
       >
         {children}
@@ -157,7 +157,7 @@ export function BreadcrumbSeparator({
 }: BreadcrumbSeparatorProps) {
   return (
     <span
-      className={cn("mx-2 flex-shrink-0 text-gray-400", className)}
+      className={cn("mx-2 flex-shrink-0 text-muted-foreground", className)}
       aria-hidden="true"
     >
       {children || <ChevronRight className="h-4 w-4" />}
@@ -191,14 +191,14 @@ export function CompactBreadcrumb({ className }: CompactBreadcrumbProps) {
         <>
           <Link
             href={parentPage.href}
-            className="text-gray-600 hover:text-gray-900 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-sm px-1"
+            className="text-muted-foreground hover:text-foreground transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm px-1"
           >
             {parentPage.label}
           </Link>
-          <ChevronRight className="h-4 w-4 text-gray-400 mx-2" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground mx-2" />
         </>
       )}
-      <span className="text-gray-900 font-medium px-1" aria-current="page">
+      <span className="text-foreground font-medium px-1" aria-current="page">
         {currentPage.label}
       </span>
     </nav>

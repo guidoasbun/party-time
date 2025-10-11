@@ -107,26 +107,26 @@ export function EventDetailHeader({ event, className }: EventDetailHeaderProps) 
         <div className="flex-1 space-y-4">
           {/* Event type and status badges */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border border-blue-300 dark:border-blue-700">
               <TypeIcon className="h-3.5 w-3.5" />
               {typeLabel}
             </span>
             <EventStatusBadge status={event.status} />
             {event.is_public && (
-              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200">
+              <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-muted text-muted-foreground border border-border">
                 Public
               </span>
             )}
           </div>
 
           {/* Event title */}
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
+          <h1 className="text-3xl font-bold text-foreground leading-tight">
             {event.name}
           </h1>
 
           {/* Event description */}
           {event.description && (
-            <p className="text-gray-600 dark:text-gray-400 text-base leading-relaxed">
+            <p className="text-muted-foreground text-base leading-relaxed">
               {event.description}
             </p>
           )}
@@ -134,20 +134,20 @@ export function EventDetailHeader({ event, className }: EventDetailHeaderProps) 
           {/* Event details */}
           <div className="space-y-2 text-sm">
             {/* Date and time */}
-            <div className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+            <div className="flex items-start gap-2 text-foreground">
               <Calendar className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <span>{formatEventDate(event.start_date, event.end_date)}</span>
             </div>
 
             {/* Location */}
-            <div className="flex items-start gap-2 text-gray-700 dark:text-gray-300">
+            <div className="flex items-start gap-2 text-foreground">
               <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <span>{getLocationDisplay()}</span>
             </div>
 
             {/* Guest count */}
             {(event.guest_count > 0 || event.max_guests) && (
-              <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+              <div className="flex items-center gap-2 text-foreground">
                 <Users className="h-5 w-5 flex-shrink-0" />
                 <span>
                   {event.guest_count > 0 && `${event.guest_count} guest${event.guest_count !== 1 ? 's' : ''}`}

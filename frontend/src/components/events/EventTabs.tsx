@@ -1,107 +1,131 @@
-'use client'
+"use client";
 
 /**
  * EventTabs Component
  * Main tabbed interface for event detail pages with URL-based tab persistence
  */
 
-import React, { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Users, DollarSign, Calendar, Settings as SettingsIcon, FileText } from 'lucide-react'
-import type { Event } from '@/types'
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Users,
+  DollarSign,
+  Calendar,
+  Settings as SettingsIcon,
+  FileText,
+} from "lucide-react";
+import type { Event } from "@/types";
+import { log } from "console";
 
 interface EventTabsProps {
-  event: Event
+  event: Event;
 }
 
-type TabId = 'overview' | 'guests' | 'budget' | 'timeline' | 'settings'
+type TabId = "overview" | "guests" | "budget" | "timeline" | "settings";
 
 interface Tab {
-  id: TabId
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  badge?: number | string
-  content: React.ReactNode
+  id: TabId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  badge?: number | string;
+  content: React.ReactNode;
 }
 
 export function EventTabs({ event }: EventTabsProps) {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const urlTab = searchParams?.get('tab') as TabId | null
-  const [activeTab, setActiveTab] = useState<TabId>(urlTab || 'overview')
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlTab = searchParams?.get("tab") as TabId | null;
+  const [activeTab, setActiveTab] = useState<TabId>(urlTab || "overview");
+
+  console.log(event);
 
   // Update active tab when URL changes
   useEffect(() => {
-    if (urlTab && ['overview', 'guests', 'budget', 'timeline', 'settings'].includes(urlTab)) {
-      setActiveTab(urlTab)
+    if (
+      urlTab &&
+      ["overview", "guests", "budget", "timeline", "settings"].includes(urlTab)
+    ) {
+      setActiveTab(urlTab);
     } else if (urlTab) {
       // Invalid tab, default to overview
-      setActiveTab('overview')
+      setActiveTab("overview");
     }
-  }, [urlTab])
+  }, [urlTab]);
 
   // Update URL when tab changes
   const handleTabChange = (tabId: TabId) => {
-    setActiveTab(tabId)
-    const params = new URLSearchParams(searchParams?.toString() || '')
-    params.set('tab', tabId)
-    router.push(`?${params.toString()}`, { scroll: false })
-  }
+    setActiveTab(tabId);
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    params.set("tab", tabId);
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
 
   // Handle keyboard navigation
-  const handleKeyDown = (e: React.KeyboardEvent, tabId: TabId, index: number) => {
-    const tabs: TabId[] = ['overview', 'guests', 'budget', 'timeline', 'settings']
+  const handleKeyDown = (
+    e: React.KeyboardEvent,
+    tabId: TabId,
+    index: number
+  ) => {
+    const tabs: TabId[] = [
+      "overview",
+      "guests",
+      "budget",
+      "timeline",
+      "settings",
+    ];
 
-    if (e.key === 'ArrowRight') {
-      e.preventDefault()
-      const nextIndex = (index + 1) % tabs.length
-      handleTabChange(tabs[nextIndex])
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault()
-      const prevIndex = (index - 1 + tabs.length) % tabs.length
-      handleTabChange(tabs[prevIndex])
-    } else if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault()
-      handleTabChange(tabId)
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const nextIndex = (index + 1) % tabs.length;
+      handleTabChange(tabs[nextIndex]);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prevIndex = (index - 1 + tabs.length) % tabs.length;
+      handleTabChange(tabs[prevIndex]);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleTabChange(tabId);
     }
-  }
+  };
 
   const tabs: Tab[] = [
     {
-      id: 'overview',
-      label: 'Overview',
+      id: "overview",
+      label: "Overview",
       icon: FileText,
-      content: <EventOverviewTabPlaceholder event={event} />
+      content: <EventOverviewTabPlaceholder event={event} />,
     },
     {
-      id: 'guests',
-      label: 'Guests',
+      id: "guests",
+      label: "Guests",
       icon: Users,
       badge: event.guest_count || 0,
-      content: <GuestsTabPlaceholder event={event} />
+      content: <GuestsTabPlaceholder event={event} />,
     },
     {
-      id: 'budget',
-      label: 'Budget',
+      id: "budget",
+      label: "Budget",
       icon: DollarSign,
-      badge: event.budget_total ? `$${(event.budget_total / 1000).toFixed(0)}k` : '0',
-      content: <BudgetTabPlaceholder event={event} />
+      badge: event.budget_total
+        ? `$${(event.budget_total / 1000).toFixed(0)}k`
+        : "0",
+      content: <BudgetTabPlaceholder event={event} />,
     },
     {
-      id: 'timeline',
-      label: 'Timeline',
+      id: "timeline",
+      label: "Timeline",
       icon: Calendar,
-      content: <TimelineTabPlaceholder event={event} />
+      content: <TimelineTabPlaceholder event={event} />,
     },
     {
-      id: 'settings',
-      label: 'Settings',
+      id: "settings",
+      label: "Settings",
       icon: SettingsIcon,
-      content: <SettingsTabPlaceholder event={event} />
-    }
-  ]
+      content: <SettingsTabPlaceholder event={event} />,
+    },
+  ];
 
-  const activeTabContent = tabs.find(tab => tab.id === activeTab)?.content
+  const activeTabContent = tabs.find((tab) => tab.id === activeTab)?.content;
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-sm">
@@ -113,8 +137,8 @@ export function EventTabs({ event }: EventTabsProps) {
           aria-label="Event details tabs"
         >
           {tabs.map((tab, index) => {
-            const Icon = tab.icon
-            const isActive = activeTab === tab.id
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
 
             return (
               <button
@@ -129,28 +153,32 @@ export function EventTabs({ event }: EventTabsProps) {
                 className={`
                   flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm
                   transition-colors whitespace-nowrap
-                  ${isActive
-                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:border-gray-300'
+                  ${
+                    isActive
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                   }
-                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-card
+                  focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-card
                 `}
               >
                 <Icon className="w-4 h-4" />
                 <span>{tab.label}</span>
                 {tab.badge !== undefined && (
-                  <span className={`
+                  <span
+                    className={`
                     px-2 py-0.5 rounded-full text-xs font-semibold
-                    ${isActive
-                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    ${
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground"
                     }
-                  `}>
+                  `}
+                  >
                     {tab.badge}
                   </span>
                 )}
               </button>
-            )
+            );
           })}
         </nav>
       </div>
@@ -160,12 +188,12 @@ export function EventTabs({ event }: EventTabsProps) {
         role="tabpanel"
         id={`${activeTab}-panel`}
         aria-labelledby={`${activeTab}-tab`}
-        className="p-6"
+        className="p-6 bg-card text-card-foreground"
       >
         {activeTabContent}
       </div>
     </div>
-  )
+  );
 }
 
 // Placeholder components (will be replaced with full implementations in future phases)
@@ -174,17 +202,17 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+        <h3 className="text-lg font-semibold text-foreground mb-4">
           Event Details
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Description */}
           {event.description && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Description
               </label>
-              <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">
+              <p className="text-foreground whitespace-pre-wrap">
                 {event.description}
               </p>
             </div>
@@ -192,34 +220,34 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
 
           {/* Date & Time */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Start Date
             </label>
-            <p className="text-gray-900 dark:text-gray-100">
-              {new Date(event.start_date).toLocaleString('en-US', {
-                weekday: 'long',
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
+            <p className="text-foreground">
+              {new Date(event.start_date).toLocaleString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
               })}
             </p>
           </div>
 
           {event.end_date && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 End Date
               </label>
-              <p className="text-gray-900 dark:text-gray-100">
-                {new Date(event.end_date).toLocaleString('en-US', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
+              <p className="text-foreground">
+                {new Date(event.end_date).toLocaleString("en-US", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </p>
             </div>
@@ -228,11 +256,13 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
           {/* Location */}
           {(event.venue_name || event.location) && (
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Location
               </label>
-              <p className="text-gray-900 dark:text-gray-100">
-                {event.venue_name && <span className="font-medium">{event.venue_name}</span>}
+              <p className="text-foreground">
+                {event.venue_name && (
+                  <span className="font-medium">{event.venue_name}</span>
+                )}
                 {event.venue_name && event.venue_address && <br />}
                 {event.venue_address || event.location}
               </p>
@@ -241,21 +271,21 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
 
           {/* Privacy */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label className="block text-sm font-medium text-muted-foreground mb-2">
               Privacy
             </label>
-            <p className="text-gray-900 dark:text-gray-100">
-              {event.is_public ? 'Public Event' : 'Private Event'}
+            <p className="text-foreground">
+              {event.is_public ? "Public Event" : "Private Event"}
             </p>
           </div>
 
           {/* Guest Limit */}
           {event.max_guests && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-muted-foreground mb-2">
                 Guest Limit
               </label>
-              <p className="text-gray-900 dark:text-gray-100">
+              <p className="text-foreground">
                 {event.guest_count} / {event.max_guests} guests
               </p>
             </div>
@@ -263,84 +293,95 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function GuestsTabPlaceholder({ event }: { event: Event }) {
+  const router = useRouter();
+
   return (
     <div className="text-center py-12">
-      <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Guest Management
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 mb-4">
-        Current guest count: <span className="font-semibold">{event.guest_count || 0}</span>
+      <p className="text-muted-foreground mb-4">
+        Current guest count:{" "}
+        <span className="font-semibold">{event.guest_count || 0}</span>
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        Full guest management features coming in Phase 4
-      </p>
+      <button
+        onClick={() => router.push(`/events/${event.id}/guests`)}
+        className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+      >
+        <Users className="w-4 h-4" />
+        Manage Guests
+      </button>
     </div>
-  )
+  );
 }
 
 function BudgetTabPlaceholder({ event }: { event: Event }) {
   const budgetPercentage = event.budget_total
     ? Math.round((event.total_expenses / event.budget_total) * 100)
-    : 0
+    : 0;
 
   return (
     <div className="text-center py-12">
-      <DollarSign className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Budget Tracking
       </h3>
       {event.budget_total ? (
         <div className="space-y-4">
           <div>
-            <p className="text-gray-600 dark:text-gray-400">Total Budget</p>
-            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <p className="text-muted-foreground">Total Budget</p>
+            <p className="text-3xl font-bold text-foreground">
               ${event.budget_total.toLocaleString()}
             </p>
           </div>
           <div>
-            <p className="text-gray-600 dark:text-gray-400">Spent</p>
-            <p className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+            <p className="text-muted-foreground">Spent</p>
+            <p className="text-2xl font-semibold text-foreground">
               ${event.total_expenses.toLocaleString()}
-              <span className="text-sm text-gray-500 ml-2">({budgetPercentage}%)</span>
+              <span className="text-sm text-muted-foreground ml-2">
+                ({budgetPercentage}%)
+              </span>
             </p>
           </div>
           <div>
-            <p className="text-gray-600 dark:text-gray-400">Remaining</p>
+            <p className="text-muted-foreground">Remaining</p>
             <p className="text-2xl font-semibold text-green-600 dark:text-green-400">
               ${(event.budget_total - event.total_expenses).toLocaleString()}
             </p>
           </div>
         </div>
       ) : (
-        <p className="text-gray-600 dark:text-gray-400">No budget set</p>
+        <p className="text-muted-foreground">No budget set</p>
       )}
-      <p className="text-sm text-gray-500 dark:text-gray-400 mt-6">
+      <p className="text-sm text-muted-foreground mt-6">
         Full budget management features coming in Phase 7
       </p>
     </div>
-  )
+  );
 }
 
 function TimelineTabPlaceholder({ event }: { event: Event }) {
   const daysUntil = Math.ceil(
-    (new Date(event.start_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-  )
+    (new Date(event.start_date).getTime() - new Date().getTime()) /
+      (1000 * 60 * 60 * 24)
+  );
 
   return (
     <div className="text-center py-12">
-      <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Event Timeline
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 mb-4">
+      <p className="text-muted-foreground mb-4">
         {daysUntil > 0 ? (
           <>
-            <span className="font-semibold text-2xl">{daysUntil}</span> days until event
+            <span className="font-semibold text-2xl">{daysUntil}</span> days
+            until event
           </>
         ) : daysUntil === 0 ? (
           <span className="font-semibold text-2xl">Event is today!</span>
@@ -348,26 +389,26 @@ function TimelineTabPlaceholder({ event }: { event: Event }) {
           <span className="font-semibold">Event has passed</span>
         )}
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-muted-foreground">
         Timeline and milestone tracking coming soon
       </p>
     </div>
-  )
+  );
 }
 
 function SettingsTabPlaceholder({ event }: { event: Event }) {
   return (
     <div className="text-center py-12">
-      <SettingsIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+      <SettingsIcon className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-foreground mb-2">
         Event Settings
       </h3>
-      <p className="text-gray-600 dark:text-gray-400 mb-4">
+      <p className="text-muted-foreground mb-4">
         Manage event preferences and configuration
       </p>
-      <p className="text-sm text-gray-500 dark:text-gray-400">
+      <p className="text-sm text-muted-foreground">
         Event settings panel coming soon
       </p>
     </div>
-  )
+  );
 }

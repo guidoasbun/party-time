@@ -20,6 +20,7 @@ from app.schemas.guest import (
     CSVImportPreview,
     CSVImportResult
 )
+from app.schemas.common import PaginatedResponse
 from app.models.guest import RsvpStatus
 from app.services.rsvp_service import get_rsvp_service
 from app.services.csv_import_service import csv_import_service
@@ -91,7 +92,7 @@ async def create_guests_bulk(
         raise HTTPException(status_code=400, detail=f"Failed to create guests: {str(e)}")
 
 
-@router.get("/{event_id}/guests/", response_model=List[Guest])
+@router.get("/{event_id}/guests/", response_model=PaginatedResponse[Guest])
 async def get_guests(
     event_id: UUID,
     skip: int = Query(0, ge=0, description="Number of guests to skip"),
@@ -117,11 +118,29 @@ async def get_guests(
         if event.planner_id != user_id and not event.is_public:
             raise HTTPException(status_code=403, detail="Access denied")
 
+        # Get guests and total count
         guests = await crud_guest.get_guests_by_event(
             db, event_id, skip, limit, rsvp_status, plus_one_only,
             search, has_dietary_restrictions, sort_by, sort_order
         )
-        return guests
+
+        total = await crud_guest.get_guests_count_by_event(
+            db, event_id, rsvp_status, plus_one_only, search, has_dietary_restrictions
+        )
+
+        # Calculate pagination metadata
+        page = (skip // limit) + 1 if limit > 0 else 1
+        has_next = (skip + limit) < total
+        has_previous = skip > 0
+
+        return PaginatedResponse(
+            items=guests,
+            total=total,
+            page=page,
+            limit=limit,
+            has_next=has_next,
+            has_previous=has_previous
+        )
     except HTTPException:
         raise
     except Exception as e:

@@ -219,14 +219,53 @@ async def mark_invitation_sent(db: AsyncSession, guest_id: UUID) -> Optional[Gue
 async def get_guests_count_by_event(
     db: AsyncSession,
     event_id: UUID,
-    rsvp_status: Optional[RsvpStatus] = None
+    rsvp_status: Optional[RsvpStatus] = None,
+    plus_one_only: Optional[bool] = None,
+    search: Optional[str] = None,
+    has_dietary_restrictions: Optional[bool] = None
 ) -> int:
-    """Get count of guests for an event."""
+    """Get count of guests for an event with filtering."""
     query = select(Guest).where(Guest.event_id == event_id)
-    
+
+    # Apply RSVP status filter
     if rsvp_status:
         query = query.where(Guest.rsvp_status == rsvp_status)
-    
+
+    # Apply plus-one filter
+    if plus_one_only is not None:
+        if plus_one_only:
+            query = query.where(Guest.plus_one_allowed == True)
+        else:
+            query = query.where(Guest.plus_one_allowed == False)
+
+    # Apply dietary restrictions filter
+    if has_dietary_restrictions is not None:
+        if has_dietary_restrictions:
+            query = query.where(
+                and_(
+                    Guest.dietary_restrictions.isnot(None),
+                    Guest.dietary_restrictions != ""
+                )
+            )
+        else:
+            query = query.where(
+                and_(
+                    Guest.dietary_restrictions.is_(None)
+                )
+            )
+
+    # Apply search filter (name, email, phone)
+    if search:
+        search_term = f"%{search}%"
+        query = query.where(
+            or_(
+                Guest.first_name.ilike(search_term),
+                Guest.last_name.ilike(search_term),
+                Guest.email.ilike(search_term),
+                Guest.phone.ilike(search_term)
+            )
+        )
+
     result = await db.execute(query)
     return len(result.scalars().all())
 
