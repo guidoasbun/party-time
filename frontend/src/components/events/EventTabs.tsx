@@ -15,6 +15,7 @@ import {
   FileText,
 } from "lucide-react";
 import type { Event } from "@/types";
+import { log } from "console";
 
 interface EventTabsProps {
   event: Event;
@@ -35,6 +36,8 @@ export function EventTabs({ event }: EventTabsProps) {
   const searchParams = useSearchParams();
   const urlTab = searchParams?.get("tab") as TabId | null;
   const [activeTab, setActiveTab] = useState<TabId>(urlTab || "overview");
+
+  console.log(event);
 
   // Update active tab when URL changes
   useEffect(() => {
