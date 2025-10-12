@@ -18,6 +18,7 @@ interface GuestTableProps {
   selectedIds: UUID[]
   onSelectionChange: (ids: UUID[]) => void
   onUpdateGuest: (guestId: UUID, data: GuestUpdate) => void
+  onGuestClick?: (guest: Guest) => void
   sortBy: keyof Guest
   sortOrder: 'asc' | 'desc'
   onSort: (field: keyof Guest) => void
@@ -42,6 +43,7 @@ export function GuestTable({
   selectedIds,
   onSelectionChange,
   onUpdateGuest,
+  onGuestClick,
   sortBy,
   sortOrder,
   onSort,
@@ -300,9 +302,21 @@ export function GuestTable({
           {guests.map((guest) => (
             <tr
               key={guest.id}
+              onClick={(e) => {
+                // Don't trigger if clicking on checkbox or edit button
+                const target = e.target as HTMLElement
+                if (
+                  target.closest('input[type="checkbox"]') ||
+                  target.closest('button')
+                ) {
+                  return
+                }
+                onGuestClick?.(guest)
+              }}
               className={cn(
                 'hover:bg-muted/50 transition-colors',
-                selectedIds.includes(guest.id) && 'bg-blue-50 dark:bg-blue-950/20'
+                selectedIds.includes(guest.id) && 'bg-blue-50 dark:bg-blue-950/20',
+                onGuestClick && 'cursor-pointer'
               )}
             >
               {/* Checkbox */}

@@ -11,6 +11,9 @@ import { GuestTable } from './GuestTable'
 import { GuestSearchBar } from './GuestSearchBar'
 import { GuestFilters, type GuestFilterValues } from './GuestFilters'
 import { BulkActionsMenu } from './BulkActionsMenu'
+import { AddGuestModal } from './AddGuestModal'
+import { GuestDetailsDrawer } from './GuestDetailsDrawer'
+import { QuickAddGuest } from './QuickAddGuest'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
 import { ChevronLeft, ChevronRight, UserPlus } from 'lucide-react'
@@ -61,6 +64,11 @@ export function GuestList({
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(25)
   const [isUpdating, setIsUpdating] = useState(false)
+
+  // Modal state
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
+  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false)
 
   // Filter guests client-side based on filters and search
   const filteredGuests = useMemo(() => {
@@ -281,6 +289,100 @@ export function GuestList({
     setCurrentPage(1) // Reset to first page
   }
 
+  const handleGuestAdded = () => {
+    // Invalidate queries to refresh guest list
+    void queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+    if (onRefresh) {
+      onRefresh()
+    }
+  }
+
+  const handleGuestClick = (guest: Guest) => {
+    setSelectedGuest(guest)
+    setIsDetailsDrawerOpen(true)
+  }
+
+  const handleDeleteGuest = async (guestId: UUID) => {
+    if (!confirm('Are you sure you want to delete this guest?')) {
+      return
+    }
+
+    try {
+      setIsUpdating(true)
+      await guestsService.deleteGuest(eventId, guestId)
+
+      setIsDetailsDrawerOpen(false)
+      setSelectedGuest(null)
+      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+
+      toast({
+        title: 'Guest deleted',
+        description: 'Guest has been removed from the event.',
+        variant: 'success'
+      })
+
+      if (onRefresh) {
+        onRefresh()
+      }
+    } catch (err) {
+      toast({
+        title: 'Delete failed',
+        description: err instanceof Error ? err.message : 'Failed to delete guest',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleSendInvitation = async (guestId: UUID) => {
+    try {
+      setIsUpdating(true)
+      await guestsService.sendInvitations(eventId, [guestId])
+
+      toast({
+        title: 'Invitation sent',
+        description: 'Invitation email has been sent to the guest.',
+        variant: 'success'
+      })
+    } catch (err) {
+      toast({
+        title: 'Send failed',
+        description: err instanceof Error ? err.message : 'Failed to send invitation',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleRegenerateToken = async (guestId: UUID) => {
+    if (!confirm('Are you sure you want to regenerate the RSVP token? The old link will stop working.')) {
+      return
+    }
+
+    try {
+      setIsUpdating(true)
+      await guestsService.regenerateToken(eventId, guestId)
+
+      toast({
+        title: 'Token regenerated',
+        description: 'A new RSVP token has been generated for this guest.',
+        variant: 'success'
+      })
+
+      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+    } catch (err) {
+      toast({
+        title: 'Regenerate failed',
+        description: err instanceof Error ? err.message : 'Failed to regenerate token',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   if (error) {
     return (
       <div className="text-center py-12">
@@ -296,6 +398,13 @@ export function GuestList({
 
   return (
     <div className={cn('space-y-6', className)}>
+      {/* Quick Add Guest */}
+      <QuickAddGuest
+        eventId={eventId}
+        onSuccess={handleGuestAdded}
+        autoFocus
+      />
+
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex-1 w-full sm:max-w-md">
@@ -311,7 +420,12 @@ export function GuestList({
             onExport={handleExport}
           />
 
-          <Button variant="default" size="sm" className="gap-2">
+          <Button
+            variant="default"
+            size="sm"
+            className="gap-2"
+            onClick={() => setIsAddModalOpen(true)}
+          >
             <UserPlus className="h-4 w-4" />
             Add Guest
           </Button>
@@ -340,6 +454,7 @@ export function GuestList({
           selectedIds={selectedIds}
           onSelectionChange={setSelectedIds}
           onUpdateGuest={handleUpdateGuest}
+          onGuestClick={handleGuestClick}
           sortBy={sortBy}
           sortOrder={sortOrder}
           onSort={handleSort}
@@ -387,6 +502,31 @@ export function GuestList({
           </div>
         </div>
       )}
+
+      {/* Add Guest Modal */}
+      <AddGuestModal
+        open={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        eventId={eventId}
+        onSuccess={handleGuestAdded}
+      />
+
+      {/* Guest Details Drawer */}
+      <GuestDetailsDrawer
+        open={isDetailsDrawerOpen}
+        onClose={() => {
+          setIsDetailsDrawerOpen(false)
+          setSelectedGuest(null)
+        }}
+        guest={selectedGuest}
+        onEdit={(guest) => {
+          // Future: implement edit modal
+          console.log('Edit guest:', guest)
+        }}
+        onDelete={handleDeleteGuest}
+        onSendInvitation={handleSendInvitation}
+        onRegenerateToken={handleRegenerateToken}
+      />
     </div>
   )
 }
