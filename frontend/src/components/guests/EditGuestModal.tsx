@@ -9,15 +9,18 @@ import React, { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Save, Loader2 } from 'lucide-react'
+import { format } from 'date-fns'
 import { Modal } from '@/components/ui/Modal'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/Textarea'
+import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { guestUpdateSchema, type GuestUpdateInput } from '@/lib/validations/guest'
 import { guestsService } from '@/lib/api/services'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 import type { UUID, Guest, GuestUpdate } from '@/types'
+import { RsvpStatus } from '@/types'
 
 interface EditGuestModalProps {
   open: boolean
@@ -44,7 +47,8 @@ export function EditGuestModal({
     handleSubmit,
     formState: { errors, isDirty },
     reset,
-    watch
+    watch,
+    setValue
   } = useForm<GuestUpdateInput>({
     resolver: zodResolver(guestUpdateSchema) as never,
     defaultValues: {
@@ -55,11 +59,20 @@ export function EditGuestModal({
       plus_one_allowed: guest?.plus_one_allowed || false,
       plus_one_name: guest?.plus_one_name || undefined,
       dietary_restrictions: guest?.dietary_restrictions || undefined,
-      notes: guest?.notes || undefined
+      notes: guest?.notes || undefined,
+      rsvp_status: guest?.rsvp_status || RsvpStatus.PENDING
     }
   })
 
   const plusOneAllowed = watch('plus_one_allowed')
+  const rsvpStatus = watch('rsvp_status')
+
+  const rsvpStatusOptions = [
+    { value: RsvpStatus.PENDING, label: 'Pending' },
+    { value: RsvpStatus.ATTENDING, label: 'Attending' },
+    { value: RsvpStatus.NOT_ATTENDING, label: 'Not Attending' },
+    { value: RsvpStatus.MAYBE, label: 'Maybe' }
+  ]
 
   // Reset form when guest changes
   useEffect(() => {
@@ -72,7 +85,8 @@ export function EditGuestModal({
         plus_one_allowed: guest.plus_one_allowed,
         plus_one_name: guest.plus_one_name || undefined,
         dietary_restrictions: guest.dietary_restrictions || undefined,
-        notes: guest.notes || undefined
+        notes: guest.notes || undefined,
+        rsvp_status: guest.rsvp_status || RsvpStatus.PENDING
       })
     }
   }, [guest, open, reset])
@@ -84,7 +98,8 @@ export function EditGuestModal({
 
     try {
       const updateData: GuestUpdate = {
-        ...data
+        ...data,
+        rsvp_status: data.rsvp_status as RsvpStatus | undefined
       }
 
       await guestsService.updateGuest(eventId, guest.id, updateData)
@@ -240,6 +255,28 @@ export function EditGuestModal({
               error={errors.plus_one_name?.message}
               disabled={isSubmitting}
             />
+          )}
+        </div>
+
+        {/* RSVP Status Section */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+            RSVP Status
+          </h3>
+
+          <Select
+            options={rsvpStatusOptions}
+            value={rsvpStatus}
+            onValueChange={(value) => setValue('rsvp_status', value as string, { shouldDirty: true })}
+            label="RSVP Status"
+            error={errors.rsvp_status?.message}
+            disabled={isSubmitting}
+          />
+
+          {guest?.rsvp_responded_at && (
+            <p className="text-xs text-muted-foreground">
+              Last updated: {format(new Date(guest.rsvp_responded_at), 'PPp')}
+            </p>
           )}
         </div>
 

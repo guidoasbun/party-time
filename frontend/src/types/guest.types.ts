@@ -37,6 +37,7 @@ export interface GuestUpdate {
   plus_one_name?: string
   dietary_restrictions?: string
   notes?: string
+  rsvp_status?: RsvpStatus
 }
 
 export interface GuestRSVPUpdate {

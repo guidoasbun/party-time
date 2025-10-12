@@ -144,7 +144,15 @@ export const guestUpdateSchema = z.object({
     .trim()
     .optional()
     .or(z.literal(''))
-    .transform((val) => (val === '' ? undefined : val))
+    .transform((val) => (val === '' ? undefined : val)),
+
+  rsvp_status: z
+    .string()
+    .refine(
+      (val) => ['pending', 'attending', 'not_attending', 'maybe'].includes(val),
+      { message: 'Invalid RSVP status' }
+    )
+    .optional()
 })
 
 /**
