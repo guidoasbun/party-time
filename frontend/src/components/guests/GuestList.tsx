@@ -12,6 +12,7 @@ import { GuestSearchBar } from './GuestSearchBar'
 import { GuestFilters, type GuestFilterValues } from './GuestFilters'
 import { BulkActionsMenu } from './BulkActionsMenu'
 import { AddGuestModal } from './AddGuestModal'
+import { EditGuestModal } from './EditGuestModal'
 import { GuestDetailsDrawer } from './GuestDetailsDrawer'
 import { QuickAddGuest } from './QuickAddGuest'
 import { Button } from '@/components/ui/Button'
@@ -67,6 +68,7 @@ export function GuestList({
 
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
   const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false)
 
@@ -511,6 +513,18 @@ export function GuestList({
         onSuccess={handleGuestAdded}
       />
 
+      {/* Edit Guest Modal */}
+      <EditGuestModal
+        open={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setSelectedGuest(null)
+        }}
+        eventId={eventId}
+        guest={selectedGuest}
+        onSuccess={handleGuestAdded}
+      />
+
       {/* Guest Details Drawer */}
       <GuestDetailsDrawer
         open={isDetailsDrawerOpen}
@@ -520,8 +534,8 @@ export function GuestList({
         }}
         guest={selectedGuest}
         onEdit={(guest) => {
-          // Future: implement edit modal
-          console.log('Edit guest:', guest)
+          setSelectedGuest(guest)
+          setIsEditModalOpen(true)
         }}
         onDelete={handleDeleteGuest}
         onSendInvitation={handleSendInvitation}

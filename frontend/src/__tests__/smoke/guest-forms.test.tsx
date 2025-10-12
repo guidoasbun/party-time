@@ -8,6 +8,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AddGuestModal } from '@/components/guests/AddGuestModal'
+import { EditGuestModal } from '@/components/guests/EditGuestModal'
 import { QuickAddGuest } from '@/components/guests/QuickAddGuest'
 import { GuestDetailsDrawer } from '@/components/guests/GuestDetailsDrawer'
 import { guestsService } from '@/lib/api/services'
@@ -18,6 +19,7 @@ import type { Guest } from '@/types'
 jest.mock('@/lib/api/services', () => ({
   guestsService: {
     createGuest: jest.fn(),
+    updateGuest: jest.fn(),
     deleteGuest: jest.fn(),
     sendInvitations: jest.fn(),
     regenerateToken: jest.fn()
@@ -417,5 +419,213 @@ describe('GuestDetailsDrawer', () => {
     expect(screen.queryByRole('button', { name: /send invite/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /regenerate token/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /delete guest/i })).not.toBeInTheDocument()
+  })
+})
+
+describe('EditGuestModal', () => {
+  const mockOnClose = jest.fn()
+  const mockOnSuccess = jest.fn()
+
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  it('renders with pre-populated guest data', () => {
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByText(/Edit Guest: John Doe/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/first name/i)).toHaveValue('John')
+    expect(screen.getByLabelText(/last name/i)).toHaveValue('Doe')
+    expect(screen.getByLabelText(/email address/i)).toHaveValue('john.doe@example.com')
+  })
+
+  it('does not render when closed', () => {
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={false}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.queryByText(/Edit Guest:/i)).not.toBeInTheDocument()
+  })
+
+  it('does not render when guest is null', () => {
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={null}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.queryByText(/Edit Guest:/i)).not.toBeInTheDocument()
+  })
+
+  it('pre-populates all guest fields correctly', () => {
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByLabelText(/phone number/i)).toHaveValue('+1 (555) 123-4567')
+    expect(screen.getByLabelText(/allow plus-one guest/i)).toBeChecked()
+    expect(screen.getByLabelText(/plus-one name/i)).toHaveValue('Jane Smith')
+    expect(screen.getByLabelText(/dietary restrictions/i)).toHaveValue('Vegetarian')
+    expect(screen.getByLabelText(/notes/i)).toHaveValue('Prefers window seat')
+  })
+
+  it('submits updated guest data', async () => {
+    const user = userEvent.setup()
+    const queryClient = createQueryClient()
+
+    ;(guestsService.updateGuest as jest.Mock).mockResolvedValue({
+      ...mockGuest,
+      first_name: 'Johnny',
+      dietary_restrictions: 'Vegan'
+    })
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    const firstNameInput = screen.getByLabelText(/first name/i)
+    await user.clear(firstNameInput)
+    await user.type(firstNameInput, 'Johnny')
+
+    const dietaryInput = screen.getByLabelText(/dietary restrictions/i)
+    await user.clear(dietaryInput)
+    await user.type(dietaryInput, 'Vegan')
+
+    const saveButton = screen.getByRole('button', { name: /save changes/i })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(guestsService.updateGuest).toHaveBeenCalledWith(
+        'event-123',
+        mockGuest.id,
+        expect.objectContaining({
+          first_name: 'Johnny',
+          dietary_restrictions: 'Vegan'
+        })
+      )
+      expect(mockOnSuccess).toHaveBeenCalled()
+      expect(mockOnClose).toHaveBeenCalled()
+    })
+  })
+
+  it('disables save button when no changes made', () => {
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    const saveButton = screen.getByRole('button', { name: /save changes/i })
+    expect(saveButton).toBeDisabled()
+  })
+
+  it('enables save button when changes are made', async () => {
+    const user = userEvent.setup()
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    const saveButton = screen.getByRole('button', { name: /save changes/i })
+    expect(saveButton).toBeDisabled()
+
+    const firstNameInput = screen.getByLabelText(/first name/i)
+    await user.type(firstNameInput, 'ny')
+
+    await waitFor(() => {
+      expect(saveButton).not.toBeDisabled()
+    })
+  })
+
+  it('validates required fields', async () => {
+    const user = userEvent.setup()
+    const queryClient = createQueryClient()
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EditGuestModal
+          open={true}
+          onClose={mockOnClose}
+          eventId="event-123"
+          guest={mockGuest}
+          onSuccess={mockOnSuccess}
+        />
+      </QueryClientProvider>
+    )
+
+    const firstNameInput = screen.getByLabelText(/first name/i)
+    await user.clear(firstNameInput)
+
+    const saveButton = screen.getByRole('button', { name: /save changes/i })
+    await user.click(saveButton)
+
+    await waitFor(() => {
+      expect(screen.getByText(/first name is required/i)).toBeInTheDocument()
+    })
   })
 })
