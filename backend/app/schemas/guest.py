@@ -33,6 +33,7 @@ class GuestUpdate(BaseModel):
     plus_one_name: Optional[str] = Field(None, max_length=200)
     dietary_restrictions: Optional[str] = None
     notes: Optional[str] = None
+    rsvp_status: Optional[RsvpStatus] = None
 
 
 class GuestRSVPUpdate(BaseModel):

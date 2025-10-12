@@ -76,7 +76,7 @@ function EventsLayoutContent({ children }: EventsLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Navigation Sidebar */}
       <Navigation />
 

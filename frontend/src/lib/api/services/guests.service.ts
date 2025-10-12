@@ -67,7 +67,7 @@ export class GuestsService {
    * Update an existing guest
    */
   async updateGuest(eventId: UUID, guestId: UUID, data: GuestUpdate): Promise<Guest> {
-    return api.patch<Guest, GuestUpdate>(
+    return api.put<Guest, GuestUpdate>(
       API_ENDPOINTS.GUESTS.UPDATE(eventId, guestId),
       data
     )
