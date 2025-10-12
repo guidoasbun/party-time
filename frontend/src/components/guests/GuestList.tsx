@@ -15,11 +15,12 @@ import { AddGuestModal } from './AddGuestModal'
 import { EditGuestModal } from './EditGuestModal'
 import { GuestDetailsDrawer } from './GuestDetailsDrawer'
 import { QuickAddGuest } from './QuickAddGuest'
+import { CSVImportWizard } from './CSVImportWizard'
 import { Button } from '@/components/ui/Button'
 import { Select } from '@/components/ui/Select'
-import { ChevronLeft, ChevronRight, UserPlus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, UserPlus, Upload } from 'lucide-react'
 import { guestsService } from '@/lib/api/services'
-import { RsvpStatus, type Guest, type GuestSearchParams, type GuestUpdate, type UUID } from '@/types'
+import { RsvpStatus, type Guest, type GuestSearchParams, type GuestUpdate, type UUID, type CSVImportResult } from '@/types'
 import { useToast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 
@@ -69,6 +70,7 @@ export function GuestList({
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isImportWizardOpen, setIsImportWizardOpen] = useState(false)
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
   const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false)
 
@@ -385,6 +387,14 @@ export function GuestList({
     }
   }
 
+  const handleImportComplete = async (result: CSVImportResult) => {
+    // Invalidate queries to refresh guest list
+    await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+    if (onRefresh) {
+      onRefresh()
+    }
+  }
+
   if (error) {
     return (
       <div className="text-center py-12">
@@ -421,6 +431,16 @@ export function GuestList({
             onSendInvitations={handleSendInvitations}
             onExport={handleExport}
           />
+
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => setIsImportWizardOpen(true)}
+          >
+            <Upload className="h-4 w-4" />
+            Import CSV
+          </Button>
 
           <Button
             variant="default"
@@ -540,6 +560,14 @@ export function GuestList({
         onDelete={handleDeleteGuest}
         onSendInvitation={handleSendInvitation}
         onRegenerateToken={handleRegenerateToken}
+      />
+
+      {/* CSV Import Wizard */}
+      <CSVImportWizard
+        eventId={eventId}
+        open={isImportWizardOpen}
+        onClose={() => setIsImportWizardOpen(false)}
+        onImportComplete={handleImportComplete}
       />
     </div>
   )
