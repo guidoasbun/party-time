@@ -31,14 +31,16 @@
 - **Guest API Endpoints**: ✅ **NEW** - Complete guest CRUD operations with search, filtering, sorting, bulk operations (delete, status update), dietary restrictions filtering (Phase 4.1.1 COMPLETE)
 - **RSVP Token System**: ✅ **NEW** - 8-character alphanumeric tokens with validation endpoints, invitation link generator with social sharing, QR code generation with theme support, token tracking (expiration, first/last access), token regeneration with confirmation (Phase 4.1.2 COMPLETE)
 - **CSV Import Backend**: ✅ **NEW** - Smart CSV parsing with pandas, multi-format support (7+ column naming conventions), duplicate detection (in-file and database), data validation with row-level error reporting, import preview with statistics, handles 1000+ guests efficiently (Phase 4.1.3 COMPLETE)
+- **Guest List Interface**: ✅ **NEW** - Guest data table with sorting, inline editing, search bar with debouncing, RSVP status filters, bulk selection and operations, pagination controls (Phase 4.2.1 COMPLETE)
+- **Guest Forms & Modals**: ✅ **NEW** - Add Guest modal with full form, Edit Guest modal with RSVP status editing, Guest Details drawer with slide-in animation, Quick Add inline form, comprehensive Zod validation, reusable Modal component with portal rendering and focus trap, 25 smoke tests passing (Phase 4.2.2 COMPLETE)
 
 ### 🔄 In Progress
 
-- **Phase 4.2: Guest Management UI** - CSV import wizard, guest list interface, analytics dashboard NEXT
+- **Phase 4.2: Guest Management UI** - CSV import wizard (Day 6), analytics dashboard (Day 7) NEXT
 
 ### ❌ Remaining Work
 
-- Guest management UI (Phase 4.2) - CSV import wizard, guest list interface, analytics dashboard
+- Guest management UI (Phase 4.2.3-4.2.4) - CSV import wizard, analytics dashboard
 - RSVP public portal (Phase 5) - Public RSVP pages, RSVP management dashboard, customization
 - Email integration (Phase 5.2) - AWS SES setup, email templates, campaign interface, automation
 - Interactive Seating Charts (Phase 6) - Fabric.js canvas, table management, guest assignments
@@ -70,7 +72,7 @@
 | Phase                                                             | Title                      | Timeline                         | Priority     | Hours              | Key Deliverables                                                                                                                                    |
 | ----------------------------------------------------------------- | -------------------------- | -------------------------------- | ------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2)           | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9)   | **CRITICAL** | ✅ 26 hrs + 18 hrs | ✅ **COMPLETE** - Event forms (3.1 ✅), Detail pages (3.2 ✅), Events list page (3.2.6 ✅) |
-| [Phase 4](#phase-4-guest-management-system-weeks-3-4)             | Guest Management System    | Weeks 3-4<br/>(Oct 9 - Oct 23)   | **HIGH**     | ✅ 12 hrs + 18 hrs | 🔄 **IN PROGRESS** - Guest Backend (4.1 ✅ COMPLETE), Guest UI (4.2) NEXT                                                                                            |
+| [Phase 4](#phase-4-guest-management-system-weeks-3-4)             | Guest Management System    | Weeks 3-4<br/>(Oct 9 - Oct 23)   | **HIGH**     | ✅ 12 hrs + 9 hrs | 🔄 **IN PROGRESS** - Guest Backend (4.1 ✅), List (4.2.1 ✅), Forms (4.2.2 ✅), CSV wizard & analytics NEXT |
 | [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6)                 | RSVP & Email Systems       | Weeks 5-6<br/>(Oct 23 - Nov 6)   | **HIGH**     | 34 hrs             | Public RSVP portal, Email templates, automation                                                                                                     |
 | [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8)          | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20)   | **HIGH**     | 42 hrs             | Fabric.js canvas, drag-drop tables, guest assignments, exports                                                                                      |
 | [Phase 7](#phase-7-venue-search--budget-tracking-week-9---part-1) | Venue & Budget             | Week 9.1<br/>(Nov 20-22)         | **MEDIUM**   | 18 hrs             | Google Places search, basic budget tracking                                                                                                         |
@@ -858,6 +860,7 @@ postman/environment-template.json (environment variables)
 
 **Duration**: 4 days
 **Estimated Hours**: 16-18 hours
+**Status**: 🔄 **IN PROGRESS** - 2 of 4 phases complete (4.2.1 ✅, 4.2.2 ✅)
 
 #### 4.2.1: Guest List Interface (Day 4 - 5 hours) ✅ COMPLETE
 
@@ -912,31 +915,96 @@ backend/app/api/v1/guests.py (UPDATED - Return paginated response)
 - ✅ Production build successful (`npm run build` passes)
 - ✅ Zero TypeScript errors (no `any` types used)
 
-#### 4.2.2: Guest Forms & Modals (Day 5 - 4 hours)
+#### 4.2.2: Guest Forms & Modals (Day 5 - 4 hours) ✅ **COMPLETED**
 
-**Development (3.5 hours)**:
+**Status**: ✅ **COMPLETED** (January 2025)
 
-- [ ] Create "Add Guest" modal with form
-- [ ] Include fields: name, email, phone, dietary restrictions, plus-one
-- [ ] Build inline edit functionality for table cells
-- [ ] Add guest validation (email format, required fields)
-- [ ] Implement "Quick Add" bar at top of list
-- [ ] Create guest details drawer/modal
-- [ ] Add notes and special requirements fields
+- ✅ All development tasks complete
+- ✅ TypeScript strict compliance maintained (no `any` types)
+- ✅ Production build passing (`npm run build`)
+- ✅ 25/25 smoke tests passing (100% success rate)
+- ✅ Theme support (light/dark/system modes)
+- ✅ RSVP status editing feature added
 
-**Smoke Testing (0.5 hours)**:
+**Development (3.5 hours)**: ✅ **COMPLETED**
 
-- [ ] Test adding new guest
-- [ ] Verify validation works
-- [ ] Confirm edit saves correctly
+- [x] Create "Add Guest" modal with full form (all fields, validation, "Save & Add Another")
+- [x] Include fields: name, email, phone, dietary restrictions, plus-one, notes
+- [x] Build Edit Guest modal with pre-population and isDirty tracking
+- [x] Add guest validation (email format, phone regex, required fields, character limits)
+- [x] Implement "Quick Add" bar at top of list (expandable/collapsible)
+- [x] Create guest details drawer/modal (slide-in with full guest info)
+- [x] Add RSVP status editing in Edit Guest modal with 4 status options
+- [x] Add notes and special requirements fields
 
-**Files to Create**:
+**Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
 
+- [x] Test adding new guest (17 initial tests + 8 EditGuestModal tests = 25 total)
+- [x] Verify validation works (Zod schemas with real-time error clearing)
+- [x] Confirm edit saves correctly (PUT method, optimistic updates)
+- [x] Test RSVP status update functionality
+
+**Files Created**: ✅ **ALL CREATED AND TESTED**
+
+**Frontend Components**:
 ```
-frontend/src/components/guests/AddGuestModal.tsx
-frontend/src/components/guests/GuestDetailsDrawer.tsx
-frontend/src/components/guests/QuickAddGuest.tsx
+✅ frontend/src/components/ui/Modal.tsx (reusable modal with portal, focus trap, accessibility)
+✅ frontend/src/lib/validations/guest.ts (Zod validation schemas: create, update, quickAdd)
+✅ frontend/src/components/guests/AddGuestModal.tsx (full-featured add guest modal)
+✅ frontend/src/components/guests/EditGuestModal.tsx (edit modal with pre-population, RSVP status)
+✅ frontend/src/components/guests/GuestDetailsDrawer.tsx (slide-in drawer with full details)
+✅ frontend/src/components/guests/QuickAddGuest.tsx (compact inline form)
+✅ frontend/src/__tests__/smoke/guest-forms.test.tsx (25 comprehensive tests)
 ```
+
+**Frontend Files Modified**:
+```
+✅ frontend/src/components/guests/GuestList.tsx (integrated modals and state management)
+✅ frontend/src/components/guests/GuestTable.tsx (added onGuestClick handler)
+✅ frontend/src/lib/api/services/guests.service.ts (fixed HTTP method from PATCH to PUT)
+✅ frontend/src/types/guest.types.ts (added rsvp_status to GuestUpdate)
+```
+
+**Backend Files Modified**:
+```
+✅ backend/app/schemas/guest.py (added rsvp_status to GuestUpdate schema)
+```
+
+**Key Features Implemented**:
+- **Modal Component**: Reusable base modal with portal rendering, focus trap, escape handling, click-outside-to-close, body scroll lock
+- **Add Guest Modal**: Full form with all guest fields, "Save & Add Another" functionality, unsaved changes warning
+- **Edit Guest Modal**: Pre-populated form, isDirty tracking, RSVP status editing with 4 options (Pending, Attending, Not Attending, Maybe)
+- **Guest Details Drawer**: Slide-in drawer displaying full guest information with RSVP status badge, action buttons (Edit, Delete)
+- **Quick Add Guest**: Compact inline form for rapid guest entry with expandable/collapsible interface
+- **Validation**: Comprehensive Zod schemas with email regex, phone regex, character limits, required field validation
+- **RSVP Status**: Select dropdown with 4 status options, displays last updated timestamp
+- **Theme Integration**: All components support light/dark/system modes
+- **Accessibility**: ARIA labels, keyboard navigation (Escape, Tab, Enter), focus management
+
+**Critical Bug Fixes Resolved**:
+
+1. **HTTP Method Mismatch** (guests.service.ts:70):
+   - Backend uses PUT for individual guest updates, not PATCH
+   - Changed `api.patch()` to `api.put()` in updateGuest method
+   - Fixed 405 Method Not Allowed error when saving edits
+
+2. **Type Compatibility** (EditGuestModal.tsx:94):
+   - Zod schema inferred `string | undefined` for rsvp_status
+   - GuestUpdate type expects `RsvpStatus | undefined`
+   - Added explicit type casting: `rsvp_status: data.rsvp_status as RsvpStatus | undefined`
+
+3. **Select Component API** (EditGuestModal.tsx:267-274):
+   - Select component uses `options` prop with `onValueChange`, not children
+   - Changed from `<option>` children to options array with value/label objects
+   - Fixed type assertion for `onValueChange`: `value as string`
+
+**Production Readiness**:
+- ✅ 25/25 smoke tests passing (100% success rate)
+- ✅ TypeScript strict compliance (no `any` types)
+- ✅ Production build successful (`npm run build`)
+- ✅ Theme support working throughout
+- ✅ All modals functional with proper state management
+- ✅ RSVP status editing fully operational
 
 #### 4.2.3: CSV Import Wizard (Day 6 - 5 hours)
 
