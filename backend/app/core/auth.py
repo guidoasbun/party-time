@@ -24,16 +24,16 @@ async def _verify_token(token: str) -> Dict[str, Any]:
     
     # Try Cognito verification first
     try:
-        logger.info("🔄 Attempting Cognito token verification...")
+        logger.info("Attempting Cognito token verification...")
         payload = await cognito_service.verify_jwt_token(token)
         
         if payload:
             user_info = cognito_service.get_user_info_from_token(payload)
             if user_info.get("user_id"):
-                logger.info(f"✅ Cognito token verified for user: {user_info.get('email')}")
+                logger.info(f"Cognito token verified for user: {user_info.get('email')}")
                 return user_info
     except Exception as e:
-        logger.info(f"⚠️ Cognito verification failed: {str(e)}")
+        logger.info(f"Cognito verification failed: {str(e)}")
     
     # If Cognito fails, try Google ID token verification
     try:
@@ -41,24 +41,24 @@ async def _verify_token(token: str) -> Dict[str, Any]:
         user_info = await google_oauth_service.verify_google_token(token)
         
         if user_info and user_info.get("user_id"):
-            logger.info(f"✅ Google ID token verified for user: {user_info.get('email')}")
+            logger.info(f"Google ID token verified for user: {user_info.get('email')}")
             return user_info
     except Exception as e:
-        logger.info(f"⚠️ Google ID token verification failed: {str(e)}")
+        logger.info(f"Google ID token verification failed: {str(e)}")
     
     # If ID token fails, try Google access token verification
     try:
-        logger.info("🔄 Attempting Google access token verification...")
+        logger.info("Attempting Google access token verification...")
         user_info = await google_oauth_service.verify_google_access_token(token)
         
         if user_info and user_info.get("user_id"):
-            logger.info(f"✅ Google access token verified for user: {user_info.get('email')}")
+            logger.info(f"Google access token verified for user: {user_info.get('email')}")
             return user_info
     except Exception as e:
-        logger.info(f"⚠️ Google access token verification failed: {str(e)}")
+        logger.info(f"Google access token verification failed: {str(e)}")
     
     # If all verification methods fail, raise unauthorized
-    logger.error("❌ All token verification methods failed")
+    logger.error("All token verification methods failed")
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials - token verification failed",
