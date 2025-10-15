@@ -1,5 +1,9 @@
 /**
  * FR-6: The system shall display an RSVP submission page 5.1.2
+ * FR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *
  * Header component for public RSVP pages with theme toggle and login
  */
 

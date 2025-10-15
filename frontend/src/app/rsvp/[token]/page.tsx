@@ -1,5 +1,8 @@
 /**
- * FR-6: The system shall display an RSVP submission page 5.1.2
+ * FR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *
  * Public RSVP page - no authentication required
  */
 
@@ -68,7 +71,10 @@ export default function RSVPPage() {
         setEventDetails(details);
 
         // Check if this is an update (guest has already responded)
-        if (details.current_rsvp_status && details.current_rsvp_status !== "pending") {
+        if (
+          details.current_rsvp_status &&
+          details.current_rsvp_status !== "pending"
+        ) {
           setIsUpdate(true);
           setPreviousStatus(details.current_rsvp_status);
         }
@@ -95,7 +101,9 @@ export default function RSVPPage() {
           err instanceof Error ? err.message : "Failed to load event details";
 
         if (errorMessage.includes("expired")) {
-          setError("This RSVP link has expired. Please contact the event host.");
+          setError(
+            "This RSVP link has expired. Please contact the event host."
+          );
           setPageState("expired");
         } else {
           setError(errorMessage);
@@ -208,7 +216,11 @@ export default function RSVPPage() {
   }
 
   // Render error states
-  if (pageState === "error" || pageState === "expired" || pageState === "rate-limited") {
+  if (
+    pageState === "error" ||
+    pageState === "expired" ||
+    pageState === "rate-limited"
+  ) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="max-w-md w-full">
@@ -244,8 +256,9 @@ export default function RSVPPage() {
             {pageState === "rate-limited" && retryAfter && (
               <div className="bg-muted/50 rounded-lg p-4 text-sm">
                 <p>
-                  Please wait <span className="font-semibold">{retryAfter}</span>{" "}
-                  seconds before trying again.
+                  Please wait{" "}
+                  <span className="font-semibold">{retryAfter}</span> seconds
+                  before trying again.
                 </p>
               </div>
             )}

@@ -1,5 +1,9 @@
 /**
  * FR-6: The system shall display an RSVP submission page 5.1.2
+ * FR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *
  * Main RSVP form component with multi-step workflow
  */
 
@@ -173,7 +177,8 @@ export function RSVPForm({
   );
 
   // Calculate progress percentage
-  const progressPercentage = ((currentStepIndex + 1) / visibleSteps.length) * 100;
+  const progressPercentage =
+    ((currentStepIndex + 1) / visibleSteps.length) * 100;
 
   // Render current step component
   const renderCurrentStep = () => {

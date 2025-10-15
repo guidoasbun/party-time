@@ -1,12 +1,24 @@
 /**
  * FR-6: The system shall display an RSVP submission page 5.1.2
+ * FR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *
  * RSVP confirmation page with celebration animation
  */
 
 "use client";
 
 import * as React from "react";
-import { Check, Calendar, MapPin, Clock, Mail, Share2, Edit } from "lucide-react";
+import {
+  Check,
+  Calendar,
+  MapPin,
+  Clock,
+  Mail,
+  Share2,
+  Edit,
+} from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -89,7 +101,8 @@ export function RSVPConfirmation({
       },
     };
 
-    const info = baseInfo[submission.rsvp_status] || baseInfo[RsvpStatus.PENDING];
+    const info =
+      baseInfo[submission.rsvp_status] || baseInfo[RsvpStatus.PENDING];
 
     return {
       ...info,
@@ -341,24 +354,30 @@ export function RSVPConfirmation({
       </div>
 
       {/* Status Comparison for Updates */}
-      {isUpdate && previousStatus && previousStatus !== submission.rsvp_status && (
-        <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-          <h3 className="font-semibold text-center mb-4">Your RSVP has been updated</h3>
-          <div className="flex items-center justify-center gap-4 text-sm">
-            <div className="text-center">
-              <p className="text-muted-foreground mb-1">Previous:</p>
-              <p className="font-medium capitalize">{previousStatus.replace("_", " ")}</p>
-            </div>
-            <div className="text-2xl text-muted-foreground">→</div>
-            <div className="text-center">
-              <p className="text-muted-foreground mb-1">New:</p>
-              <p className={cn("font-medium capitalize", statusInfo.color)}>
-                {submission.rsvp_status.replace("_", " ")}
-              </p>
+      {isUpdate &&
+        previousStatus &&
+        previousStatus !== submission.rsvp_status && (
+          <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+            <h3 className="font-semibold text-center mb-4">
+              Your RSVP has been updated
+            </h3>
+            <div className="flex items-center justify-center gap-4 text-sm">
+              <div className="text-center">
+                <p className="text-muted-foreground mb-1">Previous:</p>
+                <p className="font-medium capitalize">
+                  {previousStatus.replace("_", " ")}
+                </p>
+              </div>
+              <div className="text-2xl text-muted-foreground">→</div>
+              <div className="text-center">
+                <p className="text-muted-foreground mb-1">New:</p>
+                <p className={cn("font-medium capitalize", statusInfo.color)}>
+                  {submission.rsvp_status.replace("_", " ")}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Action Buttons */}
       <div className="flex flex-col sm:flex-row gap-3 justify-center">

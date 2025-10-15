@@ -1,4 +1,8 @@
 /**
+ * PFR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *
  * Smoke tests for RSVP update flow
  * Tests the enhanced RSVP update experience with edit button and status comparison
  */
@@ -124,7 +128,9 @@ describe("RSVP Update Flow - Smoke Tests", () => {
         />
       );
 
-      expect(screen.getByText("RSVP Updated Successfully!")).toBeInTheDocument();
+      expect(
+        screen.getByText("RSVP Updated Successfully!")
+      ).toBeInTheDocument();
     });
 
     it("should show status comparison when status changes", () => {
@@ -138,12 +144,16 @@ describe("RSVP Update Flow - Smoke Tests", () => {
       );
 
       // Check for status comparison section
-      expect(screen.getByText("Your RSVP has been updated")).toBeInTheDocument();
+      expect(
+        screen.getByText("Your RSVP has been updated")
+      ).toBeInTheDocument();
       expect(screen.getByText("Previous:")).toBeInTheDocument();
       expect(screen.getByText("New:")).toBeInTheDocument();
 
       // Verify the statuses are displayed (lowercase with spaces)
-      const text = screen.getByText("Your RSVP has been updated").closest('div');
+      const text = screen
+        .getByText("Your RSVP has been updated")
+        .closest("div");
       expect(text?.textContent).toContain("attending");
       expect(text?.textContent).toContain("not attending");
     });

@@ -28,6 +28,12 @@ function getGreeting(): string {
   }
 }
 
+/**
+ * FR-6: RSVP Submission
+ * Phase 5: RSVP & Email Systems -
+ * 5.1.2: RSVP Frontend Portal
+ *  **/
+
 export function DashboardHeader({
   user,
   onSignOut,
