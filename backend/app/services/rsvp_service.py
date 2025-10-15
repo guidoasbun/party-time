@@ -1,5 +1,5 @@
 """RSVP service for managing invitation tokens and links."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -286,7 +286,7 @@ class RSVPService:
 
         # Check if token has expired (if expiry is set)
         if guest.token_expires_at:
-            if datetime.utcnow() > guest.token_expires_at:
+            if datetime.now(timezone.utc) > guest.token_expires_at:
                 return False, "Token has expired"
 
         return True, None
@@ -304,7 +304,7 @@ class RSVPService:
         Returns:
             Expiry datetime
         """
-        return datetime.utcnow() + timedelta(days=days)
+        return datetime.now(timezone.utc) + timedelta(days=days)
 
     def is_token_expired(self, expires_at: Optional[datetime]) -> bool:
         """
@@ -318,7 +318,7 @@ class RSVPService:
         """
         if not expires_at:
             return False  # No expiry set
-        return datetime.utcnow() > expires_at
+        return datetime.now(timezone.utc) > expires_at
 
     async def track_token_access(
         self,
@@ -341,7 +341,7 @@ class RSVPService:
         if not guest:
             return
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Update first access if not set
         if is_first_access and not guest.token_first_accessed_at:
@@ -351,6 +351,138 @@ class RSVPService:
         guest.token_last_accessed_at = now
 
         await db.commit()
+
+    """FR-6: The system shall display an RSVP submission page. 5.1.1"""
+
+    async def track_rsvp_response(
+        self,
+        db: AsyncSession,
+        token: str,
+        ip_address: str
+    ) -> None:
+        """
+        Track RSVP response submission.
+
+        Args:
+            db: Database session
+            token: RSVP token
+            ip_address: Client IP address
+
+        Note:
+            This updates guest record with response timestamp and IP
+        """
+        from app.crud.crud_guest import get_guest_by_rsvp_token
+
+        guest = await get_guest_by_rsvp_token(db, token)
+        if not guest:
+            return
+
+        now = datetime.now(timezone.utc)
+
+        # Update response timestamp
+        guest.rsvp_responded_at = now
+
+        # Store IP address for audit trail
+        guest.rsvp_ip_address = ip_address
+
+        await db.commit()
+
+    def validate_plus_one_eligibility(self, guest) -> tuple[bool, Optional[str]]:
+        """
+        Validate if guest can bring a plus-one.
+
+        Args:
+            guest: Guest model instance
+
+        Returns:
+            Tuple of (is_eligible, error_message)
+        """
+        if not guest.plus_one_allowed:
+            return False, "Plus-one not allowed for this guest"
+
+        # Plus-one only valid if attending or maybe
+        from app.models.guest import RsvpStatus
+        if guest.rsvp_status not in [RsvpStatus.ATTENDING, RsvpStatus.MAYBE]:
+            return False, "Plus-one only available when attending or maybe"
+
+        return True, None
+
+    async def get_rsvp_statistics(
+        self,
+        db: AsyncSession,
+        event_id: UUID
+    ) -> dict:
+        """
+        Get RSVP statistics for an event.
+
+        Args:
+            db: Database session
+            event_id: Event ID
+
+        Returns:
+            Dictionary with RSVP statistics
+        """
+        from app.crud import crud_guest
+        from app.models.guest import RsvpStatus
+        from sqlalchemy import select, func
+
+        # Get total invited
+        total_invited = await crud_guest.get_guests_count_by_event(db, event_id)
+
+        # Get counts by status
+        attending = await crud_guest.get_guests_count_by_event(db, event_id, RsvpStatus.ATTENDING)
+        not_attending = await crud_guest.get_guests_count_by_event(db, event_id, RsvpStatus.NOT_ATTENDING)
+        maybe = await crud_guest.get_guests_count_by_event(db, event_id, RsvpStatus.MAYBE)
+        pending = await crud_guest.get_guests_count_by_event(db, event_id, RsvpStatus.PENDING)
+
+        # Calculate responded count
+        responded = total_invited - pending
+
+        # Calculate response rate
+        response_rate = (responded / total_invited * 100) if total_invited > 0 else 0.0
+
+        # Get plus-ones confirmed (guests with plus_one_name set)
+        from app.models.guest import Guest
+        result = await db.execute(
+            select(func.count(Guest.id)).where(
+                Guest.event_id == event_id,
+                Guest.plus_one_name.isnot(None),
+                Guest.plus_one_name != ""
+            )
+        )
+        plus_ones_confirmed = result.scalar() or 0
+
+        # Get dietary restrictions count
+        result = await db.execute(
+            select(func.count(Guest.id)).where(
+                Guest.event_id == event_id,
+                Guest.dietary_restrictions.isnot(None),
+                Guest.dietary_restrictions != ""
+            )
+        )
+        dietary_restrictions_count = result.scalar() or 0
+
+        # Get last response timestamp
+        result = await db.execute(
+            select(func.max(Guest.rsvp_responded_at)).where(
+                Guest.event_id == event_id
+            )
+        )
+        last_response_at = result.scalar()
+
+        return {
+            "event_id": str(event_id),
+            "total_invited": total_invited,
+            "responded": responded,
+            "pending": pending,
+            "attending": attending,
+            "not_attending": not_attending,
+            "maybe": maybe,
+            "response_rate": round(response_rate, 2),
+            "plus_ones_confirmed": plus_ones_confirmed,
+            "dietary_restrictions_count": dietary_restrictions_count,
+            "last_response_at": last_response_at
+        }
 
     def get_sharing_links(self, rsvp_url: str, event_name: str) -> dict[str, str]:
         """

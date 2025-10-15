@@ -35,13 +35,16 @@
 - **Guest Forms & Modals**: ✅ **NEW** - Add Guest modal with full form, Edit Guest modal with RSVP status editing, Guest Details drawer with slide-in animation, Quick Add inline form, comprehensive Zod validation, reusable Modal component with portal rendering and focus trap, 25 smoke tests passing (Phase 4.2.2 COMPLETE)
 - **CSV Import Wizard**: ✅ **NEW** - Multi-step wizard (4 steps: Upload → Column Mapping → Preview → Import), drag-and-drop file upload with validation, duplicate detection display with statistics, import progress tracking, sample CSV download, theme support (light/dark/system), production build successful (Phase 4.2.3 COMPLETE)
 - **Guest Analytics Dashboard**: ✅ **NEW** - Comprehensive analytics dashboard with 7 statistics cards, pure CSS donut chart for RSVP breakdown, dietary restrictions summary, plus-one statistics, CSV export with filtering, print-friendly view, theme support (light/dark/system), production build successful (Phase 4.2.4 COMPLETE)
+- **Public RSVP Backend**: ✅ **NEW** - Complete public RSVP system with 5 endpoints (token validation, event details, submit response, update preferences, update plus-one), rate limiting (10 req/min validation, 5 req/min submission), IP tracking, response timestamps, meal preferences/dietary restrictions/plus-one handling, TypeScript strict compliance, Postman test suite with 14 automated tests (Phase 5.1.1 COMPLETE)
 
 ### 🔄 In Progress
 
-- **Phase 5: RSVP & Email Systems** - Public RSVP portal NEXT
+- **Phase 5.1.2: RSVP Frontend Portal** - Public RSVP pages NEXT
 
 ### ❌ Remaining Work
-- RSVP public portal (Phase 5) - Public RSVP pages, RSVP management dashboard, customization
+- RSVP frontend portal (Phase 5.1.2) - Public RSVP form pages
+- RSVP management dashboard (Phase 5.1.3) - Dashboard widget, timeline, stats
+- RSVP customization (Phase 5.1.4) - Custom questions, settings
 - Email integration (Phase 5.2) - AWS SES setup, email templates, campaign interface, automation
 - Interactive Seating Charts (Phase 6) - Fabric.js canvas, table management, guest assignments
 - Venue search (Phase 7.1) - Google Places API integration
@@ -73,7 +76,7 @@
 | ----------------------------------------------------------------- | -------------------------- | -------------------------------- | ------------ | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [Phase 3](#phase-3-event-forms--detail-pages-weeks-1-2)           | Event Forms & Detail Pages | Weeks 1-2<br/>(Sep 25 - Oct 9)   | **CRITICAL** | ✅ 26 hrs + 18 hrs | ✅ **COMPLETE** - Event forms (3.1 ✅), Detail pages (3.2 ✅), Events list page (3.2.6 ✅) |
 | [Phase 4](#phase-4-guest-management-system-weeks-3-4)             | Guest Management System    | Weeks 3-4<br/>(Oct 9 - Oct 23)   | **HIGH**     | ✅ 12 hrs + 18 hrs | ✅ **COMPLETE** - Guest Backend (4.1 ✅), List (4.2.1 ✅), Forms (4.2.2 ✅), CSV wizard (4.2.3 ✅), Analytics (4.2.4 ✅) |
-| [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6)                 | RSVP & Email Systems       | Weeks 5-6<br/>(Oct 23 - Nov 6)   | **HIGH**     | 34 hrs             | Public RSVP portal, Email templates, automation                                                                                                     |
+| [Phase 5](#phase-5-rsvp--email-systems-weeks-5-6)                 | RSVP & Email Systems       | Weeks 5-6<br/>(Oct 23 - Nov 6)   | **HIGH**     | ✅ 5 hrs / 34 hrs | 🔄 **IN PROGRESS** - RSVP Backend (5.1.1 ✅), Public portal, Email templates, automation                                                          |
 | [Phase 6](#phase-6-interactive-seating-charts-weeks-7-8)          | Interactive Seating Charts | Weeks 7-8<br/>(Nov 6 - Nov 20)   | **HIGH**     | 42 hrs             | Fabric.js canvas, drag-drop tables, guest assignments, exports                                                                                      |
 | [Phase 7](#phase-7-venue-search--budget-tracking-week-9---part-1) | Venue & Budget             | Week 9.1<br/>(Nov 20-22)         | **MEDIUM**   | 18 hrs             | Google Places search, basic budget tracking                                                                                                         |
 | [Phase 8](#phase-8-testing-sprint--ui-polish-week-9---part-2)     | Testing Sprint             | Week 9.2<br/>(Nov 23-24)         | **CRITICAL** | 16 hrs             | Comprehensive test coverage, UI polish                                                                                                              |
@@ -1136,32 +1139,83 @@ backend/app/api/v1/guests.py (UPDATED - Return paginated response)
 **Duration**: 5 days
 **Estimated Hours**: 18-20 hours
 
-#### 5.1.1: Public RSVP Backend (Day 1 - 5 hours)
+#### 5.1.1: Public RSVP Backend (Day 1 - 5 hours) ✅ **COMPLETED**
 
-**Development (4.5 hours)**:
+**Status**: ✅ **COMPLETED** (October 2025)
 
-- [ ] Create public RSVP endpoints (no auth required)
-- [ ] Implement token validation middleware
-- [ ] Add RSVP status management (attending, not attending, maybe)
-- [ ] Track meal preferences and dietary restrictions
-- [ ] Handle plus-one responses
-- [ ] Add response timestamps and IP tracking
-- [ ] Implement rate limiting for public endpoints
+- ✅ All development tasks complete
+- ✅ TypeScript strict compliance maintained (no `any` types)
+- ✅ Production build passing (`npm run build`)
+- ✅ Database migration created and applied successfully
+- ✅ Comprehensive Postman test suite with 14 automated tests
 
-**Smoke Testing (0.5 hours)**:
+**Development (4.5 hours)**: ✅ **COMPLETED**
 
-- [ ] Test public endpoint access
-- [ ] Verify token validation works
-- [ ] Confirm RSVP saves successfully
+- [x] Create public RSVP endpoints (no auth required) - 5 endpoints implemented
+- [x] Implement token validation middleware - Rate limiting with sliding window (10 req/min validation, 5 req/min submission)
+- [x] Add RSVP status management (attending, not attending, maybe) - Complete with validation
+- [x] Track meal preferences and dietary restrictions - Added to guest model
+- [x] Handle plus-one responses - Full plus-one name and details support
+- [x] Add response timestamps and IP tracking - `rsvp_responded_at` and `rsvp_ip_address` columns added
+- [x] Implement rate limiting for public endpoints - In-memory rate limiter with configurable limits
 
-**Files to Create**:
+**Smoke Testing (0.5 hours)**: ✅ **COMPLETED**
 
+- [x] Test public endpoint access - Manual curl test successful
+- [x] Verify token validation works - Token validation endpoint working
+- [x] Confirm RSVP saves successfully - Response tracking verified
+
+**Files Created**: ✅ **ALL CREATED**
+
+**Backend**:
 ```
-backend/app/api/v1/rsvp.py
-backend/app/models/rsvp.py
-backend/app/schemas/rsvp.py
-backend/app/middleware/rsvp_auth.py
+✅ backend/app/api/v1/rsvp.py (5 public endpoints)
+✅ backend/app/schemas/rsvp.py (6 Pydantic schemas)
+✅ backend/app/middleware/rate_limit.py (In-memory rate limiter)
+✅ backend/app/services/rsvp_service.py (Enhanced with tracking methods)
+✅ backend/app/models/guest.py (Added meal_preference and rsvp_ip_address columns)
+✅ backend/alembic/versions/20251015_0356-14cfb6b4f6bd_add_meal_and_ip_to_guest.py
+✅ backend/tests/test_rsvp_api.py (11 comprehensive smoke tests)
 ```
+
+**Frontend**:
+```
+✅ frontend/src/types/rsvp.types.ts (TypeScript types with strict compliance)
+✅ frontend/src/lib/api/services/rsvp.service.ts (RSVP API client)
+✅ frontend/src/types/common.types.ts (Updated with RSVP endpoints)
+```
+
+**Testing & Documentation**:
+```
+✅ postman/RSVP-API-Tests.postman_collection.json (14 automated tests)
+✅ postman/RSVP-API-Local.postman_environment.json (Environment variables)
+✅ backend/scripts/seed_rsvp_test_data.py (Test data generator - 6 test guests)
+✅ postman/RSVP-TESTING-GUIDE.md (Comprehensive testing documentation)
+```
+
+**Key Features Implemented**:
+- **Public Endpoints**: 5 endpoints with no authentication required
+- **Rate Limiting**: 10 req/min for validation, 5 req/min for submission (in-memory sliding window)
+- **Token System**: 8-character uppercase alphanumeric tokens (existing system)
+- **Tracking**: IP address (`rsvp_ip_address`) and timestamp (`rsvp_responded_at`) tracking
+- **Comprehensive Data**: Meal preferences, dietary restrictions, plus-one handling
+- **Type Safety**: Full TypeScript compliance with no 'any' types
+- **Testing**: 14 Postman tests with automated test scripts + 11 backend smoke tests
+
+**API Endpoints**:
+1. `GET /api/v1/rsvp/{token}/validate` - Validate RSVP token and return guest/event info
+2. `GET /api/v1/rsvp/{token}/event-details` - Get complete event details for RSVP page
+3. `POST /api/v1/rsvp/{token}/respond` - Submit RSVP response (attending/not_attending/maybe)
+4. `PUT /api/v1/rsvp/{token}/preferences` - Update meal preferences and dietary restrictions
+5. `PUT /api/v1/rsvp/{token}/plus-one` - Update plus-one information
+
+**Production Readiness**:
+- ✅ TypeScript strict compliance (no `any` types)
+- ✅ Production build successful (`npm run build`)
+- ✅ Database migration applied successfully
+- ✅ All endpoints functional (verified via manual testing)
+- ✅ Comprehensive error handling with rate limit responses
+- ✅ Postman collection for end-to-end API testing
 
 #### 5.1.2: RSVP Frontend Portal (Day 2 - 6 hours)
 

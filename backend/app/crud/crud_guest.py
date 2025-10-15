@@ -1,7 +1,7 @@
 """CRUD operations for Guest model."""
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_, or_
 
@@ -186,7 +186,7 @@ async def update_guest_rsvp(
     """Update guest RSVP status using token."""
     update_data = {
         "rsvp_status": rsvp_status,
-        "rsvp_responded_at": datetime.utcnow()
+        "rsvp_responded_at": datetime.now(timezone.utc)
     }
     
     if plus_one_name is not None:
@@ -211,7 +211,7 @@ async def mark_invitation_sent(db: AsyncSession, guest_id: UUID) -> Optional[Gue
     await db.execute(
         update(Guest)
         .where(Guest.id == guest_id)
-        .values(invitation_sent_at=datetime.utcnow())
+        .values(invitation_sent_at=datetime.now(timezone.utc))
     )
     return await get_guest_by_id(db, guest_id)
 
@@ -320,7 +320,7 @@ async def bulk_update_guests_status(
     result = await db.execute(
         update(Guest)
         .where(Guest.id.in_(guest_ids))
-        .values(rsvp_status=rsvp_status, rsvp_responded_at=datetime.utcnow())
+        .values(rsvp_status=rsvp_status, rsvp_responded_at=datetime.now(timezone.utc))
     )
     return result.rowcount
 

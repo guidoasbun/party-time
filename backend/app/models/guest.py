@@ -49,8 +49,13 @@ class Guest(Base):
     
     # Additional info
     dietary_restrictions = Column(Text)
+    meal_preference = Column(String(200))  # Meal choice for events with meal options
     notes = Column(Text)
-    
+
+    # RSVP response tracking
+    # FR-6: The system shall display an RSVP submission page. 5.1.1
+    rsvp_ip_address = Column(String(45))  # IPv4 (15 chars) or IPv6 (45 chars max)
+
     # Tracking timestamps
     invitation_sent_at = Column(DateTime(timezone=True))
     rsvp_responded_at = Column(DateTime(timezone=True))
