@@ -143,7 +143,18 @@ export class GuestsService {
    */
   async getGuestStats(eventId: UUID): Promise<GuestStats> {
     return api.get<GuestStats>(
-      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/stats`,
+      API_ENDPOINTS.GUESTS.STATS(eventId),
+      undefined,
+      withRetry({ attempts: 2 })
+    )
+  }
+
+  /**
+   * Get guests with dietary restrictions
+   */
+  async getDietaryRestrictions(eventId: UUID): Promise<Guest[]> {
+    return api.get<Guest[]>(
+      API_ENDPOINTS.GUESTS.DIETARY_RESTRICTIONS(eventId),
       undefined,
       withRetry({ attempts: 2 })
     )
