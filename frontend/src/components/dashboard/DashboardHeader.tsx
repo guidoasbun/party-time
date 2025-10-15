@@ -1,42 +1,49 @@
-'use client'
+"use client";
 
-import { format } from 'date-fns'
-import { LogOut, Calendar } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { ThemeToggle } from '@/components/ui/ThemeToggle'
-import { UserProfileResponse } from '@/types/auth.types'
-import { MobileNavToggle, SidebarToggle } from '@/components/layout/Navigation'
-import { Breadcrumb } from '@/components/layout/Breadcrumb'
-import { cn } from '@/lib/utils'
+import { format } from "date-fns";
+import { LogOut, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { UserProfileResponse } from "@/types/auth.types";
+import { MobileNavToggle, SidebarToggle } from "@/components/layout/Navigation";
+import { Breadcrumb } from "@/components/layout/Breadcrumb";
+import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
-  user: UserProfileResponse
-  onSignOut: () => void
-  className?: string
-  showBreadcrumbs?: boolean
+  user: UserProfileResponse;
+  onSignOut: () => void;
+  className?: string;
+  showBreadcrumbs?: boolean;
 }
 
 function getGreeting(): string {
-  const hour = new Date().getHours()
+  const hour = new Date().getHours();
 
   if (hour < 12) {
-    return 'Good morning'
+    return "Good morning";
   } else if (hour < 17) {
-    return 'Good afternoon'
+    return "Good afternoon";
   } else {
-    return 'Good evening'
+    return "Good evening";
   }
 }
 
-export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = true }: DashboardHeaderProps) {
-  const greeting = getGreeting()
-  const currentDate = format(new Date(), 'EEEE, MMMM do, yyyy')
+export function DashboardHeader({
+  user,
+  onSignOut,
+  className,
+  showBreadcrumbs = true,
+}: DashboardHeaderProps) {
+  const greeting = getGreeting();
+  const currentDate = format(new Date(), "EEEE, MMMM do, yyyy");
 
   return (
-    <div className={cn(
-      "bg-card border-b border-border transition-colors duration-200",
-      className
-    )}>
+    <div
+      className={cn(
+        "bg-card border-b border-border transition-colors duration-200",
+        className
+      )}
+    >
       <div className="max-w-7xl mx-auto">
         {/* Main Header */}
         <div className="flex items-center justify-between h-16 px-6">
@@ -48,7 +55,7 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
             {/* Title on mobile/compact view */}
             <div className="lg:hidden">
               <h1 className="text-lg font-semibold text-foreground">
-                {greeting}, {(user.name || user.email || 'User').split(' ')[0]}!
+                {greeting}, {(user.name || user.email || "User").split(" ")[0]}!
               </h1>
             </div>
           </div>
@@ -62,12 +69,20 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
             <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-muted rounded-lg transition-colors duration-200">
               <div className="w-7 h-7 bg-primary rounded-full flex items-center justify-center">
                 <span className="text-primary-foreground text-xs font-medium">
-                  {user.name ? user.name.charAt(0).toUpperCase() : user.email ? user.email.charAt(0).toUpperCase() : '?'}
+                  {user.name
+                    ? user.name.charAt(0).toUpperCase()
+                    : user.email
+                    ? user.email.charAt(0).toUpperCase()
+                    : "?"}
                 </span>
               </div>
               <div className="text-sm">
-                <p className="font-medium text-foreground">{user.name || user.email || 'User'}</p>
-                <p className="text-muted-foreground hidden md:block">{user.email}</p>
+                <p className="font-medium text-foreground">
+                  {user.name || user.email || "User"}
+                </p>
+                <p className="text-muted-foreground hidden md:block">
+                  {user.email}
+                </p>
               </div>
             </div>
 
@@ -84,6 +99,7 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sign Out</span>
             </Button>
+            <h1>HOT DOG</h1>
           </div>
         </div>
 
@@ -100,7 +116,7 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
             {/* Greeting and Date - Desktop */}
             <div className="hidden lg:block order-2">
               <h1 className="text-2xl font-bold text-foreground">
-                {greeting}, {user.name || user.email || 'User'}!
+                {greeting}, {user.name || user.email || "User"}!
               </h1>
               <div className="flex items-center gap-2 mt-1 text-muted-foreground">
                 <Calendar className="h-4 w-4" />
@@ -125,5 +141,5 @@ export function DashboardHeader({ user, onSignOut, className, showBreadcrumbs = 
         )}
       </div>
     </div>
-  )
+  );
 }

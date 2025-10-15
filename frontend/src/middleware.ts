@@ -44,7 +44,8 @@ export const config = {
      * - / (home page)
      * - demo/ (demo pages for development)
      * - test- (test pages for development)
+     * - rsvp/ (public RSVP pages - no authentication required)
      */
-    "/((?!api|_next/static|_next/image|favicon.ico|demo|test-|$).*)",
+    "/((?!api|_next/static|_next/image|favicon.ico|demo|test-|rsvp|$).*)",
   ],
 }
