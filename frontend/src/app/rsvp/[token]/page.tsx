@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { RSVPForm } from "@/components/rsvp/RSVPForm";
 import { RSVPConfirmation } from "@/components/rsvp/RSVPConfirmation";
+import { RSVPHeader } from "@/components/rsvp/RSVPHeader";
 import {
   getRSVPEventDetails,
   submitRSVPResponse,
@@ -269,6 +270,9 @@ export default function RSVPPage() {
   // Render main content
   return (
     <div className="min-h-screen bg-background">
+      {/* RSVP Header with Theme Toggle and Login */}
+      <RSVPHeader />
+
       {/* Header with Event Details */}
       {eventDetails && (
         <header className="bg-card border-b border-border">

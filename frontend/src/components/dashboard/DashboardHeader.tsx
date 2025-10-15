@@ -99,7 +99,6 @@ export function DashboardHeader({
               <LogOut className="h-4 w-4" />
               <span className="hidden sm:inline">Sign Out</span>
             </Button>
-            <h1>HOT DOG</h1>
           </div>
         </div>
 
