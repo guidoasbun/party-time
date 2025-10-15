@@ -1,0 +1,690 @@
+{
+	"info": {
+		"_postman_id": "rsvp-api-tests-001",
+		"name": "RSVP API - Public Endpoints",
+		"description": "Comprehensive test suite for Party-Time RSVP public API endpoints.\n\n## Overview\nThis collection tests all public RSVP endpoints that allow guests to respond to event invitations without authentication.\n\n## Features Tested\n- Token validation\n- Event details retrieval\n- RSVP submission (attending/not attending/maybe)\n- Preference updates (dietary restrictions, meal choices)\n- Plus-one management\n- Error handling (expired tokens, invalid tokens, rate limiting)\n\n## Setup\n1. Ensure backend server is running on http://localhost:8000\n2. Run the test data seed script: `python backend/scripts/seed_rsvp_test_data.py`\n3. Import the environment: `RSVP-API-Local.postman_environment.json`\n4. Run the collection with Collection Runner\n\n## Created\nPhase 5.1.1: Public RSVP Backend Implementation",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Token Validation",
+			"item": [
+				{
+					"name": "Validate Valid Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_valid).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has guest information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.guest_name).to.be.a('string');",
+									"    pm.expect(jsonData.event_name).to.be.a('string');",
+									"    pm.expect(jsonData.current_rsvp_status).to.be.a('string');",
+									"});",
+									"",
+									"// Save guest and event IDs for later use",
+									"var jsonData = pm.response.json();",
+									"pm.environment.set(\"guest_id\", jsonData.guest_id);",
+									"pm.environment.set(\"event_id\", jsonData.event_id);"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{valid_token}}/validate",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{valid_token}}", "validate"]
+						},
+						"description": "Validate a valid RSVP token and retrieve basic guest/event information."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Invalid Token Format",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is invalid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_valid).to.be.false;",
+									"});",
+									"",
+									"pm.test(\"Has error message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error_message).to.be.a('string');",
+									"    pm.expect(jsonData.error_message.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/invalid/validate",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "invalid", "validate"]
+						},
+						"description": "Test token validation with an invalid token format (too short)."
+					},
+					"response": []
+				},
+				{
+					"name": "Validate Non-Existent Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Token is invalid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.is_valid).to.be.false;",
+									"});",
+									"",
+									"pm.test(\"Error indicates token not found\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.error_message).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/XXXXXXXX/validate",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "XXXXXXXX", "validate"]
+						},
+						"description": "Test with a valid format but non-existent token."
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for RSVP token validation endpoint."
+		},
+		{
+			"name": "2. Event Details",
+			"item": [
+				{
+					"name": "Get Event Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has guest information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.guest).to.be.an('object');",
+									"    pm.expect(jsonData.guest.first_name).to.be.a('string');",
+									"    pm.expect(jsonData.guest.last_name).to.be.a('string');",
+									"    pm.expect(jsonData.guest.email).to.be.a('string');",
+									"});",
+									"",
+									"pm.test(\"Response has event information\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.event).to.be.an('object');",
+									"    pm.expect(jsonData.event.name).to.be.a('string');",
+									"    pm.expect(jsonData.event.type).to.be.a('string');",
+									"});",
+									"",
+									"pm.test(\"Response has host name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.host_name).to.be.a('string');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{valid_token}}/event-details",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{valid_token}}", "event-details"]
+						},
+						"description": "Get complete event details for RSVP page including guest info, event info, and host name."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event Details - Expired Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 410 (Gone)\", function () {",
+									"    pm.response.to.have.status(410);",
+									"});",
+									"",
+									"pm.test(\"Has error detail\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.be.a('string');",
+									"    pm.expect(jsonData.detail).to.include('expired');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{expired_token}}/event-details",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{expired_token}}", "event-details"]
+						},
+						"description": "Test accessing event details with an expired token (should return 410 Gone)."
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for retrieving event details for the RSVP page."
+		},
+		{
+			"name": "3. RSVP Submission",
+			"item": [
+				{
+					"name": "Submit RSVP - Attending",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Submission successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"RSVP status is attending\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.rsvp_status).to.equal('attending');",
+									"});",
+									"",
+									"pm.test(\"Has confirmation message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.be.a('string');",
+									"    pm.expect(jsonData.message.length).to.be.above(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsvp_status\": \"attending\",\n    \"dietary_restrictions\": \"Vegetarian\",\n    \"notes\": \"Looking forward to it!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{valid_token}}/respond",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{valid_token}}", "respond"]
+						},
+						"description": "Submit RSVP response as 'attending' with dietary restrictions and notes."
+					},
+					"response": []
+				},
+				{
+					"name": "Submit RSVP - Not Attending",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Submission successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"RSVP status is not_attending\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.rsvp_status).to.equal('not_attending');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsvp_status\": \"not_attending\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{not_attending_token}}/respond",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{not_attending_token}}", "respond"]
+						},
+						"description": "Submit RSVP response as 'not_attending'."
+					},
+					"response": []
+				},
+				{
+					"name": "Submit RSVP - Maybe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Submission successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"RSVP status is maybe\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.rsvp_status).to.equal('maybe');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsvp_status\": \"maybe\",\n    \"notes\": \"Will confirm closer to the date\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{maybe_token}}/respond",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{maybe_token}}", "respond"]
+						},
+						"description": "Submit RSVP response as 'maybe'."
+					},
+					"response": []
+				},
+				{
+					"name": "Submit RSVP - With Plus-One",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Submission successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsvp_status\": \"attending\",\n    \"plus_one_name\": \"Jane Doe\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{plus_one_token}}/respond",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{plus_one_token}}", "respond"]
+						},
+						"description": "Submit RSVP with plus-one information."
+					},
+					"response": []
+				},
+				{
+					"name": "Submit RSVP - Plus-One Not Allowed (Error)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates plus-one not allowed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('not allowed');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"rsvp_status\": \"attending\",\n    \"plus_one_name\": \"Someone\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{no_plus_one_token}}/respond",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{no_plus_one_token}}", "respond"]
+						},
+						"description": "Attempt to add plus-one when not allowed (should return 400)."
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for submitting RSVP responses."
+		},
+		{
+			"name": "4. Update Preferences",
+			"item": [
+				{
+					"name": "Update Dietary Restrictions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Update successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Has dietary restrictions in response\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('dietary_restrictions');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"dietary_restrictions\": \"Gluten-free, no dairy\",\n    \"meal_preference\": \"Fish\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{valid_token}}/preferences",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{valid_token}}", "preferences"]
+						},
+						"description": "Update dietary restrictions and meal preference."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Notes Only",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Update successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"notes\": \"Please seat me near the window\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{valid_token}}/preferences",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{valid_token}}", "preferences"]
+						},
+						"description": "Update only notes field."
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for updating RSVP preferences."
+		},
+		{
+			"name": "5. Update Plus-One",
+			"item": [
+				{
+					"name": "Add Plus-One Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Update successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Plus-one name updated\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.plus_one_name).to.equal('Jane Smith');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"plus_one_name\": \"Jane Smith\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{plus_one_token}}/plus-one",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{plus_one_token}}", "plus-one"]
+						},
+						"description": "Add or update plus-one name (requires RSVP status to be attending or maybe)."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Plus-One Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Update successful\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Plus-one name removed\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.plus_one_name).to.be.null;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"plus_one_name\": null\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}{{api_version}}/rsvp/{{plus_one_token}}/plus-one",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "rsvp", "{{plus_one_token}}", "plus-one"]
+						},
+						"description": "Remove plus-one name by setting it to null."
+					},
+					"response": []
+				}
+			],
+			"description": "Tests for updating plus-one information."
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global pre-request script",
+					"// Set default values if not already set",
+					"if (!pm.environment.get('base_url')) {",
+					"    pm.environment.set('base_url', 'http://localhost:8000');",
+					"}",
+					"if (!pm.environment.get('api_version')) {",
+					"    pm.environment.set('api_version', '/api/v1');",
+					"}"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Global test script",
+					"pm.test(\"Response time is acceptable\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+					"});",
+					"",
+					"pm.test(\"Response has proper headers\", function () {",
+					"    pm.response.to.have.header('Content-Type');",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "api_version",
+			"value": "/api/v1",
+			"type": "string"
+		}
+	]
+}

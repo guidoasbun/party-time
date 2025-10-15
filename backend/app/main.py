@@ -4,6 +4,7 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.events import router as events_router
 from app.api.v1.guests import router as guests_router
 from app.api.v1.budget import router as budget_router
+from app.api.v1.rsvp import router as rsvp_router
 
 settings = get_settings()
 
@@ -58,6 +59,7 @@ app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["aut
 app.include_router(events_router, prefix=f"{settings.API_V1_STR}/events", tags=["events"])
 app.include_router(guests_router, prefix=f"{settings.API_V1_STR}/events", tags=["guests"])
 app.include_router(budget_router, prefix=f"{settings.API_V1_STR}/events", tags=["budget"])
+app.include_router(rsvp_router, prefix=settings.API_V1_STR, tags=["rsvp"])
 
 
 @app.get("/")
