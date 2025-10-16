@@ -18,7 +18,8 @@ from app.schemas.guest import (
     RSVPEventDetails,
     QRCodeOptions,
     CSVImportPreview,
-    CSVImportResult
+    CSVImportResult,
+    RSVPTimelineItem
 )
 from app.schemas.common import PaginatedResponse
 from app.models.guest import RsvpStatus
@@ -209,6 +210,65 @@ async def get_guests_with_dietary_restrictions(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve dietary restrictions: {str(e)}")
+
+""" FR-6: The system shall display an RSVP submission page.
+    5.1.3: RSVP Management Dashboard
+"""
+
+
+@router.get("/{event_id}/guests/rsvp-timeline", response_model=List[RSVPTimelineItem])
+async def get_rsvp_timeline(
+    event_id: UUID,
+    limit: int = Query(30, ge=1, le=100, description="Number of timeline items to return"),
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """Get recent RSVP responses timeline for an event."""
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Get guests who have responded (not pending)
+        from sqlalchemy import select, and_, or_
+        from app.models.guest import Guest as GuestModel
+
+        query = (
+            select(GuestModel)
+            .where(
+                and_(
+                    GuestModel.event_id == event_id,
+                    GuestModel.rsvp_status != RsvpStatus.PENDING,
+                    GuestModel.rsvp_responded_at.is_not(None)
+                )
+            )
+            .order_by(GuestModel.rsvp_responded_at.desc())
+            .limit(limit)
+        )
+
+        result = await db.execute(query)
+        guests = result.scalars().all()
+
+        # Format timeline items
+        timeline_items = [
+            RSVPTimelineItem(
+                id=guest.id,
+                guest_id=guest.id,
+                guest_name=f"{guest.first_name} {guest.last_name}",
+                rsvp_status=guest.rsvp_status,
+                changed_at=guest.rsvp_responded_at
+            )
+            for guest in guests
+        ]
+
+        return timeline_items
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve RSVP timeline: {str(e)}")
 
 
 @router.get("/{event_id}/guests/search", response_model=List[Guest])

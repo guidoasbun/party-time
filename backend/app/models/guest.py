@@ -5,9 +5,9 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 import uuid
 import enum
-import secrets
 
 from app.db.base import Base
+from app.utils.token_generator import generate_rsvp_token
 
 
 class RsvpStatus(str, enum.Enum):
@@ -37,7 +37,7 @@ class Guest(Base):
     phone = Column(String(20))
     
     # RSVP tracking
-    rsvp_token = Column(String(255), unique=True, nullable=False, default=lambda: secrets.token_hex(32))
+    rsvp_token = Column(String(255), unique=True, nullable=False, default=generate_rsvp_token)
     rsvp_status = Column(SQLEnum(RsvpStatus), nullable=False, default=RsvpStatus.PENDING)
     token_expires_at = Column(DateTime(timezone=True))
     token_first_accessed_at = Column(DateTime(timezone=True))

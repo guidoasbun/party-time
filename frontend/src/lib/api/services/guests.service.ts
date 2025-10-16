@@ -2,8 +2,8 @@
  * Guests service module
  */
 
-import { api, withRetry } from '@/lib/api-client'
-import { getSession } from 'next-auth/react'
+import { api, withRetry } from "@/lib/api-client";
+import { getSession } from "next-auth/react";
 import {
   Guest,
   GuestCreate,
@@ -24,8 +24,9 @@ import {
   InvitationLinkData,
   TokenValidationResult,
   RSVPEventDetails,
-  QRCodeOptions
-} from '@/types'
+  QRCodeOptions,
+  RSVPTimelineItem,
+} from "@/types";
 
 /**
  * Guests service class with typed methods
@@ -34,12 +35,15 @@ export class GuestsService {
   /**
    * Get all guests for an event
    */
-  async getGuests(eventId: UUID, params?: GuestSearchParams): Promise<PaginatedResponse<Guest>> {
+  async getGuests(
+    eventId: UUID,
+    params?: GuestSearchParams
+  ): Promise<PaginatedResponse<Guest>> {
     return api.get<PaginatedResponse<Guest>>(
       API_ENDPOINTS.GUESTS.LIST(eventId),
       params,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -50,7 +54,7 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.GET(eventId, guestId),
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -60,44 +64,54 @@ export class GuestsService {
     return api.post<Guest, GuestCreate>(
       API_ENDPOINTS.GUESTS.CREATE(eventId),
       data
-    )
+    );
   }
 
   /**
    * Update an existing guest
    */
-  async updateGuest(eventId: UUID, guestId: UUID, data: GuestUpdate): Promise<Guest> {
+  async updateGuest(
+    eventId: UUID,
+    guestId: UUID,
+    data: GuestUpdate
+  ): Promise<Guest> {
     return api.put<Guest, GuestUpdate>(
       API_ENDPOINTS.GUESTS.UPDATE(eventId, guestId),
       data
-    )
+    );
   }
 
   /**
    * Delete a guest
    */
-  async deleteGuest(eventId: UUID, guestId: UUID): Promise<{ message: string }> {
+  async deleteGuest(
+    eventId: UUID,
+    guestId: UUID
+  ): Promise<{ message: string }> {
     return api.delete<{ message: string }>(
       API_ENDPOINTS.GUESTS.DELETE(eventId, guestId)
-    )
+    );
   }
 
   /**
    * Bulk create guests
    */
-  async bulkCreateGuests(eventId: UUID, data: GuestBulkCreate): Promise<{
-    created_count: number
-    errors: Array<{ index: number; error: string }>
-    guests: GuestSummary[]
+  async bulkCreateGuests(
+    eventId: UUID,
+    data: GuestBulkCreate
+  ): Promise<{
+    created_count: number;
+    errors: Array<{ index: number; error: string }>;
+    guests: GuestSummary[];
   }> {
-    return api.post<{
-      created_count: number
-      errors: Array<{ index: number; error: string }>
-      guests: GuestSummary[]
-    }, GuestBulkCreate>(
-      API_ENDPOINTS.GUESTS.BULK_CREATE(eventId),
-      data
-    )
+    return api.post<
+      {
+        created_count: number;
+        errors: Array<{ index: number; error: string }>;
+        guests: GuestSummary[];
+      },
+      GuestBulkCreate
+    >(API_ENDPOINTS.GUESTS.BULK_CREATE(eventId), data);
   }
 
   /**
@@ -108,34 +122,40 @@ export class GuestsService {
     guestIds: UUID[],
     rsvpStatus: RsvpStatus
   ): Promise<{
-    message: string
-    updated_count: number
-    new_status: string
+    message: string;
+    updated_count: number;
+    new_status: string;
   }> {
-    return api.patch<{
-      message: string
-      updated_count: number
-      new_status: string
-    }, { guest_ids: UUID[]; rsvp_status: RsvpStatus }>(
-      API_ENDPOINTS.GUESTS.BULK_UPDATE(eventId),
-      { guest_ids: guestIds, rsvp_status: rsvpStatus }
-    )
+    return api.patch<
+      {
+        message: string;
+        updated_count: number;
+        new_status: string;
+      },
+      { guest_ids: UUID[]; rsvp_status: RsvpStatus }
+    >(API_ENDPOINTS.GUESTS.BULK_UPDATE(eventId), {
+      guest_ids: guestIds,
+      rsvp_status: rsvpStatus,
+    });
   }
 
   /**
    * Bulk delete guests
    */
-  async bulkDeleteGuests(eventId: UUID, guestIds: UUID[]): Promise<{
-    message: string
-    deleted_count: number
+  async bulkDeleteGuests(
+    eventId: UUID,
+    guestIds: UUID[]
+  ): Promise<{
+    message: string;
+    deleted_count: number;
   }> {
-    return api.post<{
-      message: string
-      deleted_count: number
-    }, { guest_ids: UUID[] }>(
-      API_ENDPOINTS.GUESTS.BULK_DELETE(eventId),
-      { guest_ids: guestIds }
-    )
+    return api.post<
+      {
+        message: string;
+        deleted_count: number;
+      },
+      { guest_ids: UUID[] }
+    >(API_ENDPOINTS.GUESTS.BULK_DELETE(eventId), { guest_ids: guestIds });
   }
 
   /**
@@ -146,7 +166,24 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.STATS(eventId),
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
+  }
+
+  /**
+   * FR-6: The system shall display an RSVP submission page.
+   * 5.1.3: RSVP Management Dashboard
+   *
+   * Get RSVP timeline (recent responses) for an event
+   */
+  async getRSVPTimeline(
+    eventId: UUID,
+    limit: number = 30
+  ): Promise<RSVPTimelineItem[]> {
+    return api.get<RSVPTimelineItem[]>(
+      API_ENDPOINTS.GUESTS.RSVP_TIMELINE(eventId),
+      { limit },
+      withRetry({ attempts: 2 })
+    );
   }
 
   /**
@@ -157,7 +194,7 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.DIETARY_RESTRICTIONS(eventId),
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -167,55 +204,54 @@ export class GuestsService {
     eventId: UUID,
     file: File,
     options: {
-      mapping: Record<string, string>
-      send_invitations: boolean
+      mapping: Record<string, string>;
+      send_invitations: boolean;
     },
     onProgress?: (progress: number) => void
   ): Promise<GuestImportResult> {
-    const formData = new FormData()
-    formData.append('file', file)
-    formData.append('mapping', JSON.stringify(options.mapping))
-    formData.append('send_invitations', options.send_invitations.toString())
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("mapping", JSON.stringify(options.mapping));
+    formData.append("send_invitations", options.send_invitations.toString());
 
     return api.upload<GuestImportResult>(
       `${API_ENDPOINTS.GUESTS.LIST(eventId)}/import`,
       file,
       onProgress
-    )
+    );
   }
 
   /**
    * Preview CSV import without executing
    */
-  async previewCSVImport(
-    eventId: UUID,
-    file: File
-  ): Promise<CSVImportPreview> {
-    const formData = new FormData()
-    formData.append('file', file)
+  async previewCSVImport(eventId: UUID, file: File): Promise<CSVImportPreview> {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const session = await getSession()
-    const headers: Record<string, string> = {}
+    const session = await getSession();
+    const headers: Record<string, string> = {};
 
     if (session?.idToken) {
-      headers['Authorization'] = `Bearer ${session.idToken}`
+      headers["Authorization"] = `Bearer ${session.idToken}`;
     }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${API_ENDPOINTS.GUESTS.IMPORT_PREVIEW(eventId)}`,
+      `${
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      }${API_ENDPOINTS.GUESTS.IMPORT_PREVIEW(eventId)}`,
       {
-        method: 'POST',
+        method: "POST",
         headers,
-        body: formData
+        body: formData,
       }
-    )
+    );
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.detail || 'Failed to preview CSV import')
+      const error = await response.json();
+      throw new Error(error.detail || "Failed to preview CSV import");
     }
 
-    return response.json()
+    return response.json();
   }
 
   /**
@@ -226,33 +262,35 @@ export class GuestsService {
     file: File,
     skipDuplicates: boolean = true
   ): Promise<CSVImportResult> {
-    const formData = new FormData()
-    formData.append('file', file)
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const session = await getSession()
-    const headers: Record<string, string> = {}
+    const session = await getSession();
+    const headers: Record<string, string> = {};
 
     if (session?.idToken) {
-      headers['Authorization'] = `Bearer ${session.idToken}`
+      headers["Authorization"] = `Bearer ${session.idToken}`;
     }
 
     const url = new URL(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${API_ENDPOINTS.GUESTS.IMPORT_EXECUTE(eventId)}`
-    )
-    url.searchParams.append('skip_duplicates', skipDuplicates.toString())
+      `${
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      }${API_ENDPOINTS.GUESTS.IMPORT_EXECUTE(eventId)}`
+    );
+    url.searchParams.append("skip_duplicates", skipDuplicates.toString());
 
     const response = await fetch(url.toString(), {
-      method: 'POST',
+      method: "POST",
       headers,
-      body: formData
-    })
+      body: formData,
+    });
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.detail || 'Failed to execute CSV import')
+      const error = await response.json();
+      throw new Error(error.detail || "Failed to execute CSV import");
     }
 
-    return response.json()
+    return response.json();
   }
 
   /**
@@ -260,25 +298,25 @@ export class GuestsService {
    */
   async exportGuests(
     eventId: UUID,
-    format: 'csv' | 'excel',
+    format: "csv" | "excel",
     options?: {
-      include_fields?: string[]
-      filter?: GuestSearchParams
+      include_fields?: string[];
+      filter?: GuestSearchParams;
     }
   ): Promise<void> {
     const _params = {
       format,
       ...options?.filter,
-      include_fields: options?.include_fields?.join(',')
-    }
+      include_fields: options?.include_fields?.join(","),
+    };
 
     return api.download(
       `${API_ENDPOINTS.GUESTS.LIST(eventId)}/export`,
       `guests-${eventId}.${format}`,
       {
-        requestId: `export-guests-${eventId}-${format}`
+        requestId: `export-guests-${eventId}-${format}`,
       }
-    )
+    );
   }
 
   /**
@@ -288,33 +326,33 @@ export class GuestsService {
     eventId: UUID,
     guestIds: UUID[],
     options?: {
-      template_id?: UUID
-      custom_message?: string
-      send_immediately?: boolean
-      scheduled_at?: string
+      template_id?: UUID;
+      custom_message?: string;
+      send_immediately?: boolean;
+      scheduled_at?: string;
     }
   ): Promise<{
-    sent_count: number
-    failed_count: number
-    errors: Array<{ guest_id: UUID; error: string }>
+    sent_count: number;
+    failed_count: number;
+    errors: Array<{ guest_id: UUID; error: string }>;
   }> {
-    return api.post<{
-      sent_count: number
-      failed_count: number
-      errors: Array<{ guest_id: UUID; error: string }>
-    }, {
-      guest_ids: UUID[]
-      template_id?: UUID
-      custom_message?: string
-      send_immediately?: boolean
-      scheduled_at?: string
-    }>(
-      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/invitations`,
+    return api.post<
       {
-        guest_ids: guestIds,
-        ...options
+        sent_count: number;
+        failed_count: number;
+        errors: Array<{ guest_id: UUID; error: string }>;
+      },
+      {
+        guest_ids: UUID[];
+        template_id?: UUID;
+        custom_message?: string;
+        send_immediately?: boolean;
+        scheduled_at?: string;
       }
-    )
+    >(`${API_ENDPOINTS.GUESTS.LIST(eventId)}/invitations`, {
+      guest_ids: guestIds,
+      ...options,
+    });
   }
 
   /**
@@ -325,42 +363,45 @@ export class GuestsService {
     guestIds: UUID[],
     message?: string
   ): Promise<{
-    sent_count: number
-    failed_count: number
-    errors: Array<{ guest_id: UUID; error: string }>
+    sent_count: number;
+    failed_count: number;
+    errors: Array<{ guest_id: UUID; error: string }>;
   }> {
-    return api.post<{
-      sent_count: number
-      failed_count: number
-      errors: Array<{ guest_id: UUID; error: string }>
-    }, {
-      guest_ids: UUID[]
-      message?: string
-    }>(
-      `${API_ENDPOINTS.GUESTS.LIST(eventId)}/reminders`,
+    return api.post<
       {
-        guest_ids: guestIds,
-        message
+        sent_count: number;
+        failed_count: number;
+        errors: Array<{ guest_id: UUID; error: string }>;
+      },
+      {
+        guest_ids: UUID[];
+        message?: string;
       }
-    )
+    >(`${API_ENDPOINTS.GUESTS.LIST(eventId)}/reminders`, {
+      guest_ids: guestIds,
+      message,
+    });
   }
 
   /**
    * RSVP response (public endpoint)
    */
-  async respondToRSVP(token: string, data: GuestRSVPUpdate): Promise<{
-    message: string
-    guest: GuestSummary
-    event_name: string
+  async respondToRSVP(
+    token: string,
+    data: GuestRSVPUpdate
+  ): Promise<{
+    message: string;
+    guest: GuestSummary;
+    event_name: string;
   }> {
-    return api.post<{
-      message: string
-      guest: GuestSummary
-      event_name: string
-    }, GuestRSVPUpdate>(
-      API_ENDPOINTS.GUESTS.RSVP_SUBMIT(token),
-      data
-    )
+    return api.post<
+      {
+        message: string;
+        guest: GuestSummary;
+        event_name: string;
+      },
+      GuestRSVPUpdate
+    >(API_ENDPOINTS.GUESTS.RSVP_SUBMIT(token), data);
   }
 
   /**
@@ -368,48 +409,48 @@ export class GuestsService {
    */
   async getRSVPDetails(token: string): Promise<{
     guest: {
-      first_name: string
-      last_name: string
-      email: string
-      plus_one_allowed: boolean
-      plus_one_name?: string
-      dietary_restrictions?: string
-    }
+      first_name: string;
+      last_name: string;
+      email: string;
+      plus_one_allowed: boolean;
+      plus_one_name?: string;
+      dietary_restrictions?: string;
+    };
     event: {
-      name: string
-      description?: string
-      start_date: string
-      end_date?: string
-      venue_name?: string
-      venue_address?: string
-    }
-    rsvp_deadline?: string
-    custom_message?: string
+      name: string;
+      description?: string;
+      start_date: string;
+      end_date?: string;
+      venue_name?: string;
+      venue_address?: string;
+    };
+    rsvp_deadline?: string;
+    custom_message?: string;
   }> {
     return api.get<{
       guest: {
-        first_name: string
-        last_name: string
-        email: string
-        plus_one_allowed: boolean
-        plus_one_name?: string
-        dietary_restrictions?: string
-      }
+        first_name: string;
+        last_name: string;
+        email: string;
+        plus_one_allowed: boolean;
+        plus_one_name?: string;
+        dietary_restrictions?: string;
+      };
       event: {
-        name: string
-        description?: string
-        start_date: string
-        end_date?: string
-        venue_name?: string
-        venue_address?: string
-      }
-      rsvp_deadline?: string
-      custom_message?: string
+        name: string;
+        description?: string;
+        start_date: string;
+        end_date?: string;
+        venue_name?: string;
+        venue_address?: string;
+      };
+      rsvp_deadline?: string;
+      custom_message?: string;
     }>(
       API_ENDPOINTS.GUESTS.RSVP_DETAILS(token),
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -424,7 +465,7 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.SEARCH(eventId),
       { q: query, limit },
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -435,8 +476,8 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.LIST(eventId),
       { rsvp_status: [status] },
       withRetry({ attempts: 2 })
-    )
-    return response.items
+    );
+    return response.items;
   }
 
   /**
@@ -447,8 +488,8 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.LIST(eventId),
       { has_dietary_restrictions: true },
       withRetry({ attempts: 2 })
-    )
-    return response.items
+    );
+    return response.items;
   }
 
   /**
@@ -459,128 +500,140 @@ export class GuestsService {
       API_ENDPOINTS.GUESTS.LIST(eventId),
       { plus_one_allowed: true },
       withRetry({ attempts: 2 })
-    )
-    return response.items
+    );
+    return response.items;
   }
 
   /**
    * Validate guest data
    */
   validateGuestData(data: GuestCreate | GuestUpdate): {
-    isValid: boolean
-    errors: string[]
+    isValid: boolean;
+    errors: string[];
   } {
-    const errors: string[] = []
+    const errors: string[] = [];
 
     // Email validation
-    if ('email' in data && data.email !== undefined) {
+    if ("email" in data && data.email !== undefined) {
       if (!data.email || data.email.trim().length === 0) {
-        errors.push('Email is required')
+        errors.push("Email is required");
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
-        errors.push('Invalid email format')
+        errors.push("Invalid email format");
       }
     }
 
     // Name validation
-    if ('first_name' in data && data.first_name !== undefined) {
+    if ("first_name" in data && data.first_name !== undefined) {
       if (!data.first_name || data.first_name.trim().length === 0) {
-        errors.push('First name is required')
+        errors.push("First name is required");
       } else if (data.first_name.length > 100) {
-        errors.push('First name must be 100 characters or less')
+        errors.push("First name must be 100 characters or less");
       }
     }
 
-    if ('last_name' in data && data.last_name !== undefined) {
+    if ("last_name" in data && data.last_name !== undefined) {
       if (!data.last_name || data.last_name.trim().length === 0) {
-        errors.push('Last name is required')
+        errors.push("Last name is required");
       } else if (data.last_name.length > 100) {
-        errors.push('Last name must be 100 characters or less')
+        errors.push("Last name must be 100 characters or less");
       }
     }
 
     // Phone validation (optional)
-    if ('phone' in data && data.phone !== undefined && data.phone) {
-      const phoneRegex = /^\+?[\d\s\-\(\)]+$/
+    if ("phone" in data && data.phone !== undefined && data.phone) {
+      const phoneRegex = /^\+?[\d\s\-\(\)]+$/;
       if (!phoneRegex.test(data.phone)) {
-        errors.push('Invalid phone number format')
+        errors.push("Invalid phone number format");
       }
     }
 
     // Plus one validation
-    if ('plus_one_name' in data && data.plus_one_name !== undefined) {
+    if ("plus_one_name" in data && data.plus_one_name !== undefined) {
       if (data.plus_one_name && data.plus_one_name.length > 200) {
-        errors.push('Plus one name must be 200 characters or less')
+        errors.push("Plus one name must be 200 characters or less");
       }
     }
 
     return {
       isValid: errors.length === 0,
-      errors
-    }
+      errors,
+    };
   }
 
   /**
    * Parse CSV data for guest import
    */
-  parseCsvData(csvText: string, mapping: Record<string, string>): GuestCreate[] {
-    const lines = csvText.split('\n')
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''))
-    const guests: GuestCreate[] = []
+  parseCsvData(
+    csvText: string,
+    mapping: Record<string, string>
+  ): GuestCreate[] {
+    const lines = csvText.split("\n");
+    const headers = lines[0].split(",").map((h) => h.trim().replace(/"/g, ""));
+    const guests: GuestCreate[] = [];
 
     for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''))
-      if (values.length < 2) continue // Skip empty lines
+      const values = lines[i].split(",").map((v) => v.trim().replace(/"/g, ""));
+      if (values.length < 2) continue; // Skip empty lines
 
-      const guest: Partial<GuestCreate> = {}
+      const guest: Partial<GuestCreate> = {};
 
       // Map CSV columns to guest fields
       Object.entries(mapping).forEach(([guestField, csvColumn]) => {
-        const columnIndex = headers.indexOf(csvColumn)
+        const columnIndex = headers.indexOf(csvColumn);
         if (columnIndex >= 0 && values[columnIndex]) {
-          const value = values[columnIndex]
-          
+          const value = values[columnIndex];
+
           switch (guestField) {
-            case 'plus_one_allowed':
-              guest[guestField] = value.toLowerCase() === 'true' || value === '1'
-              break
+            case "plus_one_allowed":
+              guest[guestField] =
+                value.toLowerCase() === "true" || value === "1";
+              break;
             default:
               // @ts-expect-error - Dynamic field assignment
-              guest[guestField] = value
+              guest[guestField] = value;
           }
         }
-      })
+      });
 
       // Validate required fields
       if (guest.email && guest.first_name && guest.last_name) {
-        guests.push(guest as GuestCreate)
+        guests.push(guest as GuestCreate);
       }
     }
 
-    return guests
+    return guests;
   }
 
   /**
    * Generate RSVP summary
    */
   generateRSVPSummary(guests: Guest[]): {
-    total: number
-    attending: number
-    not_attending: number
-    pending: number
-    maybe: number
-    responseRate: number
-    plusOnesConfirmed: number
+    total: number;
+    attending: number;
+    not_attending: number;
+    pending: number;
+    maybe: number;
+    responseRate: number;
+    plusOnesConfirmed: number;
   } {
-    const total = guests.length
-    const attending = guests.filter(g => g.rsvp_status === RsvpStatus.ATTENDING).length
-    const not_attending = guests.filter(g => g.rsvp_status === RsvpStatus.NOT_ATTENDING).length
-    const pending = guests.filter(g => g.rsvp_status === RsvpStatus.PENDING).length
-    const maybe = guests.filter(g => g.rsvp_status === RsvpStatus.MAYBE).length
-    const responded = attending + not_attending + maybe
-    const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0
-    const plusOnesConfirmed = guests.filter(g =>
-      g.rsvp_status === RsvpStatus.ATTENDING && g.plus_one_name
-    ).length
+    const total = guests.length;
+    const attending = guests.filter(
+      (g) => g.rsvp_status === RsvpStatus.ATTENDING
+    ).length;
+    const not_attending = guests.filter(
+      (g) => g.rsvp_status === RsvpStatus.NOT_ATTENDING
+    ).length;
+    const pending = guests.filter(
+      (g) => g.rsvp_status === RsvpStatus.PENDING
+    ).length;
+    const maybe = guests.filter(
+      (g) => g.rsvp_status === RsvpStatus.MAYBE
+    ).length;
+    const responded = attending + not_attending + maybe;
+    const responseRate = total > 0 ? Math.round((responded / total) * 100) : 0;
+    const plusOnesConfirmed = guests.filter(
+      (g) => g.rsvp_status === RsvpStatus.ATTENDING && g.plus_one_name
+    ).length;
 
     return {
       total,
@@ -589,8 +642,8 @@ export class GuestsService {
       pending,
       maybe,
       responseRate,
-      plusOnesConfirmed
-    }
+      plusOnesConfirmed,
+    };
   }
 
   /**
@@ -598,12 +651,12 @@ export class GuestsService {
    */
   getGuestStatusColor(status: RsvpStatus): string {
     const statusColors: Record<RsvpStatus, string> = {
-      [RsvpStatus.ATTENDING]: '#10B981',  // green
-      [RsvpStatus.NOT_ATTENDING]: '#EF4444',   // red
-      [RsvpStatus.PENDING]: '#F59E0B',    // amber
-      [RsvpStatus.MAYBE]: '#3B82F6'   // blue
-    }
-    return statusColors[status] || '#6B7280'
+      [RsvpStatus.ATTENDING]: "#10B981", // green
+      [RsvpStatus.NOT_ATTENDING]: "#EF4444", // red
+      [RsvpStatus.PENDING]: "#F59E0B", // amber
+      [RsvpStatus.MAYBE]: "#3B82F6", // blue
+    };
+    return statusColors[status] || "#6B7280";
   }
 
   /**
@@ -611,12 +664,12 @@ export class GuestsService {
    */
   getGuestStatusLabel(status: RsvpStatus): string {
     const statusLabels: Record<RsvpStatus, string> = {
-      [RsvpStatus.ATTENDING]: 'Attending',
-      [RsvpStatus.NOT_ATTENDING]: 'Not Attending',
-      [RsvpStatus.PENDING]: 'Pending',
-      [RsvpStatus.MAYBE]: 'Maybe'
-    }
-    return statusLabels[status] || 'Unknown'
+      [RsvpStatus.ATTENDING]: "Attending",
+      [RsvpStatus.NOT_ATTENDING]: "Not Attending",
+      [RsvpStatus.PENDING]: "Pending",
+      [RsvpStatus.MAYBE]: "Maybe",
+    };
+    return statusLabels[status] || "Unknown";
   }
 
   /**
@@ -626,12 +679,15 @@ export class GuestsService {
   /**
    * Get invitation link and sharing info for a guest
    */
-  async getInvitationLink(eventId: UUID, guestId: UUID): Promise<InvitationLinkData> {
+  async getInvitationLink(
+    eventId: UUID,
+    guestId: UUID
+  ): Promise<InvitationLinkData> {
     return api.get<InvitationLinkData>(
       `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/invitation-link`,
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -645,31 +701,35 @@ export class GuestsService {
     const params: Record<string, string> = {
       box_size: String(options?.box_size || 10),
       border: String(options?.border || 4),
-      theme: options?.theme || 'light',
-      format: options?.format || 'png'
-    }
+      theme: options?.theme || "light",
+      format: options?.format || "png",
+    };
 
     // Get session for authentication
-    const session = await getSession()
-    const headers: Record<string, string> = {}
+    const session = await getSession();
+    const headers: Record<string, string> = {};
 
     if (session?.idToken) {
-      headers['Authorization'] = `Bearer ${session.idToken}`
+      headers["Authorization"] = `Bearer ${session.idToken}`;
     }
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/events/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(params)}`,
+      `${
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+      }/api/v1/events/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(
+        params
+      )}`,
       {
-        method: 'GET',
-        headers
+        method: "GET",
+        headers,
       }
-    )
+    );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch QR code')
+      throw new Error("Failed to fetch QR code");
     }
 
-    return response.blob()
+    return response.blob();
   }
 
   /**
@@ -683,17 +743,17 @@ export class GuestsService {
     const params = {
       box_size: options?.box_size || 10,
       border: options?.border || 4,
-      theme: options?.theme || 'light',
-      format: 'base64'
-    }
+      theme: options?.theme || "light",
+      format: "base64",
+    };
 
     const response = await api.get<{ qr_code: string }>(
       `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/qr-code`,
       params,
       withRetry({ attempts: 2 })
-    )
+    );
 
-    return response.qr_code
+    return response.qr_code;
   }
 
   /**
@@ -703,7 +763,7 @@ export class GuestsService {
     return api.post<Guest, never>(
       `${API_ENDPOINTS.GUESTS.LIST(eventId)}/${guestId}/regenerate-token`,
       undefined as never
-    )
+    );
   }
 
   /**
@@ -714,7 +774,7 @@ export class GuestsService {
       `/api/v1/events/guests/rsvp/${token}/validate`,
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -725,7 +785,7 @@ export class GuestsService {
       `/api/v1/events/guests/rsvp/${token}/event-details`,
       undefined,
       withRetry({ attempts: 2 })
-    )
+    );
   }
 
   /**
@@ -734,23 +794,23 @@ export class GuestsService {
   async copyToClipboard(text: string): Promise<boolean> {
     try {
       if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(text)
-        return true
+        await navigator.clipboard.writeText(text);
+        return true;
       } else {
         // Fallback for non-secure contexts
-        const textArea = document.createElement('textarea')
-        textArea.value = text
-        textArea.style.position = 'fixed'
-        textArea.style.left = '-999999px'
-        document.body.appendChild(textArea)
-        textArea.select()
-        const success = document.execCommand('copy')
-        document.body.removeChild(textArea)
-        return success
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.select();
+        const success = document.execCommand("copy");
+        document.body.removeChild(textArea);
+        return success;
       }
     } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
-      return false
+      console.error("Failed to copy to clipboard:", error);
+      return false;
     }
   }
 
@@ -764,43 +824,42 @@ export class GuestsService {
     options?: QRCodeOptions
   ): Promise<void> {
     try {
-      const blob = await this.getQRCode(eventId, guestId, options)
-      const url = window.URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `rsvp-qr-${guestName.replace(/\s+/g, '-').toLowerCase()}.png`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      window.URL.revokeObjectURL(url)
+      const blob = await this.getQRCode(eventId, guestId, options);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `rsvp-qr-${guestName
+        .replace(/\s+/g, "-")
+        .toLowerCase()}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error('Failed to download QR code:', error)
-      throw error
+      console.error("Failed to download QR code:", error);
+      throw error;
     }
   }
 
   /**
    * Open sharing dialog for invitation
    */
-  openShareDialog(
-    platform: string,
-    sharingUrl: string
-  ): void {
-    const width = 600
-    const height = 400
-    const left = (window.screen.width - width) / 2
-    const top = (window.screen.height - height) / 2
+  openShareDialog(platform: string, sharingUrl: string): void {
+    const width = 600;
+    const height = 400;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
 
     window.open(
       sharingUrl,
-      'share',
+      "share",
       `width=${width},height=${height},left=${left},top=${top}`
-    )
+    );
   }
 }
 
 // Create singleton instance
-export const guestsService = new GuestsService()
+export const guestsService = new GuestsService();
 
 // Export default instance
-export default guestsService
+export default guestsService;
