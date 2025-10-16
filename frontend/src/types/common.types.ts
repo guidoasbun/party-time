@@ -150,6 +150,10 @@ export const API_ENDPOINTS = {
     STATS: (eventId: string) => `/api/v1/events/${eventId}/guests/stats`,
     DIETARY_RESTRICTIONS: (eventId: string) =>
       `/api/v1/events/${eventId}/guests/dietary-restrictions`,
+    // FR-6: The system shall display an RSVP submission page.
+    // 5.1.3: RSVP Management Dashboard
+    RSVP_TIMELINE: (eventId: string) =>
+      `/api/v1/events/${eventId}/guests/rsvp-timeline`,
   },
   // Budget endpoints
   BUDGET: {

@@ -46,10 +46,16 @@ class GuestRSVPUpdate(BaseModel):
 class Guest(GuestBase):
     """Schema for guest response."""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: UUID
     event_id: UUID
     rsvp_status: RsvpStatus
+    #FR-6: The system shall display an RSVP submission page.
+    #5.1.3: RSVP Management Dashboard
+    rsvp_token: Optional[str] = None  # RSVP token for invitation links (auth-protected)
+    token_expires_at: Optional[datetime] = None
+    token_first_accessed_at: Optional[datetime] = None
+    token_last_accessed_at: Optional[datetime] = None
     invitation_sent_at: Optional[datetime] = None
     rsvp_responded_at: Optional[datetime] = None
     created_at: datetime
@@ -164,3 +170,19 @@ class CSVImportResult(BaseModel):
     skipped_count: int
     created_guest_ids: List[str]
     errors: List[str]
+
+
+class RSVPTimelineItem(BaseModel):
+    """Schema for RSVP timeline item."""
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    guest_id: UUID
+    guest_name: str
+    rsvp_status: RsvpStatus
+    changed_at: datetime
+
+    @field_serializer('changed_at')
+    def serialize_datetime(self, dt: datetime, _info) -> str:
+        """Serialize datetime to ISO format string."""
+        return dt.isoformat()

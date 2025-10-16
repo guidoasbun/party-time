@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   Users,
   DollarSign,
@@ -14,8 +15,9 @@ import {
   Settings as SettingsIcon,
   FileText,
 } from "lucide-react";
-import type { Event } from "@/types";
-import { log } from "console";
+import type { Event, Guest, PaginatedResponse } from "@/types";
+import { RSVPDashboard } from "./RSVPDashboard";
+import { guestsService } from "@/lib/api/services";
 
 interface EventTabsProps {
   event: Event;
@@ -199,8 +201,42 @@ export function EventTabs({ event }: EventTabsProps) {
 // Placeholder components (will be replaced with full implementations in future phases)
 
 function EventOverviewTabPlaceholder({ event }: { event: Event }) {
+  // Fetch guests for RSVP Dashboard
+
+  // FR-6: The system shall display an RSVP submission page.
+  // 5.1.3: RSVP Management Dashboard
+
+  const { data: guestsResponse, isLoading: isGuestsLoading } = useQuery<
+    PaginatedResponse<Guest>
+  >({
+    queryKey: ["guests", event.id],
+    queryFn: () => guestsService.getGuests(event.id),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  });
+
+  const guests = guestsResponse?.items || [];
+
   return (
-    <div className="space-y-6">
+    // FR-6: The system shall display an RSVP submission page.
+    // 5.1.3: RSVP Management Dashboard
+
+    <div className="space-y-8">
+      {/* RSVP Dashboard Section */}
+      {!isGuestsLoading && guests.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-foreground mb-4">
+            RSVP Management
+          </h3>
+          <RSVPDashboard
+            eventId={event.id}
+            eventName={event.name}
+            guests={guests}
+            rsvpDeadline={undefined}
+          />
+        </div>
+      )}
+
+      {/* Event Details Section */}
       <div>
         <h3 className="text-lg font-semibold text-foreground mb-4">
           Event Details
