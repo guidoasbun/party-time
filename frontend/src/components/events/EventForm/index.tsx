@@ -8,6 +8,7 @@ import { BasicInfoStep } from './BasicInfoStep'
 import { DateTimeStep } from './DateTimeStep'
 import { LocationStep } from './LocationStep'
 import { SettingsStep } from './SettingsStep'
+import { RSVPSettingsStep } from './RSVPSettingsStep'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { transformFormDataForApi } from '@/lib/utils/form'
 import { useCreateEvent, useUpdateEvent } from '@/hooks/api/useEvents'
@@ -132,6 +133,7 @@ export function EventForm({
           {currentStep === 'dateTime' && <DateTimeStep />}
           {currentStep === 'location' && <LocationStep />}
           {currentStep === 'settings' && <SettingsStep />}
+          {currentStep === 'rsvpSettings' && <RSVPSettingsStep />}
         </>
       )}
     </FormContainer>
@@ -143,4 +145,5 @@ export { BasicInfoStep } from './BasicInfoStep'
 export { DateTimeStep } from './DateTimeStep'
 export { LocationStep } from './LocationStep'
 export { SettingsStep } from './SettingsStep'
+export { RSVPSettingsStep } from './RSVPSettingsStep'
 export { FormContainer } from './FormContainer'

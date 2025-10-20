@@ -66,7 +66,14 @@ class Event(Base):
     # Event constraints
     max_guests = Column(Integer)
     budget_total = Column(DECIMAL(10, 2))
-    
+
+    # RSVP customization settings
+    rsvp_deadline = Column(DateTime(timezone=True))
+    allow_plus_ones = Column(Boolean, nullable=False, default=False)
+    meal_options = Column(Text)  # JSON array stored as text
+    custom_questions = Column(Text)  # JSON array stored as text
+    dietary_restrictions_enabled = Column(Boolean, nullable=False, default=False)
+
     # Ownership and visibility
     planner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     is_public = Column(Boolean, nullable=False, default=False)

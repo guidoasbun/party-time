@@ -467,6 +467,8 @@ function getStepData(
       return formData.guest_settings;
     case "notificationSettings":
       return formData.notification_settings;
+    case "rsvpSettings":
+      return formData.rsvp_settings;
     default:
       return formData;
   }
@@ -503,6 +505,16 @@ function isFieldInCurrentStep(
       "notification_settings.send_invitations",
       "notification_settings.reminder_schedule",
       "notification_settings.auto_reminders",
+    ],
+    // FR-6: The system shall display an RSVP submission page.
+    // 5.1.4: RSVP Customization
+    rsvpSettings: [
+      "rsvp_settings.allow_plus_ones",
+      "rsvp_settings.require_rsvp",
+      "rsvp_settings.rsvp_deadline",
+      "rsvp_settings.dietary_restrictions_enabled",
+      "rsvp_settings.meal_options",
+      "rsvp_settings.custom_questions",
     ],
   };
 
