@@ -5,7 +5,6 @@ from decimal import Decimal
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict, field_serializer, field_validator
 from app.models.event import EventType, EventStatus
-import json
 
 
 
@@ -152,20 +151,6 @@ class Event(EventBase):
     def serialize_uuid(self, value: UUID) -> str:
         """Convert UUID to string for JSON serialization."""
         return str(value)
-
-    # FR-6: The system shall display an RSVP submission page.
-    # 5.1.4: RSVP Customization
-    @field_serializer('meal_options', 'custom_questions')
-    def serialize_json_fields(self, value):
-        """Parse JSON string fields from database."""
-        if value is None:
-            return None
-        if isinstance(value, str):
-            try:
-                return json.loads(value)
-            except (json.JSONDecodeError, ValueError):
-                return None
-        return value
 
 
 class EventWithDetails(Event):

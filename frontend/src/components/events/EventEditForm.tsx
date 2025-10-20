@@ -1,30 +1,32 @@
-'use client'
+"use client";
 
-import * as React from 'react'
-import { EventForm } from './EventForm'
-import { useEvent } from '@/hooks/api/useEvents'
-import { transformApiDataForForm } from '@/lib/utils/form'
-import { EventCreateFormData } from '@/lib/validations/event'
-import { Loader2 } from 'lucide-react'
+import * as React from "react";
+import { EventForm } from "./EventForm";
+import { useEvent } from "@/hooks/api/useEvents";
+import { transformApiDataForForm } from "@/lib/utils/form";
+import { EventCreateFormData } from "@/lib/validations/event";
+import { Loader2 } from "lucide-react";
 
 interface EventEditFormProps {
-  eventId: string
-  onSuccess?: (eventId: string) => void
-  onCancel?: () => void
-  className?: string
+  eventId: string;
+  onSuccess?: (eventId: string) => void;
+  onCancel?: () => void;
+  className?: string;
 }
 
 export function EventEditForm({
   eventId,
   onSuccess,
   onCancel,
-  className
+  className,
 }: EventEditFormProps) {
-  const { data: event, isLoading, error } = useEvent(eventId)
+  const { data: event, isLoading, error } = useEvent(eventId);
 
   // Transform API event data to form format
-  const initialFormData = React.useMemo((): Partial<EventCreateFormData> | undefined => {
-    if (!event) return undefined
+  const initialFormData = React.useMemo(():
+    | Partial<EventCreateFormData>
+    | undefined => {
+    if (!event) return undefined;
 
     return transformApiDataForForm({
       name: event.name,
@@ -40,8 +42,8 @@ export function EventEditForm({
       max_guests: event.max_guests,
       budget_total: event.budget_total,
       is_public: event.is_public,
-    })
-  }, [event])
+    });
+  }, [event]);
 
   // Handle loading state
   if (isLoading) {
@@ -49,10 +51,12 @@ export function EventEditForm({
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="flex flex-col items-center gap-3">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading event details...</p>
+          <p className="text-sm text-muted-foreground">
+            Loading event details...
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Handle error state
@@ -64,22 +68,26 @@ export function EventEditForm({
             Failed to Load Event
           </h3>
           <p className="text-sm text-muted-foreground">
-            {error instanceof Error ? error.message : 'The event could not be found or you do not have permission to edit it.'}
+            {error instanceof Error
+              ? error.message
+              : "The event could not be found or you do not have permission to edit it."}
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <EventForm
-      mode="edit"
-      eventId={eventId}
-      initialData={initialFormData}
-      formId={`edit-${eventId}`}
-      onSuccess={onSuccess}
-      onCancel={onCancel}
-      className={className}
-    />
-  )
+    <>
+      <EventForm
+        mode="edit"
+        eventId={eventId}
+        initialData={initialFormData}
+        formId={`edit-${eventId}`}
+        onSuccess={onSuccess}
+        onCancel={onCancel}
+        className={className}
+      />
+    </>
+  );
 }

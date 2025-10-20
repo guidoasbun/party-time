@@ -5,7 +5,6 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update, delete, and_, or_
 from sqlalchemy.orm import selectinload
-import json
 
 from app.models.event import Event, EventType, EventStatus
 from app.schemas.event import EventCreate, EventUpdate
@@ -13,11 +12,12 @@ from app.schemas.event import EventCreate, EventUpdate
 
 async def create_event(db: AsyncSession, event_data: EventCreate, planner_id: UUID) -> Event:
     """Create a new event."""
-    # Serialize JSON fields
-    #FR-6: The system shall display an RSVP submission page.
-    #5.1.4: RSVP Customization
-    meal_options_json = json.dumps(event_data.meal_options) if event_data.meal_options else None
-    custom_questions_json = json.dumps([q.model_dump() for q in event_data.custom_questions]) if event_data.custom_questions else None
+    # Convert custom questions to dict format for JSONB (if present)
+    # FR-6: The system shall display an RSVP submission page.
+    # 5.1.4: RSVP Customization
+    custom_questions_data = None
+    if event_data.custom_questions:
+        custom_questions_data = [q.model_dump() for q in event_data.custom_questions]
 
     db_event = Event(
         name=event_data.name,
@@ -32,12 +32,12 @@ async def create_event(db: AsyncSession, event_data: EventCreate, planner_id: UU
         max_guests=event_data.max_guests,
         budget_total=event_data.budget_total,
         is_public=event_data.is_public,
-        #FR-6: The system shall display an RSVP submission page.
-        #5.1.4: RSVP Customization
+        # FR-6: The system shall display an RSVP submission page.
+        # 5.1.4: RSVP Customization - JSONB fields handle JSON serialization automatically
         rsvp_deadline=event_data.rsvp_deadline,
         allow_plus_ones=event_data.allow_plus_ones,
-        meal_options=meal_options_json,
-        custom_questions=custom_questions_json,
+        meal_options=event_data.meal_options,  # JSONB handles serialization
+        custom_questions=custom_questions_data,  # JSONB handles serialization
         dietary_restrictions_enabled=event_data.dietary_restrictions_enabled,
         planner_id=planner_id
     )
@@ -166,11 +166,9 @@ async def update_event(db: AsyncSession, event_id: UUID, event_data: EventUpdate
     if not update_data:
         return event
 
-    # Serialize JSON fields if present
-    if 'meal_options' in update_data and update_data['meal_options'] is not None:
-        update_data['meal_options'] = json.dumps(update_data['meal_options'])
+    # Convert custom questions to dict format for JSONB if present
     if 'custom_questions' in update_data and update_data['custom_questions'] is not None:
-        update_data['custom_questions'] = json.dumps([q.model_dump() if hasattr(q, 'model_dump') else q for q in update_data['custom_questions']])
+        update_data['custom_questions'] = [q.model_dump() if hasattr(q, 'model_dump') else q for q in update_data['custom_questions']]
 
     await db.execute(
         update(Event)
