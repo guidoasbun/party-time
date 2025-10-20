@@ -157,14 +157,38 @@ export const locationSchema = z.object({
 
 export const settingsSchema = z.object({
   is_public: z.boolean().default(false),
-  max_guests: optionalPositiveNumberSchema.refine((val) => {
-    if (val === undefined) return true;
-    return val >= 1 && val <= 10000;
-  }, "Guest limit must be between 1 and 10,000"),
-  budget_total: optionalPositiveNumberSchema.refine((val) => {
-    if (val === undefined) return true;
-    return val >= 0 && val <= 10000000;
-  }, "Budget must be between $0 and $10,000,000"),
+  max_guests: z
+    .union([z.number(), z.null(), z.undefined()])
+    .refine(
+      (val) => {
+        // null means user deleted the value - show error
+        if (val === null) return false;
+        // undefined means no value entered yet - valid (no limit)
+        if (val === undefined) return true;
+        // number must be in valid range
+        return val >= 1 && val <= 10000;
+      },
+      {
+        message: "Must have at least 1 guest",
+      }
+    )
+    .transform((val) => (val === null ? undefined : val)),
+  budget_total: z
+    .union([z.number(), z.null(), z.undefined()])
+    .refine(
+      (val) => {
+        // null means user deleted the value - show error
+        if (val === null) return false;
+        // undefined means no value entered yet - valid (no budget set)
+        if (val === undefined) return true;
+        // number must be in valid range
+        return val >= 0 && val <= 10000000;
+      },
+      {
+        message: "Budget must be at least $0",
+      }
+    )
+    .transform((val) => (val === null ? undefined : val)),
   status: eventStatusSchema
     .optional()
     .nullable()
