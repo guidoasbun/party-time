@@ -42,6 +42,12 @@ export function EventEditForm({
       max_guests: event.max_guests,
       budget_total: event.budget_total,
       is_public: event.is_public,
+      // RSVP customization fields
+      allow_plus_ones: event.allow_plus_ones,
+      meal_options: event.meal_options,
+      custom_questions: event.custom_questions,
+      dietary_restrictions_enabled: event.dietary_restrictions_enabled,
+      rsvp_deadline: event.rsvp_deadline,
     });
   }, [event]);
 

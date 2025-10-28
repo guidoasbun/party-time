@@ -157,38 +157,46 @@ export const locationSchema = z.object({
 
 export const settingsSchema = z.object({
   is_public: z.boolean().default(false),
-  max_guests: z
-    .union([z.number(), z.null(), z.undefined()])
-    .refine(
-      (val) => {
-        // null means user deleted the value - show error
-        if (val === null) return false;
-        // undefined means no value entered yet - valid (no limit)
-        if (val === undefined) return true;
-        // number must be in valid range
-        return val >= 1 && val <= 10000;
-      },
-      {
-        message: "Must have at least 1 guest",
-      }
-    )
-    .transform((val) => (val === null ? undefined : val)),
-  budget_total: z
-    .union([z.number(), z.null(), z.undefined()])
-    .refine(
-      (val) => {
-        // null means user deleted the value - show error
-        if (val === null) return false;
-        // undefined means no value entered yet - valid (no budget set)
-        if (val === undefined) return true;
-        // number must be in valid range
-        return val >= 0 && val <= 10000000;
-      },
-      {
-        message: "Budget must be at least $0",
-      }
-    )
-    .transform((val) => (val === null ? undefined : val)),
+  max_guests: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined || val === '') return undefined;
+      if (typeof val === 'string') return Number(val);
+      return val;
+    },
+    z
+      .union([z.number(), z.undefined()])
+      .refine(
+        (val) => {
+          // undefined means no value entered yet - valid (no limit)
+          if (val === undefined) return true;
+          // number must be in valid range
+          return val >= 1 && val <= 10000;
+        },
+        {
+          message: "Must have at least 1 guest",
+        }
+      )
+  ),
+  budget_total: z.preprocess(
+    (val) => {
+      if (val === null || val === undefined || val === '') return undefined;
+      if (typeof val === 'string') return Number(val);
+      return val;
+    },
+    z
+      .union([z.number(), z.undefined()])
+      .refine(
+        (val) => {
+          // undefined means no value entered yet - valid (no budget set)
+          if (val === undefined) return true;
+          // number must be in valid range
+          return val >= 0 && val <= 10000000;
+        },
+        {
+          message: "Budget must be at least $0",
+        }
+      )
+  ),
   status: eventStatusSchema
     .optional()
     .nullable()
@@ -227,7 +235,10 @@ const rsvpCustomQuestionSchema = z
       .min(1, "Question is required")
       .max(500, "Question must be less than 500 characters"),
     type: z.enum(["text", "select", "yes_no"]),
-    options: z.array(z.string()).optional(),
+    options: z.preprocess(
+      (val) => val === null ? undefined : val,
+      z.array(z.string()).optional()
+    ),
     required: z.boolean().default(false),
     order: z.number().int().min(0),
   })
@@ -271,11 +282,15 @@ export const rsvpSettingsSchema = z
     meal_options: z
       .array(z.string().min(1).max(100))
       .max(10, "Maximum 10 meal options allowed")
-      .optional(),
+      .optional()
+      .nullable()
+      .transform(val => val === null ? [] : val),
     custom_questions: z
       .array(rsvpCustomQuestionSchema)
       .max(5, "Maximum 5 custom questions allowed")
-      .optional(),
+      .optional()
+      .nullable()
+      .transform(val => val === null ? [] : val),
   })
   .refine(
     (data) => {
@@ -331,18 +346,6 @@ export const eventCreateSchema = z.object({
   // Settings step
   ...settingsSchema.shape,
 
-  // Additional settings (with defaults)
-  guest_settings: guestSettingsSchema.default({
-    allow_plus_ones: false,
-    require_rsvp: true,
-    rsvp_deadline: undefined,
-    dietary_restrictions_enabled: false,
-  }),
-  notification_settings: notificationSettingsSchema.default({
-    send_invitations: true,
-    reminder_schedule: [],
-    auto_reminders: true,
-  }),
   // FR-6: The system shall display an RSVP submission page.
   // 5.1.4: RSVP Customization
   rsvp_settings: rsvpSettingsSchema.optional().default({
@@ -350,6 +353,8 @@ export const eventCreateSchema = z.object({
     require_rsvp: true,
     rsvp_deadline: undefined,
     dietary_restrictions_enabled: false,
+    meal_options: [],
+    custom_questions: [],
   }),
 });
 
@@ -367,18 +372,6 @@ export const eventEditSchema = z.object({
   // Settings step
   ...settingsSchema.shape,
 
-  // Additional settings (with defaults)
-  guest_settings: guestSettingsSchema.default({
-    allow_plus_ones: false,
-    require_rsvp: true,
-    rsvp_deadline: undefined,
-    dietary_restrictions_enabled: false,
-  }),
-  notification_settings: notificationSettingsSchema.default({
-    send_invitations: true,
-    reminder_schedule: [],
-    auto_reminders: true,
-  }),
   // FR-6: The system shall display an RSVP submission page.
   // 5.1.4: RSVP Customization
   rsvp_settings: rsvpSettingsSchema.optional().default({
@@ -386,6 +379,8 @@ export const eventEditSchema = z.object({
     require_rsvp: true,
     rsvp_deadline: undefined,
     dietary_restrictions_enabled: false,
+    meal_options: [],
+    custom_questions: [],
   }),
 });
 
@@ -400,8 +395,6 @@ export const formStepSchemas = {
   dateTime: dateTimeSchema,
   location: locationSchema,
   settings: settingsSchema,
-  guestSettings: guestSettingsSchema,
-  notificationSettings: notificationSettingsSchema,
   rsvpSettings: rsvpSettingsSchema,
 } as const;
 
@@ -411,8 +404,6 @@ export const formStepSchemasEdit = {
   dateTime: dateTimeSchemaEdit,
   location: locationSchema,
   settings: settingsSchema,
-  guestSettings: guestSettingsSchema,
-  notificationSettings: notificationSettingsSchema,
   rsvpSettings: rsvpSettingsSchema,
 } as const;
 
@@ -477,7 +468,7 @@ export const FORM_STEPS: FormStep[] = [
     title: "RSVP Customization",
     description: "Configure RSVP options and questions",
     schema: rsvpSettingsSchema,
-    optional: true,
+    optional: false, // Make this step mandatory so it's not skipped
   },
 ];
 
@@ -487,17 +478,6 @@ export const defaultEventFormValues: Partial<EventCreateFormData> = {
   is_public: false,
   status: EventStatus.DRAFT,
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  guest_settings: {
-    allow_plus_ones: false,
-    require_rsvp: true,
-    rsvp_deadline: undefined,
-    dietary_restrictions_enabled: false,
-  },
-  notification_settings: {
-    send_invitations: true,
-    reminder_schedule: [],
-    auto_reminders: true,
-  },
   // FR-6: The system shall display an RSVP submission page.
   // 5.1.4: RSVP Customization
   rsvp_settings: {
@@ -505,6 +485,8 @@ export const defaultEventFormValues: Partial<EventCreateFormData> = {
     require_rsvp: true,
     rsvp_deadline: undefined,
     dietary_restrictions_enabled: false,
+    meal_options: [],
+    custom_questions: [],
   },
 };
 
