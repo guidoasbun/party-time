@@ -14,9 +14,10 @@ This module provides endpoints for:
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
 from datetime import datetime, timedelta
 from uuid import UUID
+from dateutil import parser as date_parser
 
 from app.core.dependencies import get_db
 from app.services.email_service import get_email_service
@@ -375,6 +376,44 @@ async def get_ses_quota() -> EmailQuotaResponse:
         )
 
 
+def convert_dates_in_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Recursively convert ISO date strings to datetime objects in a dictionary.
+
+    This helper is needed for mock_data in preview endpoint because Jinja2
+    template filters expect datetime objects, not string dates.
+    """
+    if not isinstance(data, dict):
+        return data
+
+    result = {}
+    for key, value in data.items():
+        # Check if key suggests this is a date field
+        if key in ['start_date', 'end_date', 'rsvp_deadline', 'created_at', 'updated_at']:
+            if isinstance(value, str):
+                try:
+                    # Parse ISO 8601 date string to datetime
+                    result[key] = date_parser.isoparse(value)
+                except (ValueError, TypeError):
+                    # If parsing fails, keep original value
+                    result[key] = value
+            else:
+                result[key] = value
+        elif isinstance(value, dict):
+            # Recursively process nested dictionaries
+            result[key] = convert_dates_in_dict(value)
+        elif isinstance(value, list):
+            # Process list items
+            result[key] = [
+                convert_dates_in_dict(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+        else:
+            result[key] = value
+
+    return result
+
+
 @router.post("/preview", response_model=TemplatePreviewResponse, status_code=status.HTTP_200_OK)
 async def preview_template(
     request: TemplatePreviewRequest,
@@ -439,7 +478,9 @@ async def preview_template(
 
         # If mock data provided, use it (overrides real data)
         if request.mock_data:
-            context.update(request.mock_data)
+            # Convert date strings to datetime objects for template filters
+            converted_mock_data = convert_dates_in_dict(request.mock_data)
+            context.update(converted_mock_data)
 
         # Add common context
         context['frontend_url'] = settings.FRONTEND_URL

@@ -1181,6 +1181,386 @@
 				}
 			],
 			"description": "Test AWS SES management endpoints (verification, quota)"
+		},
+		{
+			"name": "6. Template Preview",
+			"item": [
+				{
+					"name": "Preview Invitation Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('template_name');",
+									"    pm.expect(jsonData).to.have.property('html_content');",
+									"    pm.expect(jsonData).to.have.property('text_content');",
+									"    pm.expect(jsonData).to.have.property('rendered_at');",
+									"});",
+									"",
+									"pm.test(\"Template name is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.template_name).to.eql('invitation');",
+									"});",
+									"",
+									"pm.test(\"HTML content includes personalization\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('John Doe');",
+									"    pm.expect(jsonData.html_content).to.include('Summer Wedding');",
+									"    pm.expect(jsonData.html_content).to.include('RSVP');",
+									"});",
+									"",
+									"pm.test(\"Response time is acceptable\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"invitation\",\n  \"mock_data\": {\n    \"guest_name\": \"John Doe\",\n    \"event\": {\n      \"name\": \"Summer Wedding Celebration\",\n      \"type\": \"wedding\",\n      \"description\": \"Join us for a beautiful summer wedding ceremony and reception\",\n      \"start_date\": \"2024-08-15T16:00:00Z\",\n      \"end_date\": null,\n      \"venue_name\": \"Garden Terrace Venue\",\n      \"venue_address\": \"123 Rose Lane\",\n      \"location\": \"Los Angeles, CA 90210\",\n      \"rsvp_deadline\": \"2024-07-15T00:00:00Z\",\n      \"meal_options\": [\"Grilled Chicken\", \"Pan-Seared Salmon\", \"Vegetarian Pasta\"],\n      \"dietary_restrictions_enabled\": true,\n      \"planner\": {\n        \"full_name\": \"Sarah & Michael\"\n      }\n    },\n    \"guest\": {\n      \"first_name\": \"John\",\n      \"plus_one_allowed\": true\n    },\n    \"rsvp_url\": \"http://localhost:3000/rsvp/ABC123XY\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Preview invitation email template with mock wedding event data"
+					},
+					"response": []
+				},
+				{
+					"name": "Preview Confirmation Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Template name is confirmation\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.template_name).to.eql('confirmation');",
+									"});",
+									"",
+									"pm.test(\"HTML includes RSVP status\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('Attending');",
+									"});",
+									"",
+									"pm.test(\"HTML includes guest details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('Jane Smith');",
+									"    pm.expect(jsonData.html_content).to.include('Vegetarian Pasta');",
+									"    pm.expect(jsonData.html_content).to.include('Robert Smith');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"confirmation\",\n  \"mock_data\": {\n    \"guest_name\": \"Jane Smith\",\n    \"event\": {\n      \"name\": \"Corporate Networking Event\",\n      \"type\": \"networking\",\n      \"start_date\": \"2024-09-20T18:00:00Z\",\n      \"venue_name\": \"Downtown Conference Center\",\n      \"venue_address\": \"456 Main Street\",\n      \"location\": \"San Francisco, CA 94102\",\n      \"planner\": {\n        \"full_name\": \"TechCorp Events Team\"\n      }\n    },\n    \"guest\": {\n      \"first_name\": \"Jane\",\n      \"rsvp_status\": \"ATTENDING\",\n      \"meal_preference\": \"Vegetarian Pasta\",\n      \"dietary_restrictions\": \"Gluten-free\",\n      \"plus_one_name\": \"Robert Smith\",\n      \"notes\": \"Looking forward to networking!\"\n    },\n    \"rsvp_url\": \"http://localhost:3000/rsvp/XYZ789AB\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Preview confirmation email template with RSVP response details"
+					},
+					"response": []
+				},
+				{
+					"name": "Preview Reminder Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Template name is reminder\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.template_name).to.eql('reminder');",
+									"});",
+									"",
+									"pm.test(\"HTML includes reminder messaging\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('RSVP');",
+									"    pm.expect(jsonData.html_content).to.include('Michael Johnson');",
+									"});",
+									"",
+									"pm.test(\"HTML includes event name\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('Annual Gala Dinner');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"reminder\",\n  \"mock_data\": {\n    \"guest_name\": \"Michael Johnson\",\n    \"event\": {\n      \"name\": \"Annual Gala Dinner\",\n      \"type\": \"gala\",\n      \"start_date\": \"2024-10-15T19:00:00Z\",\n      \"venue_name\": \"Grand Hotel Ballroom\",\n      \"venue_address\": \"789 Luxury Ave\",\n      \"location\": \"New York, NY 10001\",\n      \"rsvp_deadline\": \"2024-09-20T00:00:00Z\",\n      \"planner\": {\n        \"full_name\": \"Charity Foundation\"\n      }\n    },\n    \"rsvp_url\": \"http://localhost:3000/rsvp/REMIND42\"\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Preview reminder email template with RSVP deadline"
+					},
+					"response": []
+				},
+				{
+					"name": "Preview Thank You Template",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Template name is thank_you\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.template_name).to.eql('thank_you');",
+									"});",
+									"",
+									"pm.test(\"HTML includes thank you message\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('Thank');",
+									"    pm.expect(jsonData.html_content).to.include('Emily Davis');",
+									"});",
+									"",
+									"pm.test(\"HTML includes event details\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.include('Birthday Celebration');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"thank_you\",\n  \"mock_data\": {\n    \"guest_name\": \"Emily Davis\",\n    \"event\": {\n      \"name\": \"Birthday Celebration\",\n      \"type\": \"birthday\",\n      \"description\": \"A wonderful evening celebrating life and friendship\",\n      \"start_date\": \"2024-06-10T17:00:00Z\",\n      \"venue_name\": \"Rooftop Garden\",\n      \"planner\": {\n        \"full_name\": \"The Anderson Family\"\n      }\n    },\n    \"guest\": {\n      \"first_name\": \"Emily\",\n      \"plus_one_name\": \"David\"\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Preview thank you email template post-event"
+					},
+					"response": []
+				},
+				{
+					"name": "Preview with Real Event/Guest Data",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Check if event_id and guest_id are set",
+									"if (!pm.environment.get(\"event_id\") || !pm.environment.get(\"guest_id\")) {",
+									"    console.log(\"⚠ Skipping: event_id and guest_id not set\");",
+									"    console.log(\"To run this test, set event_id and guest_id environment variables\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Real data rendered correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.html_content).to.not.be.empty;",
+									"    pm.expect(jsonData.template_name).to.eql('invitation');",
+									"});",
+									"",
+									"pm.test(\"HTML contains real event data\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    // Verify HTML is not using placeholder text",
+									"    pm.expect(jsonData.html_content).to.not.include('Mock');",
+									"    pm.expect(jsonData.html_content).to.not.include('Test Event');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"invitation\",\n  \"event_id\": \"{{event_id}}\",\n  \"guest_id\": \"{{guest_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Preview template with real event and guest data from database (requires event_id and guest_id variables)"
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Invalid Template Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('template');",
+									"});",
+									"",
+									"pm.test(\"Error mentions template rendering failure\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail.toLowerCase()).to.match(/template|render/);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"nonexistent_template\",\n  \"mock_data\": {\n    \"guest_name\": \"Test User\",\n    \"event\": {\n      \"name\": \"Test Event\",\n      \"type\": \"other\"\n    }\n  }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Test error handling for non-existent template name"
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Invalid Event ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Error message mentions event\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('Event');",
+									"    pm.expect(jsonData.detail).to.include('not found');",
+									"});",
+									"",
+									"pm.test(\"Error includes the UUID\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include('00000000-0000-0000-0000-000000000000');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"template_name\": \"invitation\",\n  \"event_id\": \"00000000-0000-0000-0000-000000000000\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/preview",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "preview"]
+						},
+						"description": "Test error handling for non-existent event ID"
+					},
+					"response": []
+				}
+			],
+			"description": "Test email template preview endpoint with various templates and data sources"
 		}
 	]
 }
