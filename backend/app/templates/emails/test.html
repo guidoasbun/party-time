@@ -1,0 +1,85 @@
+<!-- 
+    FR-7: The system shall send email invitations
+    5.2.1: Email Service Setup 
+-->
+
+{% extends "base.html" %} {% block title %}Test Email - Party-Time{% endblock %}
+{% block header_title %}Test Email{% endblock %} {% block header_subtitle %}
+<p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9">
+  Email Service Configuration Test
+</p>
+{% endblock %} {% block content %}
+<h2 style="color: #171717; margin-bottom: 16px">Email System is Working!</h2>
+
+<p>Hello{{ ' ' + recipient_name if recipient_name else '' }},</p>
+
+<p>
+  This is a test email from your Party-Time application. If you're reading this,
+  it means your AWS SES email service is configured correctly and working as
+  expected.
+</p>
+
+<div
+  style="
+    background-color: #f3f4f6;
+    border-left: 4px solid #2563eb;
+    padding: 16px;
+    margin: 24px 0;
+  "
+>
+  <p style="margin: 0; font-weight: 500; color: #171717">
+    Email Configuration Details:
+  </p>
+  <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #6b7280">
+    <li>Service: AWS SES</li>
+    <li>Region: {{ ses_region }}</li>
+    <li>From: {{ from_email }}</li>
+    <li>Status: ✅ Operational</li>
+  </ul>
+</div>
+
+<p>The email service is now ready to send:</p>
+
+<ul style="color: #6b7280">
+  <li>RSVP invitations with unique tokens</li>
+  <li>Event confirmation emails</li>
+  <li>Reminder notifications</li>
+  <li>Thank you messages</li>
+  <li>Bulk email campaigns</li>
+</ul>
+
+<hr class="divider" />
+
+<p class="text-muted">
+  <strong>Next Steps:</strong><br />
+  Proceed to Phase 5.2.2 to create beautiful email templates for RSVP
+  invitations, confirmations, and reminders.
+</p>
+
+<a
+  href="https://party-time.app"
+  class="btn"
+  style="
+    background-color: #2563eb;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: inline-block;
+    margin-top: 16px;
+  "
+>
+  Visit Party-Time Dashboard
+</a>
+
+<p style="margin-top: 32px; color: #6b7280; font-size: 14px">
+  This test email was sent at {{ timestamp }}.
+</p>
+{% endblock %} {% block footer %}
+<p style="margin: 0; color: #6b7280">
+  &copy; {{ current_year }} Party-Time. All rights reserved.
+</p>
+<p style="margin: 8px 0 0 0; color: #6b7280; font-size: 12px">
+  This is an automated test email from the Party-Time email service.
+</p>
+{% endblock %}

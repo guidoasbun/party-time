@@ -1,0 +1,1186 @@
+{
+	"info": {
+		"_postman_id": "email-api-tests-2025",
+		"name": "Email API Tests - Party-Time",
+		"description": "Comprehensive testing suite for Party-Time Email Service API\n\nThis collection tests all email endpoints including:\n- Send operations (test emails, template emails)\n- Email logs retrieval with filtering\n- Email statistics and analytics\n- AWS SES management (verification, quota)\n\nTwo testing modes:\n1. **Local Mode** (Email-API-Local environment): Tests logs/stats without AWS SES\n2. **AWS Mode** (Email-API-AWS environment): Full testing with AWS SES credentials\n\nPrerequisites:\n- Backend server running on localhost:8000\n- PostgreSQL database running\n- Redis running (for Celery)\n- (Optional) AWS SES configured for send operations",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Setup & Health",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Basic health check to verify backend is running"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Email Service Config",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"console.log(\"Email Service Configuration:\");",
+									"console.log(\"SES Enabled: \" + pm.environment.get(\"ses_enabled\"));",
+									"console.log(\"Test Email: \" + pm.environment.get(\"test_email\"));",
+									"",
+									"if (pm.environment.get(\"ses_enabled\") === \"true\") {",
+									"    console.log(\"✓ AWS SES is configured - All tests will run\");",
+									"} else {",
+									"    console.log(\"⚠ AWS SES not configured - Send operations will be skipped\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/",
+							"host": ["{{base_url}}"],
+							"path": [""]
+						},
+						"description": "Check API root and determine SES availability"
+					},
+					"response": []
+				}
+			],
+			"description": "Initial setup and health check requests"
+		},
+		{
+			"name": "2. Send Operations",
+			"item": [
+				{
+					"name": "Send Test Email (HTML + Text)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has success field\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('success');",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Response has message_id\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('message_id');",
+									"    pm.environment.set(\"message_id\", jsonData.message_id);",
+									"});",
+									"",
+									"pm.test(\"Response has recipient\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('recipient');",
+									"    pm.expect(jsonData.recipient).to.eql(pm.environment.get(\"test_email\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Test Email - HTML and Text\",\n    \"html_body\": \"<h1>Test Email</h1><p>This is a test email with both HTML and text body.</p>\",\n    \"text_body\": \"Test Email\\n\\nThis is a test email with both HTML and text body.\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Send a test email with both HTML and plain text body"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Test Email (HTML Only)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email sent successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Test Email - HTML Only\",\n    \"html_body\": \"<h1>HTML Email</h1><p>This email contains <strong>only</strong> HTML content.</p><ul><li>Item 1</li><li>Item 2</li></ul>\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Send a test email with only HTML body"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Test Email (Text Only)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email sent successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Test Email - Text Only\",\n    \"text_body\": \"This is a plain text email.\\n\\nNo HTML formatting included.\\n\\nBest regards,\\nParty-Time Team\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Send a test email with only plain text body"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Template Email",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Template email sent successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"    pm.expect(jsonData.message).to.include(\"Template email sent\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Template Test - Party-Time Email Service\",\n    \"template_name\": \"test.html\",\n    \"context\": {\n        \"recipient_name\": \"John Doe\",\n        \"ses_region\": \"us-east-1\",\n        \"from_email\": \"{{ses_from_email}}\"\n    }\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/send-template",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "send-template"]
+						},
+						"description": "Send email using the test.html template"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Email with CC and BCC",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Email with CC/BCC sent successfully\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success).to.be.true;",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Test Email with CC and BCC\",\n    \"html_body\": \"<p>This email is sent with CC and BCC recipients.</p>\",\n    \"cc\": [\"cc@example.com\"],\n    \"bcc\": [\"bcc@example.com\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Send email with CC and BCC recipients (Note: In SES sandbox, all recipients must be verified)"
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Invalid Email Address",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500 (service error)\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Error message contains 'Invalid'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"Invalid\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"invalid-email\",\n    \"subject\": \"This should fail\",\n    \"text_body\": \"This email should not be sent\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Test error handling for invalid email address"
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Missing Email Body",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500 (service error)\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Error message about missing body\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.detail).to.include(\"html_body or text_body\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"to_email\": \"{{test_email}}\",\n    \"subject\": \"Email with no body\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "test"]
+						},
+						"description": "Test error handling when both html_body and text_body are missing"
+					},
+					"response": []
+				}
+			],
+			"description": "Test email sending operations (requires AWS SES configuration)"
+		},
+		{
+			"name": "3. Email Logs",
+			"item": [
+				{
+					"name": "Get All Recent Logs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Each log has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        var log = jsonData[0];",
+									"        pm.expect(log).to.have.property('id');",
+									"        pm.expect(log).to.have.property('recipient_email');",
+									"        pm.expect(log).to.have.property('subject');",
+									"        pm.expect(log).to.have.property('email_type');",
+									"        pm.expect(log).to.have.property('status');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"]
+						},
+						"description": "Get recent email logs (default: last 7 days, limit 50)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Filter by Type (test)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"All logs are of type 'test'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        jsonData.forEach(function(log) {",
+									"            pm.expect(log.email_type).to.eql('test');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?email_type=test",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "email_type",
+									"value": "test"
+								}
+							]
+						},
+						"description": "Filter email logs by type 'test'"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Filter by Status (sent)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"All logs have status 'sent'\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        jsonData.forEach(function(log) {",
+									"            pm.expect(log.status).to.eql('sent');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?email_status=sent",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "email_status",
+									"value": "sent"
+								}
+							]
+						},
+						"description": "Filter email logs by status 'sent'"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Last 7 Days",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7"
+								}
+							]
+						},
+						"description": "Get email logs from last 7 days"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Last 30 Days",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?days=30",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "days",
+									"value": "30"
+								}
+							]
+						},
+						"description": "Get email logs from last 30 days"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Pagination Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Returns maximum 10 results\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.length).to.be.at.most(10);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?limit=10&offset=0",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10"
+								},
+								{
+									"key": "offset",
+									"value": "0"
+								}
+							]
+						},
+						"description": "Test pagination with limit and offset"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Logs - Combined Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Filters applied correctly\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        jsonData.forEach(function(log) {",
+									"            pm.expect(log.email_type).to.eql('test');",
+									"            pm.expect(log.status).to.eql('sent');",
+									"        });",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/logs?email_type=test&email_status=sent&days=30&limit=20",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "logs"],
+							"query": [
+								{
+									"key": "email_type",
+									"value": "test"
+								},
+								{
+									"key": "email_status",
+									"value": "sent"
+								},
+								{
+									"key": "days",
+									"value": "30"
+								},
+								{
+									"key": "limit",
+									"value": "20"
+								}
+							]
+						},
+						"description": "Test multiple filters combined"
+					},
+					"response": []
+				}
+			],
+			"description": "Test email log retrieval with various filters and pagination"
+		},
+		{
+			"name": "4. Email Statistics",
+			"item": [
+				{
+					"name": "Get Overall Statistics (30 days)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has required fields\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_sent');",
+									"    pm.expect(jsonData).to.have.property('total_failed');",
+									"    pm.expect(jsonData).to.have.property('total_delivered');",
+									"    pm.expect(jsonData).to.have.property('success_rate');",
+									"    pm.expect(jsonData).to.have.property('by_type');",
+									"});",
+									"",
+									"pm.test(\"Success rate is a valid percentage\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.success_rate).to.be.at.least(0);",
+									"    pm.expect(jsonData.success_rate).to.be.at.most(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/stats",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "stats"]
+						},
+						"description": "Get email statistics for last 30 days (default)"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Statistics (7 days)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_sent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/stats?days=7",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "stats"],
+							"query": [
+								{
+									"key": "days",
+									"value": "7"
+								}
+							]
+						},
+						"description": "Get email statistics for last 7 days"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Statistics (90 days)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_sent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/stats?days=90",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "stats"],
+							"query": [
+								{
+									"key": "days",
+									"value": "90"
+								}
+							]
+						},
+						"description": "Get email statistics for last 90 days"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event-Specific Statistics",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Replace with actual event_id if testing event-specific stats",
+									"// pm.environment.set(\"event_id\", \"your-event-uuid\");"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_sent');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/stats?event_id={{event_id}}&days=30",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "stats"],
+							"query": [
+								{
+									"key": "event_id",
+									"value": "{{event_id}}",
+									"description": "Optional: Filter by event ID"
+								},
+								{
+									"key": "days",
+									"value": "30"
+								}
+							]
+						},
+						"description": "Get email statistics for a specific event (requires event_id variable)"
+					},
+					"response": []
+				}
+			],
+			"description": "Test email statistics and analytics endpoints"
+		},
+		{
+			"name": "5. SES Management",
+			"item": [
+				{
+					"name": "Verify Email Address",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verification request sent\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('message');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"{{ses_from_email}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/verify",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "verify"]
+						},
+						"description": "Request email verification with AWS SES (sends verification email)"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Verification Status",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Verification status returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('email');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('verified');",
+									"});",
+									"",
+									"pm.test(\"Status message indicates verification state\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.message).to.include(\"Verification status:\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/verify/{{ses_from_email}}",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "verify", "{{ses_from_email}}"]
+						},
+						"description": "Check verification status of an email address"
+					},
+					"response": []
+				},
+				{
+					"name": "Get SES Send Quota",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Quota information returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('max_24_hour_send');",
+									"    pm.expect(jsonData).to.have.property('max_send_rate');",
+									"    pm.expect(jsonData).to.have.property('sent_last_24_hours');",
+									"    pm.expect(jsonData).to.have.property('remaining_24_hour');",
+									"    pm.expect(jsonData).to.have.property('usage_percentage');",
+									"});",
+									"",
+									"pm.test(\"Usage percentage is valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.usage_percentage).to.be.at.least(0);",
+									"    pm.expect(jsonData.usage_percentage).to.be.at.most(100);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/quota",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "quota"]
+						},
+						"description": "Get AWS SES sending quota and current usage"
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Verify Invalid Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 500\", function () {",
+									"    pm.response.to.have.status(500);",
+									"});",
+									"",
+									"pm.test(\"Error message returned\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"not-an-email\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/verify",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "verify"]
+						},
+						"description": "Test error handling for invalid email format"
+					},
+					"response": []
+				},
+				{
+					"name": "Check Status - Unverified Email",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"if (pm.environment.get(\"ses_enabled\") !== \"true\") {",
+									"    console.log(\"⚠ Skipping: AWS SES not configured\");",
+									"    postman.setNextRequest(null);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// This might return 404 or 200 with NotFound status depending on SES response",
+									"pm.test(\"Status code is 200 or 404\", function () {",
+									"    pm.expect([200, 404]).to.include(pm.response.code);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/{{api_version}}/emails/verify/unverified@example.com",
+							"host": ["{{base_url}}"],
+							"path": ["api", "{{api_version}}", "emails", "verify", "unverified@example.com"]
+						},
+						"description": "Check status of an unverified email address"
+					},
+					"response": []
+				}
+			],
+			"description": "Test AWS SES management endpoints (verification, quota)"
+		}
+	]
+}
