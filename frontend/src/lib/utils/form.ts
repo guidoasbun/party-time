@@ -172,8 +172,12 @@ export const transformFormDataForApi = (formData: EventCreateFormData): EventCre
   if (formData.venue_name) transformed.venue_name = formData.venue_name
   if (formData.venue_address) transformed.venue_address = formData.venue_address
   if (formData.venue_google_place_id) transformed.venue_google_place_id = formData.venue_google_place_id
-  if (formData.max_guests !== undefined && formData.max_guests !== null) transformed.max_guests = formData.max_guests
-  if (formData.budget_total !== undefined && formData.budget_total !== null) transformed.budget_total = formData.budget_total
+  if (formData.max_guests !== undefined && formData.max_guests !== null) {
+    transformed.max_guests = typeof formData.max_guests === 'string' ? Number(formData.max_guests) : formData.max_guests
+  }
+  if (formData.budget_total !== undefined && formData.budget_total !== null) {
+    transformed.budget_total = typeof formData.budget_total === 'string' ? Number(formData.budget_total) : formData.budget_total
+  }
   if (formData.status) transformed.status = formData.status
 
   // Handle end date if provided
@@ -184,6 +188,25 @@ export const transformFormDataForApi = (formData: EventCreateFormData): EventCre
     }
     const endDateTime = `${formData.end_date}T${endTime}`
     transformed.end_date = new Date(endDateTime).toISOString()
+  }
+
+  // Transform RSVP settings from frontend nested structure to backend flat structure
+  // Frontend has: rsvp_settings: { ... } nested object
+  // Backend expects: rsvp_deadline, allow_plus_ones, meal_options, custom_questions, dietary_restrictions_enabled as direct fields
+  if (formData.rsvp_settings) {
+    if (formData.rsvp_settings.rsvp_deadline) {
+      // Convert date to ISO string with time set to end of day
+      const rsvpDeadline = new Date(`${formData.rsvp_settings.rsvp_deadline}T23:59:59`)
+      transformed.rsvp_deadline = rsvpDeadline.toISOString()
+    }
+    transformed.allow_plus_ones = formData.rsvp_settings.allow_plus_ones ?? false
+    transformed.dietary_restrictions_enabled = formData.rsvp_settings.dietary_restrictions_enabled ?? false
+    if (formData.rsvp_settings.meal_options) {
+      transformed.meal_options = formData.rsvp_settings.meal_options
+    }
+    if (formData.rsvp_settings.custom_questions) {
+      transformed.custom_questions = formData.rsvp_settings.custom_questions
+    }
   }
 
   // Note: start_time, end_time, all_day, timezone, guest_settings, and notification_settings
@@ -219,15 +242,39 @@ export const transformApiDataForForm = (apiData: Record<string, unknown>): Parti
     transformed.end_time = `${hours}:${minutes}`
   }
 
-  if (transformed.guest_settings &&
-      typeof transformed.guest_settings === 'object' &&
-      transformed.guest_settings !== null &&
-      'rsvp_deadline' in transformed.guest_settings) {
-    const guestSettings = transformed.guest_settings as Record<string, unknown>
-    if (typeof guestSettings.rsvp_deadline === 'string') {
-      guestSettings.rsvp_deadline = new Date(guestSettings.rsvp_deadline).toISOString().split('T')[0]
+  // Transform RSVP fields from backend flat structure to frontend nested structure
+  // Backend returns: rsvp_deadline, allow_plus_ones, meal_options, custom_questions, dietary_restrictions_enabled as direct fields
+  // Frontend expects: rsvp_settings: { ... } nested object
+  const apiFields = transformed as Record<string, unknown>
+  if (!apiFields.rsvp_settings) {
+    apiFields.rsvp_settings = {
+      allow_plus_ones: apiFields.allow_plus_ones ?? false,
+      require_rsvp: true, // Default value, backend doesn't have this field
+      rsvp_deadline: apiFields.rsvp_deadline as string | undefined,
+      dietary_restrictions_enabled: apiFields.dietary_restrictions_enabled ?? false,
+      meal_options: (apiFields.meal_options || []) as string[],
+      custom_questions: (apiFields.custom_questions || []) as Array<{
+        id: string
+        question: string
+        type: 'text' | 'select' | 'yes_no'
+        options?: string[]
+        required: boolean
+      }>
     }
   }
+
+  // Format RSVP deadline if present
+  const rsvpSettings = apiFields.rsvp_settings as Record<string, unknown>
+  if (rsvpSettings && typeof rsvpSettings.rsvp_deadline === 'string') {
+    rsvpSettings.rsvp_deadline = new Date(rsvpSettings.rsvp_deadline).toISOString().split('T')[0]
+  }
+
+  // Clean up the flat fields since they're now in rsvp_settings
+  delete apiFields.allow_plus_ones
+  delete apiFields.rsvp_deadline
+  delete apiFields.dietary_restrictions_enabled
+  delete apiFields.meal_options
+  delete apiFields.custom_questions
 
   return transformed
 }
@@ -255,10 +302,8 @@ export const getRequiredFieldsForStep = (stepName: FormStepName): (keyof EventCr
       return [] // Location is optional
     case 'settings':
       return ['is_public']
-    case 'guestSettings':
-      return [] // All guest settings are optional
-    case 'notificationSettings':
-      return [] // All notification settings are optional
+    case 'rsvpSettings':
+      return [] // All RSVP settings are optional
     default:
       return []
   }

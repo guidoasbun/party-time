@@ -12,6 +12,13 @@ from app.schemas.event import EventCreate, EventUpdate
 
 async def create_event(db: AsyncSession, event_data: EventCreate, planner_id: UUID) -> Event:
     """Create a new event."""
+    # Convert custom questions to dict format for JSONB (if present)
+    # FR-6: The system shall display an RSVP submission page.
+    # 5.1.4: RSVP Customization
+    custom_questions_data = None
+    if event_data.custom_questions:
+        custom_questions_data = [q.model_dump() for q in event_data.custom_questions]
+
     db_event = Event(
         name=event_data.name,
         description=event_data.description,
@@ -25,6 +32,13 @@ async def create_event(db: AsyncSession, event_data: EventCreate, planner_id: UU
         max_guests=event_data.max_guests,
         budget_total=event_data.budget_total,
         is_public=event_data.is_public,
+        # FR-6: The system shall display an RSVP submission page.
+        # 5.1.4: RSVP Customization - JSONB fields handle JSON serialization automatically
+        rsvp_deadline=event_data.rsvp_deadline,
+        allow_plus_ones=event_data.allow_plus_ones,
+        meal_options=event_data.meal_options,  # JSONB handles serialization
+        custom_questions=custom_questions_data,  # JSONB handles serialization
+        dietary_restrictions_enabled=event_data.dietary_restrictions_enabled,
         planner_id=planner_id
     )
     db.add(db_event)
@@ -147,11 +161,15 @@ async def update_event(db: AsyncSession, event_id: UUID, event_data: EventUpdate
     event = await get_event_by_id(db, event_id)
     if not event or event.planner_id != planner_id:
         return None
-    
+
     update_data = event_data.model_dump(exclude_unset=True)
     if not update_data:
         return event
-    
+
+    # Convert custom questions to dict format for JSONB if present
+    if 'custom_questions' in update_data and update_data['custom_questions'] is not None:
+        update_data['custom_questions'] = [q.model_dump() if hasattr(q, 'model_dump') else q for q in update_data['custom_questions']]
+
     await db.execute(
         update(Event)
         .where(Event.id == event_id)

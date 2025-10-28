@@ -214,8 +214,6 @@ async def get_guests_with_dietary_restrictions(
 """ FR-6: The system shall display an RSVP submission page.
     5.1.3: RSVP Management Dashboard
 """
-
-
 @router.get("/{event_id}/guests/rsvp-timeline", response_model=List[RSVPTimelineItem])
 async def get_rsvp_timeline(
     event_id: UUID,

@@ -1,6 +1,6 @@
 """Event model for party planning."""
 from sqlalchemy import Column, String, Boolean, Enum as SQLEnum, DateTime, Integer, Text, ForeignKey, DECIMAL, select
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -66,7 +66,14 @@ class Event(Base):
     # Event constraints
     max_guests = Column(Integer)
     budget_total = Column(DECIMAL(10, 2))
-    
+
+    # RSVP customization settings
+    rsvp_deadline = Column(DateTime(timezone=True))
+    allow_plus_ones = Column(Boolean, nullable=False, default=False)
+    meal_options = Column(JSONB)  # JSON array
+    custom_questions = Column(JSONB)  # JSON array
+    dietary_restrictions_enabled = Column(Boolean, nullable=False, default=False)
+
     # Ownership and visibility
     planner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     is_public = Column(Boolean, nullable=False, default=False)

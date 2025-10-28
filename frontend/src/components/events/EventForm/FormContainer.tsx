@@ -11,6 +11,7 @@ import {
   FORM_STEPS,
   FormStepName,
   validateFormStep,
+  validateCompleteForm,
   eventCreateSchema,
   eventEditSchema,
   formatZodErrors,
@@ -92,8 +93,31 @@ export function FormContainer({
     clearErrors,
   } = form;
 
+  const formState = form.formState;
+
   // Warn about unsaved changes if enabled
   useUnsavedChangesWarning(enableUnsavedWarning && isDirty);
+
+  // Clear stale localStorage data on mount if necessary
+  React.useEffect(() => {
+    // Only clear if we're in create mode and there's no initialData
+    // This prevents clearing valid saved drafts but clears corrupted data
+    if (mode === 'create' && !initialData) {
+      const savedFormData = FormPersistence.loadFormData(formId);
+      if (savedFormData) {
+        try {
+          // Try to validate the saved data against current schema
+          validationSchema.parse(savedFormData);
+        } catch (error) {
+          // If validation fails, clear the stale data
+          console.log('[FormContainer] Clearing stale localStorage data due to schema mismatch');
+          FormPersistence.clearFormData(formId);
+          // Reload the page to reset the form
+          window.location.reload();
+        }
+      }
+    }
+  }, [formId, mode, initialData, validationSchema]);
 
   // Step management
   const [currentStepIndex, setCurrentStepIndex] = React.useState(() => {
@@ -111,6 +135,12 @@ export function FormContainer({
   const currentStep = FORM_STEPS[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === FORM_STEPS.length - 1;
+
+  // Use a ref to track current step for stable callbacks
+  const currentStepRef = React.useRef(currentStep);
+  React.useEffect(() => {
+    currentStepRef.current = currentStep;
+  }, [currentStep]);
 
   // Watch form data for auto-save
   const formData = watch();
@@ -181,10 +211,13 @@ export function FormContainer({
     async function checkStepValidity() {
       try {
         const stepData = getStepData(formData, currentStep.name);
+        console.log(`[FormContainer] Validating step: ${currentStep.name}`, stepData);
         const result = validateFormStep(currentStep.name, stepData, mode);
+        console.log(`[FormContainer] Validation result for ${currentStep.name}:`, result.success);
 
         if (!result.success) {
           const errors = formatZodErrors(result.error);
+          console.log(`[FormContainer] Validation errors for ${currentStep.name}:`, errors);
           setFormErrors(errors);
           setIsStepValid(false);
           return;
@@ -214,16 +247,40 @@ export function FormContainer({
   // Submit handler
   const onFormSubmit = React.useCallback(
     async (data: EventCreateFormData) => {
+      console.log("[FormContainer] onFormSubmit called! Current step:", currentStepRef.current.name);
+      console.log("[FormContainer] Form data:", data);
+
+      // Prevent submission if not on RSVP step (the last step)
+      if (currentStepRef.current.name !== 'rsvpSettings') {
+        console.error("[FormContainer] Form submitted but not on RSVP step! Current step:", currentStepRef.current.name);
+        return;
+      }
+
       try {
+        // Validate the complete form before submission
+        const validationResult = validateCompleteForm(data, mode);
+        console.log("[FormContainer] Complete form validation result:", validationResult.success);
+
+        if (!validationResult.success) {
+          console.error("[FormContainer] Form validation failed:", validationResult.error.issues);
+          const errors = formatZodErrors(validationResult.error);
+          setFormErrors(errors);
+          // Show first error to user
+          const firstError = validationResult.error.issues[0];
+          alert(`Validation error: ${firstError.message} at ${firstError.path.join('.')}`);
+          return;
+        }
+
         await onSubmit(data);
         // Clear saved data after successful submission
         FormPersistence.clearFormData(formId);
       } catch (error) {
         console.error("Form submission error:", error);
+        alert(`Failed to submit form: ${error instanceof Error ? error.message : 'Unknown error'}`);
         throw error;
       }
     },
-    [onSubmit, formId]
+    [onSubmit, formId, mode] // Removed unstable dependencies
   );
 
   // Cancel handler
@@ -274,7 +331,9 @@ export function FormContainer({
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold">Create Event</h2>
+            <h2 className="text-2xl font-bold">
+              {mode === "edit" ? "Edit Event" : "Create Event"}
+            </h2>
             <div className="text-sm text-muted-foreground">
               Step {currentStepIndex + 1} of {FORM_STEPS.length}
             </div>
@@ -340,7 +399,25 @@ export function FormContainer({
         </div>
 
         {/* Form content */}
-        <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
+        <form
+          onSubmit={(e) => {
+            console.log("[FormContainer] Form onSubmit triggered");
+            console.log("[FormContainer] Form errors:", errors);
+            console.log("[FormContainer] isValid:", formState.isValid);
+            console.log("[FormContainer] isSubmitting:", formState.isSubmitting);
+            console.log("[FormContainer] Full form values:", form.getValues());
+
+            // Try direct submission with error logging
+            handleSubmit(
+              onFormSubmit,
+              (errors) => {
+                console.error("[FormContainer] Form validation failed!", errors);
+                console.error("[FormContainer] Validation error details:", JSON.stringify(errors, null, 2));
+              }
+            )(e);
+          }}
+          className="space-y-6"
+        >
           {children({
             currentStep: currentStep.name,
             currentStepIndex,
@@ -408,12 +485,18 @@ export function FormContainer({
 
               {isLastStep ? (
                 <Button type="submit" disabled={!isStepValid || isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Event"}
+                  {isSubmitting
+                    ? (mode === "edit" ? "Updating..." : "Creating...")
+                    : (mode === "edit" ? "Update Event" : "Create Event")}
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  onClick={goToNextStep}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent any form submission
+                    e.stopPropagation(); // Stop event propagation
+                    goToNextStep();
+                  }}
                   disabled={!isStepValid || isSubmitting}
                 >
                   Next
@@ -459,14 +542,19 @@ function getStepData(
     case "settings":
       return {
         is_public: formData.is_public,
-        max_guests: formData.max_guests,
-        budget_total: formData.budget_total,
-        status: formData.status,
+        max_guests: formData.max_guests ? Number(formData.max_guests) : undefined,
+        budget_total: formData.budget_total ? Number(formData.budget_total) : undefined,
+        status: formData.status || "DRAFT", // Provide default status if missing
       };
-    case "guestSettings":
-      return formData.guest_settings;
-    case "notificationSettings":
-      return formData.notification_settings;
+    case "rsvpSettings":
+      return formData.rsvp_settings || {
+        allow_plus_ones: false,
+        require_rsvp: true,
+        dietary_restrictions_enabled: false,
+        rsvp_deadline: undefined,
+        meal_options: [],
+        custom_questions: []
+      };
     default:
       return formData;
   }
@@ -493,16 +581,15 @@ function isFieldInCurrentStep(
       "venue_google_place_id",
     ],
     settings: ["is_public", "max_guests", "budget_total", "status"],
-    guestSettings: [
-      "guest_settings.allow_plus_ones",
-      "guest_settings.require_rsvp",
-      "guest_settings.rsvp_deadline",
-      "guest_settings.dietary_restrictions_enabled",
-    ],
-    notificationSettings: [
-      "notification_settings.send_invitations",
-      "notification_settings.reminder_schedule",
-      "notification_settings.auto_reminders",
+    // FR-6: The system shall display an RSVP submission page.
+    // 5.1.4: RSVP Customization
+    rsvpSettings: [
+      "rsvp_settings.allow_plus_ones",
+      "rsvp_settings.require_rsvp",
+      "rsvp_settings.rsvp_deadline",
+      "rsvp_settings.dietary_restrictions_enabled",
+      "rsvp_settings.meal_options",
+      "rsvp_settings.custom_questions",
     ],
   };
 
