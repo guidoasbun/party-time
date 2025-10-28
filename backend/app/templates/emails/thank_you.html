@@ -1,0 +1,260 @@
+<!-- FR-7: The system shall send email invitations
+5.2.2: Email Templates -->
+
+{% extends "base.html" %} {% block title %}Thank You - {{ event.name }}{%
+endblock %} {% block header_title %} {{ app_name }} {% endblock %} {% block
+header_subtitle %}
+<p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9">Thank You!</p>
+{% endblock %} {% block content %}
+<!-- Greeting -->
+<h2 style="color: #2563eb; margin-bottom: 8px">Thank You, {{ guest_name }}!</h2>
+
+<p
+  style="
+    font-size: 18px;
+    color: #171717;
+    margin-bottom: 24px;
+    text-align: center;
+  "
+>
+  We hope you had a wonderful time at our {{ event.type|event_type_display }}!
+</p>
+
+<!-- Event Recap Card -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 24px 0;
+  "
+>
+  <tr>
+    <td style="padding: 24px; text-align: center">
+      <!-- Event Name -->
+      <h3 style="margin: 0 0 8px 0; color: #171717; font-size: 22px">
+        {{ event.name }}
+      </h3>
+
+      <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 14px">
+        {{ event.type|event_type_display }}
+      </p>
+
+      <!-- Event Date -->
+      <p style="margin: 0; color: #374151; font-size: 16px">
+        <strong>Date:</strong> {{ event.start_date|format_date('full') }}
+      </p>
+
+      {% if event.venue_name %}
+      <p style="margin: 8px 0 0 0; color: #374151; font-size: 16px">
+        <strong>Venue:</strong> {{ event.venue_name }}
+      </p>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<!-- Thank You Message -->
+<div
+  style="
+    background: linear-gradient(135deg, #dbeafe 0%, #fef3c7 100%);
+    border-radius: 8px;
+    padding: 32px;
+    text-align: center;
+    margin: 24px 0;
+  "
+>
+  <p
+    style="
+      margin: 0 0 16px 0;
+      color: #1e3a8a;
+      font-size: 20px;
+      font-weight: 600;
+    "
+  >
+    Your presence made our celebration truly special!
+  </p>
+  <p style="margin: 0; color: #1e40af; font-size: 16px">
+    Thank you for being part of this memorable day.
+  </p>
+</div>
+
+<!-- Gratitude Points -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="margin: 24px 0"
+>
+  <tr>
+    <td
+      style="
+        padding: 24px;
+        background-color: #ffffff;
+        border-left: 4px solid #10b981;
+        border-radius: 4px;
+      "
+    >
+      <h3 style="margin: 0 0 16px 0; color: #047857; font-size: 18px">
+        We're grateful for:
+      </h3>
+      <ul
+        style="margin: 0; padding-left: 20px; color: #374151; line-height: 1.8"
+      >
+        <li>Taking the time to celebrate with us</li>
+        <li>Making the event more memorable with your presence</li>
+        <li>Being part of our special day</li>
+        {% if guest.plus_one_name %}
+        <li>
+          Bringing {{ guest.plus_one_name }} along to share in the celebration
+        </li>
+        {% endif %}
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<!-- Memorable Moments Section -->
+<hr class="divider" />
+
+<h3
+  style="
+    color: #171717;
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 16px;
+  "
+>
+  Memorable Moments
+</h3>
+
+<p style="color: #374151; text-align: center; margin-bottom: 24px">
+  We hope you enjoyed the {{ event.type|event_type_display }} as much as we did!
+  From the heartfelt moments to the fun celebrations, we're so glad you could be
+  there to share it with us.
+</p>
+
+{% if event.description %}
+<p
+  style="
+    color: #6b7280;
+    font-style: italic;
+    text-align: center;
+    margin: 24px 0;
+    padding: 16px;
+    background-color: #f9fafb;
+    border-radius: 4px;
+  "
+>
+  "{{ event.description|truncate_text(150) }}"
+</p>
+{% endif %}
+
+<!-- Photo Gallery CTA (Future Feature) -->
+<!-- Uncomment when photo gallery is implemented
+<div style="text-align: center; margin: 32px 0;">
+  <a href="{{ frontend_url }}/events/{{ event.id }}/photos" style="display: inline-block; padding: 12px 24px; background-color: #8b5cf6; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500;">
+    📸 View Event Photos
+  </a>
+</div>
+-->
+
+<!-- Stay Connected -->
+<hr class="divider" />
+
+<h3 style="color: #171717; font-size: 18px; margin-bottom: 12px">
+  Stay Connected
+</h3>
+
+<p style="color: #374151">
+  We'd love to stay in touch! If you have any photos or memories from the event
+  you'd like to share, please feel free to send them our way.
+</p>
+
+<!-- Feedback Request (Optional) -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="
+    background-color: #eff6ff;
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    margin: 24px 0;
+  "
+>
+  <tr>
+    <td style="padding: 20px; text-align: center">
+      <p
+        style="
+          margin: 0 0 12px 0;
+          color: #1e40af;
+          font-weight: 600;
+          font-size: 16px;
+        "
+      >
+        We'd love your feedback!
+      </p>
+      <p style="margin: 0 0 16px 0; color: #1e3a8a; font-size: 14px">
+        Help us make future events even better by sharing your thoughts.
+      </p>
+      <!-- Feedback link can be added when feature is implemented -->
+      <p style="margin: 0; color: #3b82f6; font-size: 14px">
+        Feel free to reply to this email with any comments or suggestions.
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Future Events Teaser (Optional) -->
+<p
+  style="
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 16px;
+    margin: 24px 0;
+    border-radius: 4px;
+    color: #92400e;
+  "
+>
+  <strong>Stay tuned!</strong> We'll keep you updated about future events and
+  celebrations. We hope to celebrate with you again soon!
+</p>
+
+<!-- Closing Message -->
+<p
+  style="
+    color: #171717;
+    margin-top: 32px;
+    font-size: 18px;
+    text-align: center;
+    font-weight: 600;
+  "
+>
+  Once again, thank you from the bottom of our hearts!
+</p>
+
+<p style="color: #171717; text-align: center; margin-top: 32px">
+  With gratitude,<br />
+  <strong
+    >{{ event.planner.full_name if event.planner and event.planner.full_name
+    else 'The Event Organizer' }}</strong
+  >
+</p>
+{% endblock %} {% block footer %}
+<p style="margin: 0; font-size: 12px; color: #6b7280">
+  This thank you message was sent by {{ app_name }}.
+</p>
+<p style="margin: 8px 0 0 0; font-size: 12px">
+  &copy; {{ current_year }} {{ app_name }}. All rights reserved.
+</p>
+{% endblock %}

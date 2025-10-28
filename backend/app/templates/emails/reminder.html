@@ -1,0 +1,300 @@
+<!-- FR-7: The system shall send email invitations
+5.2.2: Email Templates -->
+
+{% extends "base.html" %} {% block title %}RSVP Reminder - {{ event.name }}{%
+endblock %} {% block header_title %} {{ app_name }} {% endblock %} {% block
+header_subtitle %}
+<p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9">
+  Friendly Reminder
+</p>
+{% endblock %} {% block content %}
+<!-- Greeting -->
+<h2 style="color: #2563eb; margin-bottom: 8px">Hello {{ guest_name }}!</h2>
+
+<p style="font-size: 18px; color: #171717; margin-bottom: 24px">
+  We noticed you haven't responded to our invitation yet. We'd love to know if
+  you can join us!
+</p>
+
+<!-- Countdown Cards -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+>
+  <tr>
+    {% set days_to_event = event.start_date|days_until %} {% set
+    days_to_deadline = event.rsvp_deadline|days_until if event.rsvp_deadline
+    else None %}
+
+    <!-- Days Until Event -->
+    <td width="48%" style="vertical-align: top">
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="
+          background-color: #dbeafe;
+          border: 2px solid #2563eb;
+          border-radius: 8px;
+          text-align: center;
+        "
+      >
+        <tr>
+          <td style="padding: 20px">
+            <div
+              style="
+                font-size: 36px;
+                font-weight: 700;
+                color: #1e40af;
+                margin-bottom: 8px;
+              "
+            >
+              {{ days_to_event }}
+            </div>
+            <div style="font-size: 14px; color: #1e3a8a; font-weight: 500">
+              {{ 'Day' if days_to_event == 1 else 'Days' }}<br />Until Event
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+
+    <td width="4%"></td>
+
+    <!-- Days Until Deadline -->
+    {% if event.rsvp_deadline and days_to_deadline is not none and
+    days_to_deadline >= 0 %}
+    <td width="48%" style="vertical-align: top">
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="background-color: {% if days_to_deadline <= 3 %}#fee2e2{% elif days_to_deadline <= 7 %}#fef3c7{% else %}#f3f4f6{% endif %}; border: 2px solid {% if days_to_deadline <= 3 %}#dc2626{% elif days_to_deadline <= 7 %}#f59e0b{% else %}#6b7280{% endif %}; border-radius: 8px; text-align: center;"
+      >
+        <tr>
+          <td style="padding: 20px">
+            <div
+              style="font-size: 36px; font-weight: 700; color: {% if days_to_deadline <= 3 %}#991b1b{% elif days_to_deadline <= 7 %}#92400e{% else %}#374151{% endif %}; margin-bottom: 8px;"
+            >
+              {{ days_to_deadline }}
+            </div>
+            <div
+              style="font-size: 14px; color: {% if days_to_deadline <= 3 %}#7f1d1d{% elif days_to_deadline <= 7 %}#78350f{% else %}#1f2937{% endif %}; font-weight: 500;"
+            >
+              {{ 'Day' if days_to_deadline == 1 else 'Days' }}<br />to RSVP
+            </div>
+          </td>
+        </tr>
+      </table>
+    </td>
+    {% endif %}
+  </tr>
+</table>
+
+<!-- Urgency Message -->
+{% if event.rsvp_deadline and days_to_deadline is not none %} {% if
+days_to_deadline <= 1 %}
+<p
+  style="
+    background-color: #fee2e2;
+    border-left: 4px solid #dc2626;
+    padding: 16px;
+    margin: 24px 0;
+    border-radius: 4px;
+    color: #991b1b;
+    font-weight: 600;
+    font-size: 16px;
+  "
+>
+  URGENT: The RSVP deadline is {% if days_to_deadline == 0 %}today{% else
+  %}tomorrow{% endif %}! Please respond as soon as possible.
+</p>
+{% elif days_to_deadline <= 3 %}
+<p
+  style="
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 16px;
+    margin: 24px 0;
+    border-radius: 4px;
+    color: #92400e;
+    font-weight: 600;
+  "
+>
+  The RSVP deadline is coming up soon ({{
+  event.rsvp_deadline|format_date('medium') }}). Please respond at your earliest
+  convenience!
+</p>
+{% endif %} {% endif %}
+
+<!-- Event Quick Summary -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 24px 0;
+  "
+>
+  <tr>
+    <td style="padding: 24px">
+      <!-- Event Name -->
+      <h3 style="margin: 0 0 16px 0; color: #171717; font-size: 20px">
+        {{ event.name }}
+      </h3>
+
+      <p style="margin: 0 0 16px 0; color: #6b7280; font-size: 14px">
+        {{ event.type|event_type_display }}
+      </p>
+
+      <hr class="divider" />
+
+      <!-- Date & Time -->
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="margin-bottom: 12px"
+      >
+        <tr>
+          <td style="vertical-align: top">
+            <strong style="color: #171717">When:</strong><br />
+            <span style="color: #374151; font-size: 15px">
+              {{ event.start_date|format_datetime('full') }}
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Location -->
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+      >
+        <tr>
+          <td style="vertical-align: top">
+            <strong style="color: #171717">Where:</strong><br />
+            <span style="color: #374151; font-size: 15px">
+              {{ format_address(event.venue_name, event.venue_address,
+              event.location)|safe }}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- RSVP Button -->
+<div style="text-align: center; margin: 32px 0">
+  <a
+    href="{{ rsvp_url }}"
+    class="btn"
+    style="font-size: 18px; padding: 16px 40px; background-color: #10b981"
+  >
+    RSVP Now
+  </a>
+  <p style="font-size: 14px; color: #6b7280; margin: 16px 0 0 0">
+    It only takes a minute!
+  </p>
+</div>
+
+<!-- Why RSVP Message -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="
+    background-color: #eff6ff;
+    border-left: 4px solid #3b82f6;
+    border-radius: 4px;
+    margin: 24px 0;
+  "
+>
+  <tr>
+    <td style="padding: 16px">
+      <p
+        style="
+          margin: 0 0 12px 0;
+          color: #1e40af;
+          font-weight: 600;
+          font-size: 15px;
+        "
+      >
+        Why is your RSVP important?
+      </p>
+      <ul
+        style="margin: 0; padding-left: 20px; color: #1e3a8a; font-size: 14px"
+      >
+        <li style="margin-bottom: 6px">
+          Helps us plan for the right number of guests
+        </li>
+        <li style="margin-bottom: 6px">
+          Ensures we have enough food and seating
+        </li>
+        <li style="margin-bottom: 6px">
+          Lets us make necessary arrangements for you
+        </li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+<!-- Questions Section -->
+<hr class="divider" />
+
+<h3 style="color: #171717; font-size: 18px; margin-bottom: 12px">
+  Have Questions?
+</h3>
+
+<p style="color: #374151">
+  If you're unsure about attending or have any questions about the event, please
+  don't hesitate to reach out. We're here to help!
+</p>
+
+<p style="color: #374151">
+  You can also tentatively respond with "Maybe" if you're not sure yet, and
+  update your RSVP later.
+</p>
+
+<!-- Closing Message -->
+<p style="color: #171717; margin-top: 32px; font-size: 16px">
+  We really hope you can join us!
+</p>
+
+<p style="color: #171717">
+  Best regards,<br />
+  <strong
+    >{{ event.planner.full_name if event.planner and event.planner.full_name
+    else 'The Event Organizer' }}</strong
+  >
+</p>
+{% endblock %} {% block footer %}
+<p style="margin: 0; font-size: 12px; color: #6b7280">
+  This reminder was sent by {{ app_name }} on behalf of {{
+  event.planner.full_name if event.planner and event.planner.full_name else
+  'your event host' }}.
+</p>
+<p style="margin: 8px 0 0 0; font-size: 12px">
+  &copy; {{ current_year }} {{ app_name }}. All rights reserved.
+</p>
+{% endblock %}

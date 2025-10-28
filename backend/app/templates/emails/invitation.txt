@@ -1,0 +1,71 @@
+{{ app_name }} - You're Invited!
+===============================================================================
+
+Hello {{ guest_name }}!
+
+You're cordially invited to our {{ event.type|event_type_display }}:
+
+{{ event.name }}
+{{ "=" * event.name|length }}
+
+{% if event.description %}
+{{ event.description|truncate_text(300) }}
+
+{% endif %}
+EVENT DETAILS
+-------------
+
+When:
+   {{ event.start_date|format_datetime('full') }}
+   {% if event.end_date and event.end_date != event.start_date %}
+   to {{ event.end_date|format_datetime('full') }}
+   {% endif %}
+
+Where:
+   {% if event.venue_name %}{{ event.venue_name }}{% endif %}
+   {% if event.venue_address %}{{ event.venue_address }}{% endif %}
+   {% if event.location %}{{ event.location }}{% endif %}
+
+{% if event.rsvp_deadline %}
+RSVP By:
+   {{ event.rsvp_deadline|format_date('full') }}
+   {% set days_left = event.rsvp_deadline|days_until %}
+   {% if days_left >= 0 and days_left <= 7 %}
+   ({{ event.rsvp_deadline|days_until_text('deadline') }})
+   {% endif %}
+
+{% endif %}
+IMPORTANT INFORMATION
+---------------------
+
+{% if guest.plus_one_allowed %}
+✓ Plus-One Allowed: You're welcome to bring a guest!
+  Please include their details when you RSVP.
+
+{% endif %}
+{% if event.meal_options and event.meal_options|length > 0 %}
+✓ Meal Selection Required: Please select your meal preference when you RSVP.
+  Options available: {% for option in event.meal_options[:3] %}{{ option }}{% if not loop.last %}, {% endif %}{% endfor %}{% if event.meal_options|length > 3 %} and more{% endif %}
+
+{% endif %}
+{% if event.dietary_restrictions_enabled %}
+✓ Have dietary restrictions or allergies? You can let us know when you RSVP.
+
+{% endif %}
+RSVP NOW
+--------
+
+Please confirm your attendance by visiting:
+{{ rsvp_url }}
+
+We can't wait to celebrate with you!
+
+If you have any questions, please feel free to reach out to us.
+
+Warm regards,
+{{ event.planner.full_name if event.planner and event.planner.full_name else 'The Event Organizer' }}
+
+===============================================================================
+This invitation was sent by {{ app_name }} on behalf of {{ event.planner.full_name if event.planner and event.planner.full_name else 'your event host' }}.
+
+© {{ current_year }} {{ app_name }}. All rights reserved.

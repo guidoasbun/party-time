@@ -24,6 +24,22 @@ from pathlib import Path
 
 from app.core.config import get_settings
 
+# FR-7: The system shall send email invitations
+# 5.2.2: Email Templates
+from app.utils.template_helpers import (
+    format_date,
+    format_time,
+    format_datetime,
+    days_until,
+    days_until_text,
+    event_type_display,
+    truncate_text,
+    format_address,
+    rsvp_status_display,
+    rsvp_status_color,
+    get_current_year,
+)
+
 settings = get_settings()
 logger = logging.getLogger(__name__)
 
@@ -52,6 +68,24 @@ class EmailService:
             loader=FileSystemLoader(str(template_dir)),
             autoescape=select_autoescape(['html', 'xml'])
         )
+
+        # Register custom filters for templates
+        # FR-7: The system shall send email invitations
+        # 5.2.2: Email Templates
+
+        self.jinja_env.filters['format_date'] = format_date
+        self.jinja_env.filters['format_time'] = format_time
+        self.jinja_env.filters['format_datetime'] = format_datetime
+        self.jinja_env.filters['days_until'] = days_until
+        self.jinja_env.filters['days_until_text'] = days_until_text
+        self.jinja_env.filters['event_type_display'] = event_type_display
+        self.jinja_env.filters['truncate_text'] = truncate_text
+        self.jinja_env.filters['rsvp_status_display'] = rsvp_status_display
+        self.jinja_env.filters['rsvp_status_color'] = rsvp_status_color
+
+        # Register global functions for templates
+        self.jinja_env.globals['format_address'] = format_address
+        self.jinja_env.globals['current_year'] = get_current_year
 
         logger.info(f"EmailService initialized with SES region: {self.region}")
 
@@ -89,6 +123,53 @@ class EmailService:
         except Exception as e:
             logger.error(f"Error rendering template {template_name}: {str(e)}")
             raise
+
+        # FR-7: The system shall send email invitations
+        # 5.2.2: Email Templates
+    def build_template_context(
+        self,
+        event: Optional[Any] = None,
+        guest: Optional[Any] = None,
+        extra_context: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Build common template context from event and guest data.
+
+        Args:
+            event: Event model instance (optional)
+            guest: Guest model instance (optional)
+            extra_context: Additional context variables (optional)
+
+        Returns:
+            Dictionary with template context including URLs and common data
+        """
+        context: Dict[str, Any] = {}
+
+        # Add event data if provided
+        if event:
+            context['event'] = event
+            # Add computed event fields
+            context['event_type_display'] = event_type_display(event.type if hasattr(event, 'type') else None)
+
+        # Add guest data if provided
+        if guest:
+            context['guest'] = guest
+            context['guest_name'] = guest.first_name if hasattr(guest, 'first_name') else "Guest"
+
+            # Generate RSVP URL if guest has token
+            if hasattr(guest, 'rsvp_token') and guest.rsvp_token:
+                context['rsvp_url'] = f"{settings.FRONTEND_URL}/rsvp/{guest.rsvp_token}"
+
+        # Add common URLs and settings
+        context['frontend_url'] = settings.FRONTEND_URL
+        context['app_name'] = settings.PROJECT_NAME
+        context['current_year'] = get_current_year()
+
+        # Merge in any extra context
+        if extra_context:
+            context.update(extra_context)
+
+        return context
 
     async def send_email(
         self,

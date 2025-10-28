@@ -1,0 +1,77 @@
+{{ app_name }} - Thank You!
+===============================================================================
+
+Thank You, {{ guest_name }}!
+
+We hope you had a wonderful time at our {{ event.type|event_type_display }}!
+
+EVENT RECAP
+-----------
+
+{{ event.name }}
+{{ event.type|event_type_display }}
+
+Date: {{ event.start_date|format_date('full') }}
+{% if event.venue_name %}
+Venue: {{ event.venue_name }}
+{% endif %}
+
+YOUR PRESENCE MADE OUR CELEBRATION TRULY SPECIAL!
+
+Thank you for being part of this memorable day.
+
+
+WE'RE GRATEFUL FOR:
+-------------------
+
+✓ Taking the time to celebrate with us
+✓ Making the event more memorable with your presence
+✓ Being part of our special day
+{% if guest.plus_one_name %}
+✓ Bringing {{ guest.plus_one_name }} along to share in the celebration
+{% endif %}
+
+
+MEMORABLE MOMENTS
+-----------------
+
+We hope you enjoyed the {{ event.type|event_type_display }} as much as we did!
+From the heartfelt moments to the fun celebrations, we're so glad you could
+be there to share it with us.
+
+{% if event.description %}
+"{{ event.description|truncate_text(200) }}"
+{% endif %}
+
+
+STAY CONNECTED
+--------------
+
+We'd love to stay in touch! If you have any photos or memories from the event
+you'd like to share, please feel free to send them our way.
+
+
+FEEDBACK
+--------
+
+We'd love your feedback! Help us make future events even better by sharing
+your thoughts. Feel free to reply to this email with any comments or
+suggestions.
+
+
+FUTURE EVENTS
+-------------
+
+Stay tuned! We'll keep you updated about future events and celebrations.
+We hope to celebrate with you again soon!
+
+
+Once again, thank you from the bottom of our hearts!
+
+With gratitude,
+{{ event.planner.full_name if event.planner and event.planner.full_name else 'The Event Organizer' }}
+
+===============================================================================
+This thank you message was sent by {{ app_name }}.
+
+© {{ current_year }} {{ app_name }}. All rights reserved.

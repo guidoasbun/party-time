@@ -1,0 +1,88 @@
+{{ app_name }} - RSVP Confirmation
+===============================================================================
+
+Thank You, {{ guest_name }}!
+
+Your RSVP Status: {{ guest.rsvp_status|rsvp_status_display|upper }}
+
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+We're thrilled you can make it!
+{% elif guest.rsvp_status == 'NOT_ATTENDING' or guest.rsvp_status == 'not_attending' %}
+We're sorry you can't join us this time. You'll be missed!
+{% elif guest.rsvp_status == 'MAYBE' or guest.rsvp_status == 'maybe' %}
+Thank you for letting us know. We hope you can make it!
+{% endif %}
+
+EVENT DETAILS
+-------------
+
+{{ event.name }}
+{{ event.type|event_type_display }}
+
+When:
+   {{ event.start_date|format_datetime('medium') }}
+
+Where:
+   {% if event.venue_name %}{{ event.venue_name }}{% endif %}
+   {% if event.venue_address %}{{ event.venue_address }}{% endif %}
+   {% if event.location %}{{ event.location }}{% endif %}
+
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+YOUR RESPONSE DETAILS
+---------------------
+
+{% if guest.meal_preference %}
+✓ Meal Selection: {{ guest.meal_preference }}
+{% endif %}
+{% if guest.dietary_restrictions %}
+✓ Dietary Restrictions: {{ guest.dietary_restrictions }}
+{% endif %}
+{% if guest.plus_one_name %}
+✓ Plus-One Guest: {{ guest.plus_one_name }}
+{% endif %}
+{% if guest.notes %}
+✓ Additional Notes:
+  {{ guest.notes }}
+{% endif %}
+
+{% endif %}
+MANAGE YOUR RSVP
+----------------
+
+Update your RSVP at any time:
+{{ rsvp_url }}
+
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+Add to Calendar:
+{{ rsvp_url }}?action=calendar
+
+WHAT'S NEXT?
+------------
+
+- Save the date on your calendar
+- Keep an eye out for updates about the event
+{% if event.venue_address %}
+- Plan your route to the venue
+{% endif %}
+- If you need to update your RSVP, use the link above
+
+IMPORTANT: You can update your RSVP at any time by visiting the link above.
+
+{% endif %}
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+We're looking forward to seeing you at {{ event.name }}!
+{% elif guest.rsvp_status == 'MAYBE' or guest.rsvp_status == 'maybe' %}
+We hope you'll be able to join us. Please update your RSVP when you know for sure!
+{% else %}
+Thank you for letting us know. We hope to see you at a future event!
+{% endif %}
+
+If you have any questions or concerns, please don't hesitate to reach out.
+
+Best regards,
+{{ event.planner.full_name if event.planner and event.planner.full_name else 'The Event Organizer' }}
+
+===============================================================================
+This confirmation was sent by {{ app_name }}.
+
+© {{ current_year }} {{ app_name }}. All rights reserved.

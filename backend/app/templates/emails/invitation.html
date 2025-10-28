@@ -1,0 +1,195 @@
+<!-- FR-7: The system shall send email invitations
+5.2.2: Email Templates -->
+
+{% extends "base.html" %} {% block title %}You're Invited - {{ event.name }}{%
+endblock %} {% block header_title %} {{ app_name }} {% endblock %} {% block
+header_subtitle %}
+<p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9">You're Invited!</p>
+{% endblock %} {% block content %}
+<!-- Greeting -->
+<h2 style="color: #2563eb; margin-bottom: 8px">Hello {{ guest_name }}!</h2>
+
+<p style="font-size: 18px; color: #171717; margin-bottom: 24px">
+  You're cordially invited to our {{ event.type|event_type_display }}:
+</p>
+
+<!-- Event Details Card -->
+<table
+  role="presentation"
+  width="100%"
+  cellspacing="0"
+  cellpadding="0"
+  border="0"
+  style="
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin: 24px 0;
+  "
+>
+  <tr>
+    <td style="padding: 24px">
+      <!-- Event Name -->
+      <h1 style="margin: 0 0 16px 0; color: #171717; font-size: 24px">
+        {{ event.name }}
+      </h1>
+
+      <!-- Event Description -->
+      {% if event.description %}
+      <p style="margin: 0 0 20px 0; color: #374151; line-height: 1.6">
+        {{ event.description|truncate_text(200) }}
+      </p>
+      {% endif %}
+
+      <hr class="divider" />
+
+      <!-- Date & Time -->
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="margin-bottom: 12px"
+      >
+        <tr>
+          <td style="vertical-align: top">
+            <strong style="color: #171717">When:</strong><br />
+            <span style="color: #374151">
+              {{ event.start_date|format_datetime('full') }} {% if
+              event.end_date and event.end_date != event.start_date %}
+              <br />to {{ event.end_date|format_datetime('full') }} {% endif %}
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Location -->
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+        style="margin-bottom: 12px"
+      >
+        <tr>
+          <td style="vertical-align: top">
+            <strong style="color: #171717">Where:</strong><br />
+            <span style="color: #374151">
+              {{ format_address(event.venue_name, event.venue_address,
+              event.location)|safe }}
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- RSVP Deadline -->
+      {% if event.rsvp_deadline %}
+      <table
+        role="presentation"
+        width="100%"
+        cellspacing="0"
+        cellpadding="0"
+        border="0"
+      >
+        <tr>
+          <td style="vertical-align: top">
+            <strong style="color: #171717">RSVP By:</strong><br />
+            <span style="color: #dc2626; font-weight: 500">
+              {{ event.rsvp_deadline|format_date('full') }} {% set days_left =
+              event.rsvp_deadline|days_until %} {% if days_left >= 0 and
+              days_left <= 7 %} ({{
+              event.rsvp_deadline|days_until_text('deadline') }}) {% endif %}
+            </span>
+          </td>
+        </tr>
+      </table>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+
+<!-- Additional Information -->
+{% if guest.plus_one_allowed %}
+<p
+  style="
+    background-color: #dbeafe;
+    border-left: 4px solid #2563eb;
+    padding: 12px 16px;
+    margin: 20px 0;
+    border-radius: 4px;
+  "
+>
+  <strong>Plus-One Allowed:</strong> You're welcome to bring a guest!<br />
+  <span style="font-size: 14px; color: #1e40af"
+    >Please include their details when you RSVP.</span
+  >
+</p>
+{% endif %} {% if event.meal_options and event.meal_options|length > 0 %}
+<p
+  style="
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 12px 16px;
+    margin: 20px 0;
+    border-radius: 4px;
+  "
+>
+  <strong>Meal Selection Required:</strong> Please select your meal preference
+  when you RSVP.<br />
+  <span style="font-size: 14px; color: #92400e">
+    Options available: {% for option in event.meal_options[:3] %} {{ option }}{%
+    if not loop.last %}, {% endif %} {% endfor %} {% if
+    event.meal_options|length > 3 %} and more{% endif %}
+  </span>
+</p>
+{% endif %} {% if event.dietary_restrictions_enabled %}
+<p style="font-size: 14px; color: #6b7280; margin: 16px 0">
+  Have dietary restrictions or allergies? You can let us know when you RSVP.
+</p>
+{% endif %}
+
+<!-- RSVP Button -->
+<div style="text-align: center; margin: 32px 0">
+  <a
+    href="{{ rsvp_url }}"
+    class="btn"
+    style="font-size: 16px; padding: 14px 32px"
+  >
+    RSVP Now
+  </a>
+  <p style="font-size: 14px; color: #6b7280; margin: 12px 0 0 0">
+    Or copy this link: <br />
+    <a href="{{ rsvp_url }}" style="color: #2563eb; word-break: break-all"
+      >{{ rsvp_url }}</a
+    >
+  </p>
+</div>
+
+<!-- Closing Message -->
+<p style="color: #374151; margin-top: 32px">
+  We can't wait to celebrate with you!
+</p>
+
+<p style="color: #374151">
+  If you have any questions, please feel free to reach out to us.
+</p>
+
+<p style="color: #171717; margin-top: 24px">
+  Warm regards,<br />
+  <strong
+    >{{ event.planner.full_name if event.planner and event.planner.full_name
+    else 'The Event Organizer' }}</strong
+  >
+</p>
+{% endblock %} {% block footer %}
+<p style="margin: 0; font-size: 12px; color: #6b7280">
+  This invitation was sent by {{ app_name }} on behalf of {{
+  event.planner.full_name if event.planner and event.planner.full_name else
+  'your event host' }}.
+</p>
+<p style="margin: 8px 0 0 0; font-size: 12px">
+  &copy; {{ current_year }} {{ app_name }}. All rights reserved.
+</p>
+{% endblock %}
