@@ -21,6 +21,8 @@ from uuid import UUID
 from app.core.dependencies import get_db
 from app.services.email_service import get_email_service
 from app.models.email_log import EmailLog, EmailStatus, EmailType
+from app.models.event import Event
+from app.models.guest import Guest
 from app.schemas.email import (
     EmailSendRequest,
     TemplatEmailSendRequest,
@@ -30,6 +32,8 @@ from app.schemas.email import (
     EmailVerificationRequest,
     EmailVerificationResponse,
     EmailQuotaResponse,
+    TemplatePreviewRequest,
+    TemplatePreviewResponse,
 )
 from app.core.config import get_settings
 
@@ -368,4 +372,109 @@ async def get_ses_quota() -> EmailQuotaResponse:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get SES quota: {str(e)}"
+        )
+
+
+@router.post("/preview", response_model=TemplatePreviewResponse, status_code=status.HTTP_200_OK)
+async def preview_template(
+    request: TemplatePreviewRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TemplatePreviewResponse:
+    """
+    Preview an email template with real or mock data.
+
+    This endpoint renders a template and returns the HTML (and optionally text) content
+    for browser preview without actually sending the email.
+
+    Args:
+        request: Template preview request with template name and data
+        db: Database session
+
+    Returns:
+        TemplatePreviewResponse with rendered HTML and text content
+    """
+    try:
+        email_service = get_email_service()
+
+        # Determine template file names
+        html_template = f"{request.template_name}.html"
+        txt_template = f"{request.template_name}.txt"
+
+        # Build context from event/guest data or mock data
+        context = {}
+
+        # If event_id provided, fetch event data
+        if request.event_id:
+            result = await db.execute(select(Event).where(Event.id == request.event_id))
+            event = result.scalar_one_or_none()
+
+            if not event:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Event with ID {request.event_id} not found"
+                )
+
+            context['event'] = event
+            context['event_type_display'] = email_service.jinja_env.filters['event_type_display'](
+                event.type if hasattr(event, 'type') else None
+            )
+
+        # If guest_id provided, fetch guest data
+        if request.guest_id:
+            result = await db.execute(select(Guest).where(Guest.id == request.guest_id))
+            guest = result.scalar_one_or_none()
+
+            if not guest:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Guest with ID {request.guest_id} not found"
+                )
+
+            context['guest'] = guest
+            context['guest_name'] = guest.first_name if hasattr(guest, 'first_name') else "Guest"
+
+            # Generate RSVP URL if guest has token
+            if hasattr(guest, 'rsvp_token') and guest.rsvp_token:
+                context['rsvp_url'] = f"{settings.FRONTEND_URL}/rsvp/{guest.rsvp_token}"
+
+        # If mock data provided, use it (overrides real data)
+        if request.mock_data:
+            context.update(request.mock_data)
+
+        # Add common context
+        context['frontend_url'] = settings.FRONTEND_URL
+        context['app_name'] = settings.PROJECT_NAME
+        context['current_year'] = datetime.utcnow().year
+
+        # Render HTML template
+        try:
+            html_content = email_service.render_template(html_template, context)
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to render HTML template '{html_template}': {str(e)}"
+            )
+
+        # Try to render text template (optional)
+        text_content = None
+        try:
+            text_content = email_service.render_template(txt_template, context)
+        except Exception:
+            # Text template is optional, so don't fail if it doesn't exist
+            pass
+
+        return TemplatePreviewResponse(
+            template_name=request.template_name,
+            html_content=html_content,
+            text_content=text_content,
+            rendered_at=datetime.utcnow()
+        )
+
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to preview template: {str(e)}"
         )

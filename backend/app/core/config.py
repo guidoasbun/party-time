@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     EMAIL_MAX_RETRIES: int = 3
     EMAIL_RETRY_DELAY: int = 300  # 5 minutes in seconds
 
+    # Frontend URL (for email links and redirects)
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # JWT Configuration
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"

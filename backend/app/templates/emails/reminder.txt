@@ -1,0 +1,77 @@
+{{ app_name }} - RSVP Reminder
+===============================================================================
+
+Hello {{ guest_name }}!
+
+We noticed you haven't responded to our invitation yet. We'd love to know if
+you can join us!
+
+{% set days_to_event = event.start_date|days_until %}
+{% set days_to_deadline = event.rsvp_deadline|days_until if event.rsvp_deadline else None %}
+
+COUNTDOWN
+---------
+
+{{ days_to_event }} {{ 'Day' if days_to_event == 1 else 'Days' }} Until Event
+
+{% if event.rsvp_deadline and days_to_deadline is not none and days_to_deadline >= 0 %}
+{{ days_to_deadline }} {{ 'Day' if days_to_deadline == 1 else 'Days' }} to RSVP Deadline
+
+{% if days_to_deadline <= 1 %}
+URGENT: The RSVP deadline is {% if days_to_deadline == 0 %}today{% else %}tomorrow{% endif %}!
+Please respond as soon as possible.
+{% elif days_to_deadline <= 3 %}
+REMINDER: The RSVP deadline is coming up soon ({{ event.rsvp_deadline|format_date('medium') }}).
+Please respond at your earliest convenience!
+{% endif %}
+{% endif %}
+
+EVENT SUMMARY
+-------------
+
+{{ event.name }}
+{{ event.type|event_type_display }}
+
+When:
+   {{ event.start_date|format_datetime('full') }}
+
+Where:
+   {% if event.venue_name %}{{ event.venue_name }}{% endif %}
+   {% if event.venue_address %}{{ event.venue_address }}{% endif %}
+   {% if event.location %}{{ event.location }}{% endif %}
+
+
+RSVP NOW - It only takes a minute!
+-----------------------------------
+
+Please respond by visiting:
+{{ rsvp_url }}
+
+
+WHY IS YOUR RSVP IMPORTANT?
+----------------------------
+
+✓ Helps us plan for the right number of guests
+✓ Ensures we have enough food and seating
+✓ Lets us make necessary arrangements for you
+
+
+HAVE QUESTIONS?
+---------------
+
+If you're unsure about attending or have any questions about the event,
+please don't hesitate to reach out. We're here to help!
+
+You can also tentatively respond with "Maybe" if you're not sure yet,
+and update your RSVP later.
+
+
+We really hope you can join us!
+
+Best regards,
+{{ event.planner.full_name if event.planner and event.planner.full_name else 'The Event Organizer' }}
+
+===============================================================================
+This reminder was sent by {{ app_name }} on behalf of {{ event.planner.full_name if event.planner and event.planner.full_name else 'your event host' }}.
+
+© {{ current_year }} {{ app_name }}. All rights reserved.

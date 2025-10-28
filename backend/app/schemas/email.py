@@ -125,3 +125,19 @@ class EmailQuotaResponse(BaseModel):
     sent_last_24_hours: float
     remaining_24_hour: float
     usage_percentage: float
+
+
+class TemplatePreviewRequest(BaseModel):
+    """Schema for template preview request"""
+    template_name: str = Field(..., min_length=1, description="Template name (e.g., 'invitation', 'confirmation')")
+    event_id: Optional[UUID] = Field(None, description="Event ID to use for preview (optional)")
+    guest_id: Optional[UUID] = Field(None, description="Guest ID to use for preview (optional)")
+    mock_data: Optional[dict] = Field(None, description="Mock data to use if event_id/guest_id not provided")
+
+
+class TemplatePreviewResponse(BaseModel):
+    """Schema for template preview response"""
+    template_name: str
+    html_content: str
+    text_content: Optional[str] = None
+    rendered_at: datetime = Field(default_factory=datetime.utcnow)

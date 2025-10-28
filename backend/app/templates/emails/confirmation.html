@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}RSVP Confirmed - {{ event.name }}{% endblock %}
+
+{% block header_title %}
+  {{ app_name }}
+{% endblock %}
+
+{% block header_subtitle %}
+  <p style="margin: 8px 0 0 0; font-size: 16px; opacity: 0.9;">RSVP Confirmation</p>
+{% endblock %}
+
+{% block content %}
+<!-- Greeting -->
+<h2 style="color: #2563eb; margin-bottom: 8px;">
+  Thank You, {{ guest_name }}!
+</h2>
+
+<!-- RSVP Status Badge -->
+<div style="text-align: center; margin: 24px 0;">
+  <div style="display: inline-block; padding: 12px 24px; background-color: {{ guest.rsvp_status|rsvp_status_color }}; color: white; border-radius: 8px; font-size: 18px; font-weight: 600;">
+    {{ guest.rsvp_status|rsvp_status_display }}
+  </div>
+</div>
+
+<!-- Confirmation Message -->
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+<p style="font-size: 18px; color: #171717; margin-bottom: 24px; text-align: center;">
+  We're thrilled you can make it!
+</p>
+{% elif guest.rsvp_status == 'NOT_ATTENDING' or guest.rsvp_status == 'not_attending' %}
+<p style="font-size: 18px; color: #171717; margin-bottom: 24px; text-align: center;">
+  We're sorry you can't join us this time. You'll be missed!
+</p>
+{% elif guest.rsvp_status == 'MAYBE' or guest.rsvp_status == 'maybe' %}
+<p style="font-size: 18px; color: #171717; margin-bottom: 24px; text-align: center;">
+  Thank you for letting us know. We hope you can make it!
+</p>
+{% endif %}
+
+<!-- Event Summary Card -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin: 24px 0;">
+  <tr>
+    <td style="padding: 24px;">
+      <h3 style="margin: 0 0 16px 0; color: #171717; font-size: 20px;">
+        Event Details
+      </h3>
+
+      <!-- Event Name -->
+      <p style="margin: 0 0 16px 0;">
+        <strong style="color: #171717; font-size: 18px;">{{ event.name }}</strong><br/>
+        <span style="color: #6b7280; font-size: 14px;">{{ event.type|event_type_display }}</span>
+      </p>
+
+      <hr class="divider" />
+
+      <!-- Date & Time -->
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin-bottom: 12px;">
+        <tr>
+          <td style="vertical-align: top;">
+            <strong style="color: #171717;">When:</strong><br/>
+            <span style="color: #374151;">
+              {{ event.start_date|format_datetime('medium') }}
+            </span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Location -->
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+        <tr>
+          <td style="vertical-align: top;">
+            <strong style="color: #171717;">Where:</strong><br/>
+            <span style="color: #374151;">
+              {{ format_address(event.venue_name, event.venue_address, event.location)|safe }}
+            </span>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Your Response Details -->
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #dbeafe; border: 1px solid #93c5fd; border-radius: 8px; margin: 24px 0;">
+  <tr>
+    <td style="padding: 24px;">
+      <h3 style="margin: 0 0 16px 0; color: #1e40af; font-size: 18px;">
+        Your Response Details
+      </h3>
+
+      <!-- Meal Preference -->
+      {% if guest.meal_preference %}
+      <p style="margin: 0 0 12px 0; color: #1e3a8a;">
+        <strong>Meal Selection:</strong> {{ guest.meal_preference }}
+      </p>
+      {% endif %}
+
+      <!-- Dietary Restrictions -->
+      {% if guest.dietary_restrictions %}
+      <p style="margin: 0 0 12px 0; color: #1e3a8a;">
+        <strong>Dietary Restrictions:</strong> {{ guest.dietary_restrictions }}
+      </p>
+      {% endif %}
+
+      <!-- Plus-One -->
+      {% if guest.plus_one_name %}
+      <p style="margin: 0 0 12px 0; color: #1e3a8a;">
+        <strong>Plus-One Guest:</strong> {{ guest.plus_one_name }}
+      </p>
+      {% endif %}
+
+      <!-- Notes -->
+      {% if guest.notes %}
+      <p style="margin: 0; color: #1e3a8a;">
+        <strong>Additional Notes:</strong><br/>
+        {{ guest.notes }}
+      </p>
+      {% endif %}
+    </td>
+  </tr>
+</table>
+{% endif %}
+
+<!-- Action Buttons -->
+<div style="text-align: center; margin: 32px 0;">
+  <!-- Update RSVP Button -->
+  <a href="{{ rsvp_url }}" style="display: inline-block; padding: 12px 24px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500; margin: 8px;">
+    Update RSVP
+  </a>
+
+  {% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+  <!-- Add to Calendar -->
+  <a href="{{ rsvp_url }}?action=calendar" style="display: inline-block; padding: 12px 24px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 500; margin: 8px;">
+    Add to Calendar
+  </a>
+  {% endif %}
+</div>
+
+<!-- Additional Information -->
+{% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+<hr class="divider" />
+
+<h3 style="color: #171717; font-size: 18px; margin-bottom: 12px;">
+  What's Next?
+</h3>
+
+<ul style="color: #374151; line-height: 1.8; padding-left: 20px;">
+  <li>Save the date on your calendar</li>
+  <li>Keep an eye out for updates about the event</li>
+  {% if event.venue_address %}
+  <li>Plan your route to the venue</li>
+  {% endif %}
+  <li>If you need to update your RSVP, use the link above</li>
+</ul>
+
+<p style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 20px 0; border-radius: 4px; font-size: 14px; color: #92400e;">
+  <strong>Need to make changes?</strong> You can update your RSVP at any time by clicking the "Update RSVP" button above.
+</p>
+{% endif %}
+
+<!-- Closing Message -->
+<p style="color: #374151; margin-top: 32px;">
+  {% if guest.rsvp_status == 'ATTENDING' or guest.rsvp_status == 'attending' %}
+  We're looking forward to seeing you at {{ event.name }}!
+  {% elif guest.rsvp_status == 'MAYBE' or guest.rsvp_status == 'maybe' %}
+  We hope you'll be able to join us. Please update your RSVP when you know for sure!
+  {% else %}
+  Thank you for letting us know. We hope to see you at a future event!
+  {% endif %}
+</p>
+
+<p style="color: #374151;">
+  If you have any questions or concerns, please don't hesitate to reach out.
+</p>
+
+<p style="color: #171717; margin-top: 24px;">
+  Best regards,<br/>
+  <strong>{{ event.planner.full_name if event.planner and event.planner.full_name else 'The Event Organizer' }}</strong>
+</p>
+{% endblock %}
+
+{% block footer %}
+<p style="margin: 0; font-size: 12px; color: #6b7280;">
+  This confirmation was sent by {{ app_name }}.
+</p>
+<p style="margin: 8px 0 0 0; font-size: 12px;">
+  &copy; {{ current_year }} {{ app_name }}. All rights reserved.
+</p>
+{% endblock %}
