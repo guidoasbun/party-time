@@ -126,6 +126,10 @@ class EmailQuotaResponse(BaseModel):
     remaining_24_hour: float
     usage_percentage: float
 
+"""
+FR-7: The system shall send email invitations
+5.2.2: Email Templates
+"""
 
 class TemplatePreviewRequest(BaseModel):
     """Schema for template preview request"""
@@ -134,6 +138,10 @@ class TemplatePreviewRequest(BaseModel):
     guest_id: Optional[UUID] = Field(None, description="Guest ID to use for preview (optional)")
     mock_data: Optional[dict] = Field(None, description="Mock data to use if event_id/guest_id not provided")
 
+"""
+FR-7: The system shall send email invitations
+5.2.2: Email Templates
+"""
 
 class TemplatePreviewResponse(BaseModel):
     """Schema for template preview response"""

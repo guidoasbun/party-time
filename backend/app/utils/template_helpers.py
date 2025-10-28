@@ -1,6 +1,9 @@
 """
 Template helper utilities for email templates.
 
+FR-7: The system shall send email invitations
+5.2.2: Email Templates
+
 Provides date/time formatting, event type display, and other utilities
 for Jinja2 templates used in email rendering.
 """

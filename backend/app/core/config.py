@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     EMAIL_MAX_RETRIES: int = 3
     EMAIL_RETRY_DELAY: int = 300  # 5 minutes in seconds
 
+    # FR-7: The system shall send email invitations
+    # 5.2.2: Email Templates
+
     # Frontend URL (for email links and redirects)
     FRONTEND_URL: str = "http://localhost:3000"
 

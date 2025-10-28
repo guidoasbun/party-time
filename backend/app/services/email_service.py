@@ -23,6 +23,9 @@ from email_validator import validate_email, EmailNotValidError
 from pathlib import Path
 
 from app.core.config import get_settings
+
+# FR-7: The system shall send email invitations
+# 5.2.2: Email Templates
 from app.utils.template_helpers import (
     format_date,
     format_time,
@@ -67,6 +70,9 @@ class EmailService:
         )
 
         # Register custom filters for templates
+        # FR-7: The system shall send email invitations
+        # 5.2.2: Email Templates
+
         self.jinja_env.filters['format_date'] = format_date
         self.jinja_env.filters['format_time'] = format_time
         self.jinja_env.filters['format_datetime'] = format_datetime
@@ -118,6 +124,8 @@ class EmailService:
             logger.error(f"Error rendering template {template_name}: {str(e)}")
             raise
 
+        # FR-7: The system shall send email invitations
+        # 5.2.2: Email Templates
     def build_template_context(
         self,
         event: Optional[Any] = None,

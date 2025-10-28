@@ -375,6 +375,10 @@ async def get_ses_quota() -> EmailQuotaResponse:
             detail=f"Failed to get SES quota: {str(e)}"
         )
 
+"""
+FR-7: The system shall send email invitations
+5.2.2: Email Templates
+"""
 
 def convert_dates_in_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -413,6 +417,10 @@ def convert_dates_in_dict(data: Dict[str, Any]) -> Dict[str, Any]:
 
     return result
 
+"""
+FR-7: The system shall send email invitations
+5.2.2: Email Templates
+"""
 
 @router.post("/preview", response_model=TemplatePreviewResponse, status_code=status.HTTP_200_OK)
 async def preview_template(
