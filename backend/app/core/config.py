@@ -29,6 +29,28 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
 
+    """
+    
+    FR-7: The system shall send email invitations
+    5.2.1: Email Service Setup
+
+    """
+
+    # AWS SES
+    SES_FROM_EMAIL: Optional[str] = None
+    SES_FROM_NAME: str = "Party-Time"
+    SES_REGION: str = "us-east-1"
+
+    # Redis & Celery
+    REDIS_URL: str = "redis://localhost:6379/0"
+    CELERY_BROKER_URL: Optional[str] = None
+    CELERY_RESULT_BACKEND: Optional[str] = None
+
+    # Email Settings
+    EMAIL_ENABLED: bool = True
+    EMAIL_MAX_RETRIES: int = 3
+    EMAIL_RETRY_DELAY: int = 300  # 5 minutes in seconds
+
     # JWT Configuration
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
