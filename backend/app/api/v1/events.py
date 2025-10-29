@@ -11,6 +11,15 @@ from app.crud import crud_event
 from app.schemas.event import Event, EventCreate, EventUpdate
 from app.models.event import EventType, EventStatus
 
+# FR-7: The system shall send email invitations
+# 5.2.3: Email Campaign Interface
+from app.schemas.email import (
+    BulkInvitationRequest,
+    BulkInvitationResponse,
+    CampaignStatsResponse
+)
+from app.services.email_campaign_service import EmailCampaignService
+
 router = APIRouter()
 
 
@@ -347,3 +356,104 @@ async def get_event_stats(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve event stats: {str(e)}")
+
+
+# FR-7: The system shall send email invitations
+# 5.2.3: Email Campaign Interface
+
+@router.post("/{event_id}/send-invitations", response_model=BulkInvitationResponse)
+async def send_bulk_invitations(
+    event_id: UUID,
+    request: BulkInvitationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Send bulk invitation emails to selected guests.
+
+    Args:
+        event_id: Event UUID
+        request: Bulk invitation request with filters and options
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        BulkInvitationResponse with campaign statistics
+
+    Raises:
+        403: If user doesn't own the event
+        404: If event not found
+        400: If request validation fails
+    """
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        if event.planner_id != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Send bulk invitations
+        campaign_service = EmailCampaignService()
+        response = await campaign_service.send_bulk_invitations(
+            event_id=event_id,
+            request=request,
+            db=db
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send invitations: {str(e)}")
+
+
+@router.get("/{event_id}/invitation-stats", response_model=CampaignStatsResponse)
+async def get_invitation_stats(
+    event_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Get invitation campaign statistics for an event.
+
+    Args:
+        event_id: Event UUID
+        db: Database session
+        current_user: Authenticated user
+
+    Returns:
+        CampaignStatsResponse with delivery metrics
+
+    Raises:
+        403: If user doesn't own the event
+        404: If event not found
+    """
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event:
+            raise HTTPException(status_code=404, detail="Event not found")
+        if event.planner_id != user_id:
+            raise HTTPException(status_code=403, detail="Access denied")
+
+        # Get campaign stats
+        campaign_service = EmailCampaignService()
+        stats = await campaign_service.get_campaign_stats(
+            event_id=event_id,
+            db=db
+        )
+
+        return stats
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve invitation stats: {str(e)}")

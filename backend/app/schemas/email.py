@@ -149,3 +149,96 @@ class TemplatePreviewResponse(BaseModel):
     html_content: str
     text_content: Optional[str] = None
     rendered_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+"""
+FR-7: The system shall send email invitations
+5.2.3: Email Campaign Interface
+"""
+
+class RecipientFilter(str, Enum):
+    """Recipient filter options for bulk invitations"""
+    ALL = "all"
+    NOT_INVITED = "not_invited"
+    PENDING_RSVP = "pending_rsvp"
+    ATTENDING = "attending"
+    NOT_ATTENDING = "not_attending"
+    MAYBE = "maybe"
+    CUSTOM = "custom"
+
+
+class BulkInvitationRequest(BaseModel):
+    """Schema for sending bulk invitations"""
+    recipient_filter: RecipientFilter = Field(
+        ...,
+        description="Filter to select recipients"
+    )
+    guest_ids: Optional[List[UUID]] = Field(
+        None,
+        description="Specific guest IDs (required if recipient_filter is 'custom')"
+    )
+    exclude_already_invited: bool = Field(
+        default=True,
+        description="Exclude guests who already received an invitation"
+    )
+    subject_override: Optional[str] = Field(
+        None,
+        max_length=255,
+        description="Custom subject line (optional, uses default if not provided)"
+    )
+    send_at: Optional[datetime] = Field(
+        None,
+        description="Schedule for later send (optional, sends immediately if not provided)"
+    )
+    test_mode: bool = Field(
+        default=False,
+        description="If True, doesn't actually send emails but returns what would be sent"
+    )
+
+
+class BulkInvitationResponse(BaseModel):
+    """Schema for bulk invitation response"""
+    campaign_id: Optional[UUID] = Field(
+        None,
+        description="Campaign ID for tracking (if scheduled)"
+    )
+    total_recipients: int = Field(
+        ...,
+        description="Total number of recipients selected"
+    )
+    queued: int = Field(
+        ...,
+        description="Number of emails successfully queued"
+    )
+    failed: int = Field(
+        default=0,
+        description="Number of emails that failed to queue"
+    )
+    excluded: int = Field(
+        default=0,
+        description="Number of guests excluded (already invited)"
+    )
+    scheduled_for: Optional[datetime] = Field(
+        None,
+        description="Scheduled send time (if scheduled)"
+    )
+    status: str = Field(
+        ...,
+        description="Campaign status: 'queued', 'scheduled', 'test_mode', or 'completed'"
+    )
+    error_messages: Optional[List[str]] = Field(
+        None,
+        description="Any error messages encountered"
+    )
+
+
+class CampaignStatsResponse(BaseModel):
+    """Schema for campaign delivery statistics"""
+    total_invitations: int = Field(..., description="Total invitations sent for this event")
+    sent: int = Field(..., description="Successfully sent emails")
+    delivered: int = Field(..., description="Emails delivered to recipient")
+    failed: int = Field(..., description="Failed deliveries")
+    bounced: int = Field(..., description="Bounced emails")
+    complained: int = Field(..., description="Spam complaints")
+    pending: int = Field(..., description="Still in queue or sent but not confirmed delivered")
+    delivery_rate: float = Field(..., description="Percentage of emails delivered")

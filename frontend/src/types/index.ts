@@ -26,6 +26,9 @@ export * from './preferences.types'
 // Actions types
 export * from './actions.types'
 
+// Email types
+export * from './email.types'
+
 // Re-export commonly used type aliases for convenience
 export type {
   UUID,
