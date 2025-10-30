@@ -7,19 +7,22 @@ export { AuthService, authService } from './auth.service'
 export { EventsService, eventsService } from './events.service'
 export { GuestsService, guestsService } from './guests.service'
 export { BudgetService, budgetService } from './budget.service'
+export { EmailsService, emailsService } from './emails.service'
 
 // Import individual services for the combined object
 import { authService } from './auth.service'
 import { eventsService } from './events.service'
 import { guestsService } from './guests.service'
 import { budgetService } from './budget.service'
+import { emailsService } from './emails.service'
 
 // Create a combined services object for easy access
 export const services = {
   auth: authService,
   events: eventsService,
   guests: guestsService,
-  budget: budgetService
+  budget: budgetService,
+  emails: emailsService
 } as const
 
 // Export individual services as default exports for convenience
@@ -27,6 +30,7 @@ export { authService as auth }
 export { eventsService as events }
 export { guestsService as guests }
 export { budgetService as budget }
+export { emailsService as emails }
 
 // Re-export common types that services use
 export type {

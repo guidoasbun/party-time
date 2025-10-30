@@ -14,9 +14,13 @@ import {
   Calendar,
   Settings as SettingsIcon,
   FileText,
+  Mail,
 } from "lucide-react";
 import type { Event, Guest, PaginatedResponse } from "@/types";
 import { RSVPDashboard } from "./RSVPDashboard";
+import { InvitationStats } from "./InvitationStats";
+import { SendInvitationsModal } from "./SendInvitationsModal";
+import { Button } from "@/components/ui/Button";
 import { guestsService } from "@/lib/api/services";
 
 interface EventTabsProps {
@@ -216,11 +220,47 @@ function EventOverviewTabPlaceholder({ event }: { event: Event }) {
 
   const guests = guestsResponse?.items || [];
 
+  // FR-7: The system shall send email invitations
+  // 5.2.3: Email Campaign Interface
+  const [isInvitationModalOpen, setIsInvitationModalOpen] = useState(false);
+
   return (
     // FR-6: The system shall display an RSVP submission page.
     // 5.1.3: RSVP Management Dashboard
 
     <div className="space-y-8">
+      {/* Email Campaign Section */}
+      {/* FR-7: The system shall send email invitations - 5.2.3 */}
+      {!isGuestsLoading && guests.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-foreground">
+              Email Campaign
+            </h3>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsInvitationModalOpen(true)}
+            >
+              <Mail className="w-4 h-4 mr-2" />
+              Send Invitations
+            </Button>
+          </div>
+          <InvitationStats eventId={event.id} autoRefresh={true} />
+        </div>
+      )}
+
+      {/* Send Invitations Modal */}
+      {/* FR-7: The system shall send email invitations - 5.2.3 */}
+      <SendInvitationsModal
+        isOpen={isInvitationModalOpen}
+        onClose={() => setIsInvitationModalOpen(false)}
+        eventId={event.id}
+        eventName={event.name}
+        guests={guests}
+        plannerEmail={undefined} // TODO: Get from auth context
+      />
+
       {/* RSVP Dashboard Section */}
       {!isGuestsLoading && guests.length > 0 && (
         <div>

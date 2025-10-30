@@ -14,6 +14,7 @@ This module provides endpoints for:
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import List, Optional, Any, Dict
 from datetime import datetime, timedelta
 from uuid import UUID
@@ -450,9 +451,19 @@ async def preview_template(
         # Build context from event/guest data or mock data
         context = {}
 
+
+        """
+        FR-7: The system shall send email invitations
+        5.2.3: Email Campain Interface
+        """
         # If event_id provided, fetch event data
         if request.event_id:
-            result = await db.execute(select(Event).where(Event.id == request.event_id))
+            # Eager load planner relationship to avoid lazy loading in template rendering
+            result = await db.execute(
+                select(Event)
+                .where(Event.id == request.event_id)
+                .options(selectinload(Event.planner))
+            )
             event = result.scalar_one_or_none()
 
             if not event:

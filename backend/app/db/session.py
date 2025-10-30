@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from sqlalchemy.pool import NullPool
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager
 
 from app.core.config import get_settings
@@ -16,9 +18,23 @@ engine = create_async_engine(
 )
 
 AsyncSessionLocal = async_sessionmaker(
-    engine, 
+    engine,
     class_=AsyncSession,
     expire_on_commit=False,
+    autocommit=False,
+    autoflush=False,
+)
+
+# Synchronous database session for Celery tasks
+# Celery tasks cannot use async sessions, so we need a sync version
+sync_engine = create_engine(
+    settings.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://"),
+    echo=False,
+    pool_pre_ping=True,
+)
+
+SessionLocal = sessionmaker(
+    bind=sync_engine,
     autocommit=False,
     autoflush=False,
 )
