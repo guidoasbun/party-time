@@ -88,7 +88,7 @@ class EmailCampaignService:
                 error_messages=["No recipients match the selected criteria"]
             )
 
-        # 3. Build email list for Celery task
+        # 3. Build email list for Celery task - Pre-render templates for serialization
         emails_to_send = []
         subject = request.subject_override or self.default_subject.format(event_name=event.name)
 
@@ -97,19 +97,22 @@ class EmailCampaignService:
             context = self.email_service.build_template_context(
                 event=event,
                 guest=guest,
-                custom_data={
+                extra_context={
                     "rsvp_url": f"{settings.FRONTEND_URL}/rsvp/{guest.rsvp_token}",
                 }
             )
 
+            # Pre-render templates BEFORE passing to Celery (avoids serialization issues)
+            html_body = self.email_service.render_template("invitation.html", context)
+            text_body = self.email_service.render_template("invitation.txt", context)
+
+            # Pass only JSON-serializable data (strings, not SQLAlchemy objects)
             emails_to_send.append({
                 "to_email": guest.email,
                 "subject": subject,
-                "template_name": "invitation",
-                "context": context,
-                "event_id": str(event_id),
-                "guest_id": str(guest.id),
-                "email_type": "invitation"
+                "html_body": html_body,
+                "text_body": text_body,
+                "log_id": None,
             })
 
         # 4. Handle test mode
@@ -218,8 +221,9 @@ class EmailCampaignService:
         )
 
     async def _get_event(self, event_id: UUID, db: AsyncSession) -> Optional[Event]:
-        """Fetch event by ID"""
-        query = select(Event).where(Event.id == event_id)
+        """Fetch event by ID with eager loading of relationships"""
+        from sqlalchemy.orm import selectinload
+        query = select(Event).where(Event.id == event_id).options(selectinload(Event.planner))
         result = await db.execute(query)
         return result.scalar_one_or_none()
 

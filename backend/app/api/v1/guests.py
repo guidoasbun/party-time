@@ -25,6 +25,13 @@ from app.schemas.common import PaginatedResponse
 from app.models.guest import RsvpStatus
 from app.services.rsvp_service import get_rsvp_service
 from app.services.csv_import_service import csv_import_service
+from app.services.email_campaign_service import EmailCampaignService
+from app.schemas.email import (
+    BulkInvitationRequest,
+    BulkInvitationResponse,
+    RecipientFilter,
+    GuestInvitationRequest
+)
 
 router = APIRouter()
 
@@ -500,6 +507,58 @@ async def send_invitation(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to send invitation: {str(e)}")
+
+
+@router.post("/{event_id}/guests/invitations", response_model=BulkInvitationResponse)
+async def send_bulk_invitations(
+    event_id: UUID,
+    request: GuestInvitationRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Send invitation emails to selected guests.
+
+    This endpoint is used by the guest management page to send invitations
+    to specific guests selected by the event planner.
+    """
+    user_id = UUID(current_user["user_id"])
+
+    try:
+        # Verify event ownership
+        event = await crud_event.get_event_by_id(db, event_id)
+        if not event or event.planner_id != user_id:
+            raise HTTPException(status_code=404, detail="Event not found or access denied")
+
+        # Validate that guest_ids is not empty
+        if not request.guest_ids or len(request.guest_ids) == 0:
+            raise HTTPException(status_code=400, detail="At least one guest ID must be provided")
+
+        # Create BulkInvitationRequest to use existing email campaign service
+        invitation_request = BulkInvitationRequest(
+            recipient_filter=RecipientFilter.CUSTOM,
+            guest_ids=request.guest_ids,
+            exclude_already_invited=False,  # Always send when explicitly requested
+            send_at=request.scheduled_at if request.scheduled_at and not request.send_immediately else None,
+            test_mode=False
+        )
+
+        # Initialize email campaign service
+        email_service = EmailCampaignService()
+
+        # Send bulk invitations using existing service
+        result = await email_service.send_bulk_invitations(
+            event_id=event_id,
+            request=invitation_request,
+            db=db
+        )
+
+        return result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send invitations: {str(e)}")
 
 
 @router.post("/{event_id}/guests/bulk-delete", status_code=200)

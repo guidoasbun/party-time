@@ -232,6 +232,15 @@ class BulkInvitationResponse(BaseModel):
     )
 
 
+class GuestInvitationRequest(BaseModel):
+    """Schema for sending invitations to selected guests from guest management page"""
+    guest_ids: List[UUID] = Field(..., description="List of guest IDs to send invitations to")
+    template_id: Optional[UUID] = Field(None, description="Optional custom template ID (not currently used)")
+    custom_message: Optional[str] = Field(None, description="Optional custom message (not currently used)")
+    send_immediately: bool = Field(True, description="Send immediately (default) or schedule for later")
+    scheduled_at: Optional[str] = Field(None, description="ISO datetime string for scheduled sending")
+
+
 class CampaignStatsResponse(BaseModel):
     """Schema for campaign delivery statistics"""
     total_invitations: int = Field(..., description="Total invitations sent for this event")
