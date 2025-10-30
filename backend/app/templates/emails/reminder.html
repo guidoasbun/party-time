@@ -294,6 +294,18 @@ days_to_deadline <= 1 %}
   event.planner.full_name if event.planner and event.planner.full_name else
   'your event host' }}.
 </p>
+<!-- FR-7: Email Automation
+    Phase 5.2.4: Automated Email Flows - Unsubscribe Page -->
+{% if unsubscribe_url %}
+<p style="margin: 8px 0 0 0; font-size: 11px; color: #9ca3af">
+  <a
+    href="{{ unsubscribe_url }}"
+    style="color: #9ca3af; text-decoration: underline"
+    >Unsubscribe</a
+  >
+  from event emails
+</p>
+{% endif %}
 <p style="margin: 8px 0 0 0; font-size: 12px">
   &copy; {{ current_year }} {{ app_name }}. All rights reserved.
 </p>

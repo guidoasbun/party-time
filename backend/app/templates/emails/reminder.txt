@@ -73,5 +73,9 @@ Best regards,
 
 ===============================================================================
 This reminder was sent by {{ app_name }} on behalf of {{ event.planner.full_name if event.planner and event.planner.full_name else 'your event host' }}.
+{% if unsubscribe_url %}
+
+Unsubscribe from event emails: {{ unsubscribe_url }}
+{% endif %}
 
 © {{ current_year }} {{ app_name }}. All rights reserved.

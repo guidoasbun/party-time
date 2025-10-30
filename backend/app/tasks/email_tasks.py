@@ -301,3 +301,70 @@ def cleanup_old_email_logs(days: int = 30) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error cleaning up email logs: {e}")
         return {"deleted": 0, "error": str(e)}
+
+# FR-7: Email Automation
+# Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+@celery_app.task
+def process_reminder_emails() -> Dict[str, Any]:
+    """
+    Periodic task to process reminder emails (Phase 5.2.4).
+    Checks for RSVP deadline reminders and event date reminders.
+
+    Called by Celery Beat every 6 hours.
+
+    Returns:
+        Dictionary with statistics for each reminder type
+    """
+    logger.info("Starting reminder email processing")
+
+    try:
+        from app.services.reminder_service import send_reminder_batch
+
+        db = SessionLocal()
+        results = send_reminder_batch(db)
+        db.close()
+
+        logger.info(f"Reminder email processing complete: {results}")
+        return results
+
+    except Exception as e:
+        logger.error(f"Error processing reminder emails: {e}")
+        return {
+            "error": str(e),
+            "rsvp_deadline": {"queued_count": 0, "error_count": 1},
+            "event_date": {"queued_count": 0, "error_count": 1},
+            "thank_you": {"queued_count": 0, "error_count": 0}
+        }
+
+
+@celery_app.task
+def process_thank_you_emails() -> Dict[str, Any]:
+    """
+    Periodic task to process thank you emails (Phase 5.2.4).
+    Checks for completed events and sends thank you emails to attending guests.
+
+    Called by Celery Beat daily at 10 AM.
+
+    Returns:
+        Dictionary with statistics
+    """
+    logger.info("Starting thank you email processing")
+
+    try:
+        from app.services.reminder_service import ReminderService
+
+        db = SessionLocal()
+        service = ReminderService(db)
+        results = service.check_completed_events()
+        db.close()
+
+        logger.info(f"Thank you email processing complete: {results}")
+        return results
+
+    except Exception as e:
+        logger.error(f"Error processing thank you emails: {e}")
+        return {
+            "error": str(e),
+            "queued_count": 0,
+            "error_count": 1
+        }

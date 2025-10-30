@@ -56,8 +56,25 @@ celery_app.conf.update(
         'app.tasks.email_tasks.*': {'queue': 'emails'},
     },
 
-    # Beat schedule (for periodic tasks - can be added later)
-    beat_schedule={},
+
+    # FR-7: Email Automation
+    # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+    # Beat schedule (Phase 5.2.4: Automated Email Flows)
+    beat_schedule={
+        'check-reminders-every-6-hours': {
+            'task': 'app.tasks.email_tasks.process_reminder_emails',
+            'schedule': 21600.0,  # Every 6 hours (in seconds)
+        },
+        'check-thank-you-daily': {
+            'task': 'app.tasks.email_tasks.process_thank_you_emails',
+            'schedule': 86400.0,  # Every 24 hours (in seconds)
+        },
+        'cleanup-email-logs-weekly': {
+            'task': 'app.tasks.email_tasks.cleanup_old_email_logs',
+            'schedule': 604800.0,  # Every 7 days (in seconds)
+            'kwargs': {'days': 90},  # Keep logs for 90 days
+        },
+    },
 )
 
 # Optional: Task annotations for specific task configurations

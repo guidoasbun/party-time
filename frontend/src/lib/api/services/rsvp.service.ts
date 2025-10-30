@@ -13,6 +13,8 @@ import type {
   RSVPPreferencesUpdate,
   RSVPPlusOneUpdate,
   RSVPErrorResponse,
+  UnsubscribePageInfo,
+  UnsubscribeResponse,
 } from "@/types/rsvp.types";
 
 /**
@@ -249,4 +251,71 @@ export const getRateLimitRetryAfter = (error: unknown): number | null => {
     }
   }
   return null;
+};
+
+/**
+ * FR-7: Email Automation
+ * Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+ *
+ * Get unsubscribe page information (Phase 5.2.4)
+ * Public endpoint - no authentication required
+ * @param unsubscribeToken - Unsubscribe token from email link
+ * @returns Guest and event information
+ */
+export const getUnsubscribePageInfo = async (
+  unsubscribeToken: string
+): Promise<UnsubscribePageInfo> => {
+  try {
+    const data = await api.get<UnsubscribePageInfo>(
+      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}`
+    );
+    return data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const httpError = error as { response: { status: number } };
+      if (httpError.response.status === 404) {
+        throw new Error(
+          "Invalid unsubscribe link. This link may have expired."
+        );
+      }
+    }
+    throw error;
+  }
+};
+
+/**
+ * Confirm unsubscribe from event emails (Phase 5.2.4)
+ * Public endpoint - no authentication required
+ * @param unsubscribeToken - Unsubscribe token from email link
+ * @param confirm - Must be true to confirm unsubscribe
+ * @returns Unsubscribe confirmation
+ */
+export const confirmUnsubscribe = async (
+  unsubscribeToken: string,
+  confirm: boolean
+): Promise<UnsubscribeResponse> => {
+  try {
+    const data = await api.post<UnsubscribeResponse>(
+      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}`,
+      { confirm }
+    );
+    return data;
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "response" in error) {
+      const httpError = error as {
+        response: { status: number; data: { detail: string } };
+      };
+
+      if (httpError.response.status === 404) {
+        throw new Error("Invalid unsubscribe link.");
+      }
+
+      if (httpError.response.status === 400) {
+        throw new Error(
+          httpError.response.data.detail || "Unsubscribe confirmation required"
+        );
+      }
+    }
+    throw error;
+  }
 };

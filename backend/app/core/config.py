@@ -57,6 +57,16 @@ class Settings(BaseSettings):
     # Frontend URL (for email links and redirects)
     FRONTEND_URL: str = "http://localhost:3000"
 
+    # Phase 5.2.4: Automated Email Flows
+    # FR-7: Email Automation
+    # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+    AUTO_CONFIRMATION_ENABLED: bool = True
+    REMINDER_DAYS_BEFORE_DEADLINE: List[int] = [7, 3, 1]
+    REMINDER_DAYS_BEFORE_EVENT: List[int] = [7, 1]
+    REMINDER_COOLDOWN_HOURS: int = 24
+    THANK_YOU_DAYS_AFTER_EVENT: int = 1
+    THANK_YOU_ENABLED: bool = True
+
     # JWT Configuration
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
