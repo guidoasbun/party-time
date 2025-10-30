@@ -1,45 +1,53 @@
-'use client'
+"use client";
 
 /**
  * GuestList Component
  * Container component that manages guest list state and coordinates all guest management features
  */
 
-import React, { useState, useCallback, useMemo } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
-import { GuestTable } from './GuestTable'
-import { GuestSearchBar } from './GuestSearchBar'
-import { GuestFilters, type GuestFilterValues } from './GuestFilters'
-import { BulkActionsMenu } from './BulkActionsMenu'
-import { AddGuestModal } from './AddGuestModal'
-import { EditGuestModal } from './EditGuestModal'
-import { GuestDetailsDrawer } from './GuestDetailsDrawer'
-import { QuickAddGuest } from './QuickAddGuest'
-import { CSVImportWizard } from './CSVImportWizard'
-import { Button } from '@/components/ui/Button'
-import { Select } from '@/components/ui/Select'
-import { ChevronLeft, ChevronRight, UserPlus, Upload } from 'lucide-react'
-import { guestsService } from '@/lib/api/services'
-import { RsvpStatus, type Guest, type GuestSearchParams, type GuestUpdate, type UUID, type CSVImportResult } from '@/types'
-import { useToast } from '@/hooks/useToast'
-import { cn } from '@/lib/utils'
+import React, { useState, useCallback, useMemo } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { GuestTable } from "./GuestTable";
+import { GuestSearchBar } from "./GuestSearchBar";
+import { GuestFilters, type GuestFilterValues } from "./GuestFilters";
+import { BulkActionsMenu } from "./BulkActionsMenu";
+import { AddGuestModal } from "./AddGuestModal";
+import { EditGuestModal } from "./EditGuestModal";
+import { GuestDetailsDrawer } from "./GuestDetailsDrawer";
+import { QuickAddGuest } from "./QuickAddGuest";
+import { CSVImportWizard } from "./CSVImportWizard";
+import { ConfirmSendInvitationsModal } from "./ConfirmSendInvitationsModal";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+import { ChevronLeft, ChevronRight, UserPlus, Upload } from "lucide-react";
+import { guestsService } from "@/lib/api/services";
+import {
+  RsvpStatus,
+  type Guest,
+  type GuestSearchParams,
+  type GuestUpdate,
+  type UUID,
+  type CSVImportResult,
+} from "@/types";
+import { useToast } from "@/hooks/useToast";
+import { cn } from "@/lib/utils";
 
 interface GuestListProps {
-  eventId: UUID
-  guests: Guest[]
-  isLoading?: boolean
-  error?: Error | null
-  totalCount?: number
-  onRefresh?: () => void
-  className?: string
+  eventId: UUID;
+  guests: Guest[];
+  isLoading?: boolean;
+  error?: Error | null;
+  totalCount?: number;
+  onRefresh?: () => void;
+  className?: string;
 }
 
 const PAGE_SIZE_OPTIONS = [
-  { value: '10', label: '10 per page' },
-  { value: '25', label: '25 per page' },
-  { value: '50', label: '50 per page' },
-  { value: '100', label: '100 per page' }
-]
+  { value: "10", label: "10 per page" },
+  { value: "25", label: "25 per page" },
+  { value: "50", label: "50 per page" },
+  { value: "100", label: "100 per page" },
+];
 
 export function GuestList({
   eventId,
@@ -48,374 +56,414 @@ export function GuestList({
   error = null,
   totalCount = 0,
   onRefresh,
-  className
+  className,
 }: GuestListProps) {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // State management
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<GuestFilterValues>({
     rsvp_statuses: [],
-    plus_one_filter: 'all',
-    dietary_restrictions: 'all'
-  })
-  const [selectedIds, setSelectedIds] = useState<UUID[]>([])
-  const [sortBy, setSortBy] = useState<keyof Guest>('first_name')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
-  const [currentPage, setCurrentPage] = useState(1)
-  const [pageSize, setPageSize] = useState(25)
-  const [isUpdating, setIsUpdating] = useState(false)
+    plus_one_filter: "all",
+    dietary_restrictions: "all",
+  });
+  const [selectedIds, setSelectedIds] = useState<UUID[]>([]);
+  const [sortBy, setSortBy] = useState<keyof Guest>("first_name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   // Modal state
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isImportWizardOpen, setIsImportWizardOpen] = useState(false)
-  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null)
-  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isImportWizardOpen, setIsImportWizardOpen] = useState(false);
+  const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
+  const [isDetailsDrawerOpen, setIsDetailsDrawerOpen] = useState(false);
+  const [isConfirmInvitationsModalOpen, setIsConfirmInvitationsModalOpen] =
+    useState(false);
+  const [pendingInvitationIds, setPendingInvitationIds] = useState<UUID[]>([]);
 
   // Filter guests client-side based on filters and search
   const filteredGuests = useMemo(() => {
-    let filtered = [...guests]
+    let filtered = [...guests];
 
     // Apply search filter
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (guest) =>
           guest.first_name.toLowerCase().includes(query) ||
           guest.last_name.toLowerCase().includes(query) ||
           guest.email.toLowerCase().includes(query) ||
           guest.phone?.toLowerCase().includes(query)
-      )
+      );
     }
 
     // Apply RSVP status filter
     if (filters.rsvp_statuses.length > 0) {
-      filtered = filtered.filter((guest) => filters.rsvp_statuses.includes(guest.rsvp_status))
+      filtered = filtered.filter((guest) =>
+        filters.rsvp_statuses.includes(guest.rsvp_status)
+      );
     }
 
     // Apply plus-one filter
-    if (filters.plus_one_filter === 'allowed') {
-      filtered = filtered.filter((guest) => guest.plus_one_allowed)
-    } else if (filters.plus_one_filter === 'confirmed') {
-      filtered = filtered.filter((guest) => guest.plus_one_allowed && guest.plus_one_name)
+    if (filters.plus_one_filter === "allowed") {
+      filtered = filtered.filter((guest) => guest.plus_one_allowed);
+    } else if (filters.plus_one_filter === "confirmed") {
+      filtered = filtered.filter(
+        (guest) => guest.plus_one_allowed && guest.plus_one_name
+      );
     }
 
     // Apply dietary restrictions filter
-    if (filters.dietary_restrictions === 'has') {
-      filtered = filtered.filter((guest) => guest.dietary_restrictions)
-    } else if (filters.dietary_restrictions === 'none') {
-      filtered = filtered.filter((guest) => !guest.dietary_restrictions)
+    if (filters.dietary_restrictions === "has") {
+      filtered = filtered.filter((guest) => guest.dietary_restrictions);
+    } else if (filters.dietary_restrictions === "none") {
+      filtered = filtered.filter((guest) => !guest.dietary_restrictions);
     }
 
-    return filtered
-  }, [guests, searchQuery, filters])
+    return filtered;
+  }, [guests, searchQuery, filters]);
 
   // Sort guests
   const sortedGuests = useMemo(() => {
-    const sorted = [...filteredGuests]
+    const sorted = [...filteredGuests];
     sorted.sort((a, b) => {
-      const aVal = a[sortBy]
-      const bVal = b[sortBy]
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
 
-      if (aVal === null || aVal === undefined) return 1
-      if (bVal === null || bVal === undefined) return -1
+      if (aVal === null || aVal === undefined) return 1;
+      if (bVal === null || bVal === undefined) return -1;
 
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return sortOrder === 'asc'
+      if (typeof aVal === "string" && typeof bVal === "string") {
+        return sortOrder === "asc"
           ? aVal.localeCompare(bVal)
-          : bVal.localeCompare(aVal)
+          : bVal.localeCompare(aVal);
       }
 
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1
-      return 0
-    })
-    return sorted
-  }, [filteredGuests, sortBy, sortOrder])
+      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+    return sorted;
+  }, [filteredGuests, sortBy, sortOrder]);
 
   // Paginate guests
   const paginatedGuests = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize
-    return sortedGuests.slice(startIndex, startIndex + pageSize)
-  }, [sortedGuests, currentPage, pageSize])
+    const startIndex = (currentPage - 1) * pageSize;
+    return sortedGuests.slice(startIndex, startIndex + pageSize);
+  }, [sortedGuests, currentPage, pageSize]);
 
-  const totalPages = Math.ceil(sortedGuests.length / pageSize)
+  const totalPages = Math.ceil(sortedGuests.length / pageSize);
 
   // Handlers
   const handleSort = (field: keyof Guest) => {
     if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
-      setSortBy(field)
-      setSortOrder('asc')
+      setSortBy(field);
+      setSortOrder("asc");
     }
-  }
+  };
 
   const handleUpdateGuest = async (guestId: UUID, data: GuestUpdate) => {
     try {
-      setIsUpdating(true)
-      await guestsService.updateGuest(eventId, guestId, data)
+      setIsUpdating(true);
+      await guestsService.updateGuest(eventId, guestId, data);
 
       // Invalidate queries to refresh data
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+      await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
 
       toast({
-        title: 'Guest updated',
-        description: 'Guest information has been updated successfully.',
-        variant: 'success'
-      })
+        title: "Guest updated",
+        description: "Guest information has been updated successfully.",
+        variant: "success",
+      });
 
       if (onRefresh) {
-        onRefresh()
+        onRefresh();
       }
     } catch (err) {
       toast({
-        title: 'Update failed',
-        description: err instanceof Error ? err.message : 'Failed to update guest',
-        variant: 'destructive'
-      })
+        title: "Update failed",
+        description:
+          err instanceof Error ? err.message : "Failed to update guest",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleBulkDelete = async (guestIds: UUID[]) => {
-    if (!confirm(`Are you sure you want to delete ${guestIds.length} guest(s)?`)) {
-      return
+    if (
+      !confirm(`Are you sure you want to delete ${guestIds.length} guest(s)?`)
+    ) {
+      return;
     }
 
     try {
-      setIsUpdating(true)
-      await guestsService.bulkDeleteGuests(eventId, guestIds)
+      setIsUpdating(true);
+      await guestsService.bulkDeleteGuests(eventId, guestIds);
 
-      setSelectedIds([])
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+      setSelectedIds([]);
+      await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
 
       toast({
-        title: 'Guests deleted',
+        title: "Guests deleted",
         description: `Successfully deleted ${guestIds.length} guest(s).`,
-        variant: 'success'
-      })
+        variant: "success",
+      });
 
       if (onRefresh) {
-        onRefresh()
+        onRefresh();
       }
     } catch (err) {
       toast({
-        title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete guests',
-        variant: 'destructive'
-      })
+        title: "Delete failed",
+        description:
+          err instanceof Error ? err.message : "Failed to delete guests",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
-  const handleBulkUpdateStatus = async (guestIds: UUID[], status: RsvpStatus) => {
+  const handleBulkUpdateStatus = async (
+    guestIds: UUID[],
+    status: RsvpStatus
+  ) => {
     try {
-      setIsUpdating(true)
-      await guestsService.bulkUpdateGuestsStatus(eventId, guestIds, status)
+      setIsUpdating(true);
+      await guestsService.bulkUpdateGuestsStatus(eventId, guestIds, status);
 
-      setSelectedIds([])
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+      setSelectedIds([]);
+      await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
 
       toast({
-        title: 'Status updated',
+        title: "Status updated",
         description: `Updated RSVP status for ${guestIds.length} guest(s).`,
-        variant: 'success'
-      })
+        variant: "success",
+      });
 
       if (onRefresh) {
-        onRefresh()
+        onRefresh();
       }
     } catch (err) {
       toast({
-        title: 'Update failed',
-        description: err instanceof Error ? err.message : 'Failed to update guest status',
-        variant: 'destructive'
-      })
+        title: "Update failed",
+        description:
+          err instanceof Error ? err.message : "Failed to update guest status",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleSendInvitations = async (guestIds: UUID[]) => {
-    try {
-      setIsUpdating(true)
-      await guestsService.sendInvitations(eventId, guestIds)
+    // FR-7: The system shall send email invitations
+    // 5.2.3: Email Campain Interface
+    // Store the IDs and open confirmation modal
+    setPendingInvitationIds(guestIds);
+    setIsConfirmInvitationsModalOpen(true);
+  };
 
-      setSelectedIds([])
+  const handleConfirmSendInvitations = async () => {
+    try {
+      setIsUpdating(true);
+      await guestsService.sendInvitations(eventId, pendingInvitationIds);
+
+      setSelectedIds([]);
+      // FR-7: The system shall send email invitations
+      // 5.2.3: Email Campain Interface
+      setPendingInvitationIds([]);
+      setIsConfirmInvitationsModalOpen(false);
 
       toast({
-        title: 'Invitations sent',
-        description: `Sent invitations to ${guestIds.length} guest(s).`,
-        variant: 'success'
-      })
+        title: "Invitations sent",
+        description: `Sent invitations to ${pendingInvitationIds.length} guest(s).`,
+        variant: "success",
+      });
     } catch (err) {
       toast({
-        title: 'Send failed',
-        description: err instanceof Error ? err.message : 'Failed to send invitations',
-        variant: 'destructive'
-      })
+        title: "Send failed",
+        description:
+          err instanceof Error ? err.message : "Failed to send invitations",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleExport = async (guestIds: UUID[]) => {
     try {
-      setIsUpdating(true)
-      await guestsService.exportGuests(eventId, 'csv', {
-        include_fields: ['email', 'first_name', 'last_name', 'phone', 'rsvp_status']
-      })
+      setIsUpdating(true);
+      await guestsService.exportGuests(eventId, "csv", {
+        include_fields: [
+          "email",
+          "first_name",
+          "last_name",
+          "phone",
+          "rsvp_status",
+        ],
+      });
 
       toast({
-        title: 'Export successful',
+        title: "Export successful",
         description: `Exported ${guestIds.length} guest(s) to CSV.`,
-        variant: 'success'
-      })
+        variant: "success",
+      });
     } catch (err) {
       toast({
-        title: 'Export failed',
-        description: err instanceof Error ? err.message : 'Failed to export guests',
-        variant: 'destructive'
-      })
+        title: "Export failed",
+        description:
+          err instanceof Error ? err.message : "Failed to export guests",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handlePageSizeChange = (value: string | string[]) => {
-    const sizeValue = Array.isArray(value) ? value[0] : value
-    setPageSize(parseInt(sizeValue, 10))
-    setCurrentPage(1) // Reset to first page
-  }
+    const sizeValue = Array.isArray(value) ? value[0] : value;
+    setPageSize(parseInt(sizeValue, 10));
+    setCurrentPage(1); // Reset to first page
+  };
 
   const handleGuestAdded = () => {
     // Invalidate queries to refresh guest list
-    void queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+    void queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
     if (onRefresh) {
-      onRefresh()
+      onRefresh();
     }
-  }
+  };
 
   const handleGuestClick = (guest: Guest) => {
-    setSelectedGuest(guest)
-    setIsDetailsDrawerOpen(true)
-  }
+    setSelectedGuest(guest);
+    setIsDetailsDrawerOpen(true);
+  };
 
   const handleDeleteGuest = async (guestId: UUID) => {
-    if (!confirm('Are you sure you want to delete this guest?')) {
-      return
+    if (!confirm("Are you sure you want to delete this guest?")) {
+      return;
     }
 
     try {
-      setIsUpdating(true)
-      await guestsService.deleteGuest(eventId, guestId)
+      setIsUpdating(true);
+      await guestsService.deleteGuest(eventId, guestId);
 
-      setIsDetailsDrawerOpen(false)
-      setSelectedGuest(null)
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+      setIsDetailsDrawerOpen(false);
+      setSelectedGuest(null);
+      await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
 
       toast({
-        title: 'Guest deleted',
-        description: 'Guest has been removed from the event.',
-        variant: 'success'
-      })
+        title: "Guest deleted",
+        description: "Guest has been removed from the event.",
+        variant: "success",
+      });
 
       if (onRefresh) {
-        onRefresh()
+        onRefresh();
       }
     } catch (err) {
       toast({
-        title: 'Delete failed',
-        description: err instanceof Error ? err.message : 'Failed to delete guest',
-        variant: 'destructive'
-      })
+        title: "Delete failed",
+        description:
+          err instanceof Error ? err.message : "Failed to delete guest",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleSendInvitation = async (guestId: UUID) => {
     try {
-      setIsUpdating(true)
-      await guestsService.sendInvitations(eventId, [guestId])
+      setIsUpdating(true);
+      await guestsService.sendInvitations(eventId, [guestId]);
 
       toast({
-        title: 'Invitation sent',
-        description: 'Invitation email has been sent to the guest.',
-        variant: 'success'
-      })
+        title: "Invitation sent",
+        description: "Invitation email has been sent to the guest.",
+        variant: "success",
+      });
     } catch (err) {
       toast({
-        title: 'Send failed',
-        description: err instanceof Error ? err.message : 'Failed to send invitation',
-        variant: 'destructive'
-      })
+        title: "Send failed",
+        description:
+          err instanceof Error ? err.message : "Failed to send invitation",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleRegenerateToken = async (guestId: UUID) => {
-    if (!confirm('Are you sure you want to regenerate the RSVP token? The old link will stop working.')) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to regenerate the RSVP token? The old link will stop working."
+      )
+    ) {
+      return;
     }
 
     try {
-      setIsUpdating(true)
-      await guestsService.regenerateToken(eventId, guestId)
+      setIsUpdating(true);
+      await guestsService.regenerateToken(eventId, guestId);
 
       toast({
-        title: 'Token regenerated',
-        description: 'A new RSVP token has been generated for this guest.',
-        variant: 'success'
-      })
+        title: "Token regenerated",
+        description: "A new RSVP token has been generated for this guest.",
+        variant: "success",
+      });
 
-      await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+      await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
     } catch (err) {
       toast({
-        title: 'Regenerate failed',
-        description: err instanceof Error ? err.message : 'Failed to regenerate token',
-        variant: 'destructive'
-      })
+        title: "Regenerate failed",
+        description:
+          err instanceof Error ? err.message : "Failed to regenerate token",
+        variant: "destructive",
+      });
     } finally {
-      setIsUpdating(false)
+      setIsUpdating(false);
     }
-  }
+  };
 
   const handleImportComplete = async (result: CSVImportResult) => {
     // Invalidate queries to refresh guest list
-    await queryClient.invalidateQueries({ queryKey: ['guests', eventId] })
+    await queryClient.invalidateQueries({ queryKey: ["guests", eventId] });
     if (onRefresh) {
-      onRefresh()
+      onRefresh();
     }
-  }
+  };
 
   if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-red-600 dark:text-red-400">Error loading guests: {error.message}</p>
+        <p className="text-red-600 dark:text-red-400">
+          Error loading guests: {error.message}
+        </p>
         {onRefresh && (
           <Button onClick={onRefresh} className="mt-4">
             Try Again
           </Button>
         )}
       </div>
-    )
+    );
   }
 
   return (
-    <div className={cn('space-y-6', className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Quick Add Guest */}
-      <QuickAddGuest
-        eventId={eventId}
-        onSuccess={handleGuestAdded}
-        autoFocus
-      />
+      <QuickAddGuest eventId={eventId} onSuccess={handleGuestAdded} autoFocus />
 
       {/* Header Actions */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
@@ -488,7 +536,9 @@ export function GuestList({
       {totalPages > 1 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-border">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Items per page:</span>
+            <span className="text-sm text-muted-foreground">
+              Items per page:
+            </span>
             <Select
               options={PAGE_SIZE_OPTIONS}
               value={pageSize.toString()}
@@ -515,7 +565,9 @@ export function GuestList({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) => Math.min(totalPages, p + 1))
+                }
                 disabled={currentPage === totalPages}
               >
                 <ChevronRight className="h-4 w-4" />
@@ -537,8 +589,8 @@ export function GuestList({
       <EditGuestModal
         open={isEditModalOpen}
         onClose={() => {
-          setIsEditModalOpen(false)
-          setSelectedGuest(null)
+          setIsEditModalOpen(false);
+          setSelectedGuest(null);
         }}
         eventId={eventId}
         guest={selectedGuest}
@@ -549,13 +601,13 @@ export function GuestList({
       <GuestDetailsDrawer
         open={isDetailsDrawerOpen}
         onClose={() => {
-          setIsDetailsDrawerOpen(false)
-          setSelectedGuest(null)
+          setIsDetailsDrawerOpen(false);
+          setSelectedGuest(null);
         }}
         guest={selectedGuest}
         onEdit={(guest) => {
-          setSelectedGuest(guest)
-          setIsEditModalOpen(true)
+          setSelectedGuest(guest);
+          setIsEditModalOpen(true);
         }}
         onDelete={handleDeleteGuest}
         onSendInvitation={handleSendInvitation}
@@ -569,6 +621,18 @@ export function GuestList({
         onClose={() => setIsImportWizardOpen(false)}
         onImportComplete={handleImportComplete}
       />
+
+      {/* Confirm Send Invitations Modal */}
+      <ConfirmSendInvitationsModal
+        open={isConfirmInvitationsModalOpen}
+        onClose={() => {
+          setIsConfirmInvitationsModalOpen(false);
+          setPendingInvitationIds([]);
+        }}
+        guests={guests.filter((g) => pendingInvitationIds.includes(g.id))}
+        onConfirm={handleConfirmSendInvitations}
+        isLoading={isUpdating}
+      />
     </div>
-  )
+  );
 }
