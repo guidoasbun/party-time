@@ -6,18 +6,25 @@ from app.schemas.budget import (
     BudgetCategory, BudgetCategoryCreate, BudgetCategoryUpdate,
     Expense, ExpenseCreate, ExpenseUpdate, BudgetSummary
 )
+from app.schemas.seating import (
+    SeatingChartBase, SeatingChartCreate, SeatingChartUpdate, SeatingChartResponse,
+    TableLayoutBase, TableLayoutCreate, TableLayoutUpdate, TableLayoutResponse,
+    SeatAssignmentBase, SeatAssignmentCreate, SeatAssignmentUpdate, SeatAssignmentResponse,
+    SeatingChartWithTables, TableLayoutWithSeats, SeatAssignmentWithGuest,
+    SeatingChartSummary, BulkTableCreate, BulkSeatAssignmentCreate, AutoAssignRequest
+)
 
 # Export all schemas
 __all__ = [
     # User schemas
     "User",
-    "UserCreate", 
+    "UserCreate",
     "UserUpdate",
     "UserInDB",
     # Event schemas
     "Event",
     "EventCreate",
-    "EventUpdate", 
+    "EventUpdate",
     "EventWithDetails",
     # Guest schemas
     "Guest",
@@ -30,7 +37,27 @@ __all__ = [
     "BudgetCategoryCreate",
     "BudgetCategoryUpdate",
     "Expense",
-    "ExpenseCreate", 
+    "ExpenseCreate",
     "ExpenseUpdate",
     "BudgetSummary",
+    # Seating schemas
+    "SeatingChartBase",
+    "SeatingChartCreate",
+    "SeatingChartUpdate",
+    "SeatingChartResponse",
+    "TableLayoutBase",
+    "TableLayoutCreate",
+    "TableLayoutUpdate",
+    "TableLayoutResponse",
+    "SeatAssignmentBase",
+    "SeatAssignmentCreate",
+    "SeatAssignmentUpdate",
+    "SeatAssignmentResponse",
+    "SeatingChartWithTables",
+    "TableLayoutWithSeats",
+    "SeatAssignmentWithGuest",
+    "SeatingChartSummary",
+    "BulkTableCreate",
+    "BulkSeatAssignmentCreate",
+    "AutoAssignRequest",
 ]
