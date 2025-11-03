@@ -123,6 +123,7 @@ export default function SeatingCanvas({
       const tableShape = createTableShape(table, {
         selectable: !readOnly,
         hasControls: !readOnly,
+        evented: !readOnly,
       });
 
       canvas.add(tableShape);
@@ -157,6 +158,7 @@ export default function SeatingCanvas({
           const newShape = createTableShape(table, {
             selectable: !readOnly,
             hasControls: !readOnly,
+            evented: !readOnly,
           });
           canvas.add(newShape);
         }

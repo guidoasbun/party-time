@@ -28,6 +28,7 @@ export interface TableShapeOptions {
   strokeWidth?: number;
   selectable?: boolean;
   hasControls?: boolean;
+  evented?: boolean;
 }
 
 export interface TableColorScheme {
@@ -261,6 +262,7 @@ export function createRoundTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -328,6 +330,7 @@ export function createRectangularTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -396,6 +399,7 @@ export function createSquareTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -464,6 +468,7 @@ export function createCustomTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
