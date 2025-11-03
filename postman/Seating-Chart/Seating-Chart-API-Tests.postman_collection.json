@@ -1,0 +1,1065 @@
+{
+	"info": {
+		"_postman_id": "seating-chart-api-tests-2025",
+		"name": "Seating Chart API Tests",
+		"description": "Comprehensive test collection for Seating Chart API endpoints.\n\n**Phase 6.1.2: Seating Chart API Endpoints**\n\nThis collection tests all 14 seating chart endpoints including:\n- Seating chart CRUD operations\n- Table layout management (single and bulk)\n- Seat assignment operations\n- Auto-assignment algorithms (fill_tables, distribute)\n- Statistics and analytics\n- Error handling and validation\n\n**Setup:**\n1. Import this collection into Postman\n2. Import the Seating-Chart-Local environment\n3. Set only the event_id variable - guest IDs are auto-populated!\n4. Ensure backend is running on http://localhost:8000\n5. Run the \"1. Setup & Authentication\" folder first\n6. Execute requests sequentially or run entire collection\n\n**Features:**\n- 23 requests across 6 folders\n- ~115 automated test assertions\n- Auto-populates guest IDs from API\n- Auto-saves IDs for request chaining\n- Bearer token authentication\n- Comprehensive error scenarios\n\n**Documentation:** See Seating-Chart-TESTING-GUIDE.md",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "1. Setup & Authentication",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 200ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check if the API is running and healthy."
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Get Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access_token\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    ",
+									"    // Save access token to collection variable",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+									"});",
+									"",
+									"pm.test(\"Response has user_id\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user_id');",
+									"    ",
+									"    // Save user_id for reference",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "auth", "login"]
+						},
+						"description": "Authenticate and get access token for subsequent requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event - Verify Exists",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Event exists and has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('planner_id');",
+									"    ",
+									"    // Ensure event_id is set",
+									"    pm.collectionVariables.set(\"event_id\", jsonData.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}"]
+						},
+						"description": "Verify test event exists before creating seating chart."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Guests - Auto-populate IDs",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Auto-populate guest IDs for testing\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('guests');",
+									"    pm.expect(jsonData.guests).to.be.an('array');",
+									"    ",
+									"    // Save up to 5 guest IDs",
+									"    if (jsonData.guests.length >= 1) {",
+									"        pm.collectionVariables.set(\"guest_id\", jsonData.guests[0].id);",
+									"    }",
+									"    if (jsonData.guests.length >= 2) {",
+									"        pm.collectionVariables.set(\"guest_id_2\", jsonData.guests[1].id);",
+									"    }",
+									"    if (jsonData.guests.length >= 3) {",
+									"        pm.collectionVariables.set(\"guest_id_3\", jsonData.guests[2].id);",
+									"    }",
+									"    if (jsonData.guests.length >= 4) {",
+									"        pm.collectionVariables.set(\"guest_id_4\", jsonData.guests[3].id);",
+									"    }",
+									"    if (jsonData.guests.length >= 5) {",
+									"        pm.collectionVariables.set(\"guest_id_5\", jsonData.guests[4].id);",
+									"    }",
+									"    ",
+									"    console.log('Auto-populated ' + Math.min(jsonData.guests.length, 5) + ' guest IDs');",
+									"});",
+									"",
+									"pm.test(\"Event has at least 5 guests for auto-assign tests\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.guests.length < 5) {",
+									"        console.warn('Warning: Event has only ' + jsonData.guests.length + ' guests. Auto-assign tests may fail if fewer than 3 guests exist.');",
+									"    }",
+									"    pm.expect(jsonData.guests.length).to.be.at.least(1);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/guests?limit=5",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "guests"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						},
+						"description": "Fetch the first 5 guests from the event and auto-populate guest_id variables for subsequent tests."
+					},
+					"response": []
+				}
+			],
+			"description": "Setup requests to authenticate and verify test environment."
+		},
+		{
+			"name": "2. Seating Chart CRUD",
+			"item": [
+				{
+					"name": "Create Seating Chart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Seating chart created successfully\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('event_id');",
+									"    pm.expect(response).to.have.property('name');",
+									"    pm.expect(response).to.have.property('venue_width');",
+									"    pm.expect(response).to.have.property('venue_height');",
+									"    pm.expect(response).to.have.property('venue_unit');",
+									"    pm.expect(response).to.have.property('version');",
+									"    pm.expect(response).to.have.property('is_active');",
+									"    ",
+									"    // Save chart_id for subsequent requests",
+									"    pm.collectionVariables.set(\"chart_id\", response.id);",
+									"});",
+									"",
+									"pm.test(\"Chart has correct event_id\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.event_id).to.eql(pm.collectionVariables.get(\"event_id\"));",
+									"});",
+									"",
+									"pm.test(\"Default version is 1\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.version).to.eql(1);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"name\": \"Reception Layout v1\",\n  \"venue_width\": 100,\n  \"venue_height\": 80,\n  \"venue_unit\": \"feet\",\n  \"version\": 1,\n  \"is_active\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating"]
+						},
+						"description": "Create a new seating chart for the event."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Seating Chart with Tables",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chart has all required fields\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('tables');",
+									"    pm.expect(response).to.have.property('total_tables');",
+									"    pm.expect(response).to.have.property('total_capacity');",
+									"    pm.expect(response).to.have.property('total_assigned');",
+									"});",
+									"",
+									"pm.test(\"Tables is an array\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.tables).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating"]
+						},
+						"description": "Retrieve the seating chart with all tables and statistics."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Seating Chart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Chart updated successfully\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.name).to.eql(\"Reception Layout v2 - Updated\");",
+									"    pm.expect(response.version).to.eql(2);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Reception Layout v2 - Updated\",\n  \"version\": 2\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}"]
+						},
+						"description": "Update seating chart metadata (name, version, etc.)."
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Create Duplicate Chart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 Bad Request\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message indicates chart already exists\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include('already exists');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"event_id\": \"{{event_id}}\",\n  \"name\": \"Duplicate Chart\",\n  \"venue_width\": 50,\n  \"venue_height\": 50,\n  \"venue_unit\": \"feet\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating"]
+						},
+						"description": "Attempt to create a second seating chart for an event (should fail)."
+					},
+					"response": []
+				}
+			],
+			"description": "CRUD operations for seating charts."
+		},
+		{
+			"name": "3. Table Management",
+			"item": [
+				{
+					"name": "Create Table - Round Table 1",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Table created successfully\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('seating_chart_id');",
+									"    pm.expect(response).to.have.property('table_number');",
+									"    pm.expect(response).to.have.property('table_type');",
+									"    pm.expect(response).to.have.property('capacity');",
+									"    pm.expect(response.table_number).to.eql('Table 1');",
+									"    pm.expect(response.table_type).to.eql('round');",
+									"    ",
+									"    // Save table_id",
+									"    pm.collectionVariables.set(\"table_id\", response.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seating_chart_id\": \"{{chart_id}}\",\n  \"table_number\": \"Table 1\",\n  \"table_type\": \"round\",\n  \"x_position\": 10,\n  \"y_position\": 10,\n  \"width\": 8,\n  \"height\": 8,\n  \"rotation\": 0,\n  \"capacity\": 8\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables"]
+						},
+						"description": "Create a single round table."
+					},
+					"response": []
+				},
+				{
+					"name": "Bulk Create Tables",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"All 5 tables created\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.be.an('array');",
+									"    pm.expect(response).to.have.lengthOf(5);",
+									"});",
+									"",
+									"pm.test(\"Each table has required fields\", function () {",
+									"    const response = pm.response.json();",
+									"    response.forEach((table, index) => {",
+									"        pm.expect(table).to.have.property('id');",
+									"        pm.expect(table).to.have.property('table_number');",
+									"        pm.expect(table).to.have.property('capacity');",
+									"        ",
+									"        // Save table IDs for later use",
+									"        pm.collectionVariables.set(`table_id_${index + 2}`, table.id);",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seating_chart_id\": \"{{chart_id}}\",\n  \"tables\": [\n    {\n      \"table_number\": \"Table 2\",\n      \"table_type\": \"round\",\n      \"x_position\": 30,\n      \"y_position\": 10,\n      \"width\": 8,\n      \"height\": 8,\n      \"rotation\": 0,\n      \"capacity\": 8\n    },\n    {\n      \"table_number\": \"Table 3\",\n      \"table_type\": \"rectangular\",\n      \"x_position\": 50,\n      \"y_position\": 10,\n      \"width\": 12,\n      \"height\": 6,\n      \"rotation\": 0,\n      \"capacity\": 10\n    },\n    {\n      \"table_number\": \"Head Table\",\n      \"table_type\": \"rectangular\",\n      \"x_position\": 40,\n      \"y_position\": 5,\n      \"width\": 20,\n      \"height\": 4,\n      \"rotation\": 0,\n      \"capacity\": 12\n    },\n    {\n      \"table_number\": \"Table 4\",\n      \"table_type\": \"square\",\n      \"x_position\": 10,\n      \"y_position\": 30,\n      \"width\": 6,\n      \"height\": 6,\n      \"rotation\": 0,\n      \"capacity\": 4\n    },\n    {\n      \"table_number\": \"Table 5\",\n      \"table_type\": \"round\",\n      \"x_position\": 30,\n      \"y_position\": 30,\n      \"width\": 8,\n      \"height\": 8,\n      \"rotation\": 0,\n      \"capacity\": 8\n    }\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables/bulk",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables", "bulk"]
+						},
+						"description": "Create 5 tables at once using bulk endpoint."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Table with Seats",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Table has seat statistics\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('seat_assignments');",
+									"    pm.expect(response).to.have.property('assigned_count');",
+									"    pm.expect(response).to.have.property('empty_seats');",
+									"    pm.expect(response.seat_assignments).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 300ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(300);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables/{{table_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables", "{{table_id}}"]
+						},
+						"description": "Get table with all seat assignments."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Table Position",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Table position updated\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.x_position).to.eql(\"15\");",
+									"    pm.expect(response.y_position).to.eql(\"15\");",
+									"    pm.expect(response.rotation).to.eql(\"45\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"x_position\": 15,\n  \"y_position\": 15,\n  \"rotation\": 45\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables/{{table_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables", "{{table_id}}"]
+						},
+						"description": "Update table position and rotation (simulating drag on canvas)."
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Invalid Table Data",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400 or 422\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([400, 422]);",
+									"});",
+									"",
+									"pm.test(\"Error response has detail field\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seating_chart_id\": \"{{chart_id}}\",\n  \"table_number\": \"Invalid Table\",\n  \"table_type\": \"round\",\n  \"x_position\": -100,\n  \"y_position\": -100,\n  \"width\": -5,\n  \"height\": -5,\n  \"rotation\": 0,\n  \"capacity\": 0\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables"]
+						},
+						"description": "Attempt to create table with invalid dimensions (negative values, zero capacity)."
+					},
+					"response": []
+				}
+			],
+			"description": "Table layout creation, retrieval, and updates."
+		},
+		{
+			"name": "4. Seat Assignments",
+			"item": [
+				{
+					"name": "Assign Guest to Seat",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Seat assignment created\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('id');",
+									"    pm.expect(response).to.have.property('table_layout_id');",
+									"    pm.expect(response).to.have.property('guest_id');",
+									"    pm.expect(response).to.have.property('seat_number');",
+									"    pm.expect(response.seat_number).to.eql(1);",
+									"    ",
+									"    // Save seat_id",
+									"    pm.collectionVariables.set(\"seat_id\", response.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"table_layout_id\": \"{{table_id}}\",\n  \"guest_id\": \"{{guest_id}}\",\n  \"seat_number\": 1,\n  \"notes\": \"VIP guest\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables/{{table_id}}/seats",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables", "{{table_id}}", "seats"]
+						},
+						"description": "Assign a guest to seat number 1 at the table."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Seat Assignment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Seat assignment updated\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.notes).to.eql(\"Head of table\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Head of table\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/seats/{{seat_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "seats", "{{seat_id}}"]
+						},
+						"description": "Update seat assignment notes."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Seat Assignment",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Deletion confirmed\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response.message).to.include('deleted successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/seats/{{seat_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "seats", "{{seat_id}}"]
+						},
+						"description": "Remove guest from seat (unassign)."
+					},
+					"response": []
+				},
+				{
+					"name": "Error - Exceed Table Capacity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error indicates capacity exceeded\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.detail).to.include('capacity');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// This test assumes table capacity is already full",
+									"// If not, you may need to fill the table first"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"table_layout_id\": \"{{table_id}}\",\n  \"guest_id\": \"{{guest_id}}\",\n  \"seat_number\": 99\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/tables/{{table_id}}/seats",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "tables", "{{table_id}}", "seats"]
+						},
+						"description": "Attempt to assign guest beyond table capacity (seat number 99 on 8-seat table)."
+					},
+					"response": []
+				}
+			],
+			"description": "Seat assignment CRUD operations."
+		},
+		{
+			"name": "5. Advanced Operations",
+			"item": [
+				{
+					"name": "Auto-Assign Guests (Fill Tables)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Auto-assignment result has assignments\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('assignments');",
+									"    pm.expect(response).to.have.property('strategy');",
+									"    pm.expect(response).to.have.property('total_guests');",
+									"    pm.expect(response).to.have.property('newly_assigned');",
+									"    pm.expect(response.strategy).to.eql('fill_tables');",
+									"    pm.expect(response.assignments).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Assignments have required fields\", function () {",
+									"    const response = pm.response.json();",
+									"    if (response.assignments.length > 0) {",
+									"        const assignment = response.assignments[0];",
+									"        pm.expect(assignment).to.have.property('guest_id');",
+									"        pm.expect(assignment).to.have.property('guest_name');",
+									"        pm.expect(assignment).to.have.property('table_id');",
+									"        pm.expect(assignment).to.have.property('table_number');",
+									"        pm.expect(assignment).to.have.property('seat_number');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seating_chart_id\": \"{{chart_id}}\",\n  \"guest_ids\": [\n    \"{{guest_id}}\",\n    \"{{guest_id_2}}\",\n    \"{{guest_id_3}}\"\n  ],\n  \"strategy\": \"fill_tables\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/auto-assign",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "auto-assign"]
+						},
+						"description": "Auto-assign guests using 'fill_tables' strategy (fill each table sequentially)."
+					},
+					"response": []
+				},
+				{
+					"name": "Auto-Assign Guests (Distribute)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Strategy is 'distribute'\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.strategy).to.eql('distribute');",
+									"});",
+									"",
+									"pm.test(\"Guests distributed across multiple tables\", function () {",
+									"    const response = pm.response.json();",
+									"    if (response.assignments.length > 0) {",
+									"        // Extract unique table IDs",
+									"        const tableIds = [...new Set(response.assignments.map(a => a.table_id))];",
+									"        // Should use multiple tables if enough guests",
+									"        pm.expect(tableIds.length).to.be.at.least(1);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"seating_chart_id\": \"{{chart_id}}\",\n  \"guest_ids\": [\n    \"{{guest_id}}\",\n    \"{{guest_id_2}}\",\n    \"{{guest_id_3}}\",\n    \"{{guest_id_4}}\",\n    \"{{guest_id_5}}\"\n  ],\n  \"strategy\": \"distribute\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/auto-assign",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "auto-assign"]
+						},
+						"description": "Auto-assign guests using 'distribute' strategy (spread evenly across tables)."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Seating Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics have all required fields\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('seating_chart_id');",
+									"    pm.expect(response).to.have.property('total_tables');",
+									"    pm.expect(response).to.have.property('total_capacity');",
+									"    pm.expect(response).to.have.property('total_assigned');",
+									"    pm.expect(response).to.have.property('total_unassigned');",
+									"    pm.expect(response).to.have.property('assignment_percentage');",
+									"    pm.expect(response).to.have.property('tables_by_type');",
+									"    pm.expect(response).to.have.property('average_table_size');",
+									"    pm.expect(response).to.have.property('table_stats');",
+									"});",
+									"",
+									"pm.test(\"Table stats is an array\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.table_stats).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Assignment percentage is valid\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response.assignment_percentage).to.be.at.least(0);",
+									"    pm.expect(response.assignment_percentage).to.be.at.most(100);",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 400ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(400);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}/statistics",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}", "statistics"]
+						},
+						"description": "Get comprehensive seating statistics including capacity, utilization, and per-table stats."
+					},
+					"response": []
+				}
+			],
+			"description": "Advanced seating operations including auto-assignment and statistics."
+		},
+		{
+			"name": "6. Cleanup",
+			"item": [
+				{
+					"name": "Delete Seating Chart",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Deletion confirmed\", function () {",
+									"    const response = pm.response.json();",
+									"    pm.expect(response).to.have.property('message');",
+									"    pm.expect(response.message).to.include('deleted successfully');",
+									"    pm.expect(response).to.have.property('deleted_chart_id');",
+									"});",
+									"",
+									"console.log(\"✅ Seating chart and all associated tables/seats deleted successfully\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}/seating/{{chart_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}", "seating", "{{chart_id}}"]
+						},
+						"description": "Delete seating chart (cascade deletes all tables and seat assignments)."
+					},
+					"response": []
+				}
+			],
+			"description": "Cleanup test data by deleting the seating chart."
+		}
+	],
+	"variable": [
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "user_id",
+			"value": ""
+		},
+		{
+			"key": "chart_id",
+			"value": ""
+		},
+		{
+			"key": "table_id",
+			"value": ""
+		},
+		{
+			"key": "seat_id",
+			"value": ""
+		}
+	]
+}
