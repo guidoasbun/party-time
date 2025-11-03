@@ -187,6 +187,42 @@ export const API_ENDPOINTS = {
     UPDATE_PREFERENCES: (token: string) => `/api/v1/rsvp/${token}/preferences`,
     UPDATE_PLUS_ONE: (token: string) => `/api/v1/rsvp/${token}/plus-one`,
   },
+  // Seating chart endpoints
+  // FR-21: The system shall provide an interactive seating chart interface
+  /*
+   * FR-21: The system shall provide an interactive seating chart interface.
+   * Phase 6 - 6.1.3 Fabric.JS Canvas Setup
+   */
+
+  SEATING: {
+    CREATE: (eventId: string) => `/api/v1/events/${eventId}/seating`,
+    GET_CHART: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}`,
+    UPDATE_CHART: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}`,
+    DELETE_CHART: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}`,
+    CREATE_TABLE: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables`,
+    BULK_CREATE_TABLES: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/bulk`,
+    GET_TABLE: (eventId: string, chartId: string, tableId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+    UPDATE_TABLE: (eventId: string, chartId: string, tableId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+    DELETE_TABLE: (eventId: string, chartId: string, tableId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+    ASSIGN_SEAT: (eventId: string, chartId: string, tableId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/seats`,
+    UPDATE_SEAT: (eventId: string, chartId: string, seatId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}`,
+    DELETE_SEAT: (eventId: string, chartId: string, seatId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}`,
+    AUTO_ASSIGN: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/auto-assign`,
+    STATISTICS: (eventId: string, chartId: string) =>
+      `/api/v1/events/${eventId}/seating/${chartId}/statistics`,
+  },
 } as const;
 
 // Rate limit error type

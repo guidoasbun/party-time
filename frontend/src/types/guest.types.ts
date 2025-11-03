@@ -338,7 +338,7 @@ export interface GuestGroup {
   created_at: string;
 }
 
-export interface SeatingChart {
+export interface LegacySeatingChart {
   id: UUID;
   event_id: UUID;
   name: string;
