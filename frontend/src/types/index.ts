@@ -3,31 +3,36 @@
  */
 
 // Common types
-export * from './common.types'
+export * from "./common.types";
 
 // Authentication types
-export * from './auth.types'
+export * from "./auth.types";
 
 // User types
-export * from './user.types'
+export * from "./user.types";
 
 // Event types
-export * from './event.types'
+export * from "./event.types";
 
 // Guest types
-export * from './guest.types'
+export * from "./guest.types";
 
 // Budget types
-export * from './budget.types'
+export * from "./budget.types";
 
 // Preferences types
-export * from './preferences.types'
+export * from "./preferences.types";
 
 // Actions types
-export * from './actions.types'
+export * from "./actions.types";
 
 // Email types
-export * from './email.types'
+export * from "./email.types";
+
+// Seating chart types
+// FR-21: The system shall provide an interactive seating chart interface.
+// Phase 6 - 6.1.3 Fabric.JS Canvas Setup
+export * from "./seating.types";
 
 // Re-export commonly used type aliases for convenience
 export type {
@@ -36,23 +41,23 @@ export type {
   ApiError,
   PaginatedResponse,
   RequestState,
-  Timestamps
-} from './common.types'
+  Timestamps,
+} from "./common.types";
 
 // Re-export error classes from api-client
 export type {
   ApiException,
   NetworkException,
-  TimeoutException
-} from '../lib/api-client'
+  TimeoutException,
+} from "../lib/api-client";
 
 export type {
   UserRole,
   User,
   UserCreate,
   UserUpdate,
-  UserSummary
-} from './user.types'
+  UserSummary,
+} from "./user.types";
 
 export type {
   EventType,
@@ -61,12 +66,10 @@ export type {
   EventCreate,
   EventUpdate,
   EventSummary,
-  EventWithDetails
-} from './event.types'
+  EventWithDetails,
+} from "./event.types";
 
-export {
-  RsvpStatus
-} from './guest.types'
+export { RsvpStatus } from "./guest.types";
 
 export type {
   Guest,
@@ -78,8 +81,8 @@ export type {
   CSVImportPreview,
   CSVImportResult,
   DuplicateDetail,
-  ImportErrorDetail
-} from './guest.types'
+  ImportErrorDetail,
+} from "./guest.types";
 
 export type {
   BudgetCategory,
@@ -88,8 +91,8 @@ export type {
   Expense,
   ExpenseCreate,
   ExpenseUpdate,
-  BudgetSummary
-} from './budget.types'
+  BudgetSummary,
+} from "./budget.types";
 
 export type {
   AuthSession,
@@ -97,5 +100,5 @@ export type {
   UserLoginRequest,
   UserLoginResponse,
   UserRegisterRequest,
-  UserRegisterResponse
-} from './auth.types'
+  UserRegisterResponse,
+} from "./auth.types";
