@@ -17,7 +17,11 @@ from app.schemas.rsvp import (
     RSVPSubmissionResponse,
     RSVPPreferencesUpdate,
     RSVPPlusOneUpdate,
-    RSVPStatistics
+    RSVPStatistics,
+    RSVPEmailPreferencesUpdate,
+    RSVPEmailPreferencesResponse,
+    UnsubscribeRequest,
+    UnsubscribeResponse
 )
 from app.models.guest import RsvpStatus, Guest
 from app.models.event import Event
@@ -235,6 +239,41 @@ async def submit_rsvp_response(
     await db.commit()
     await db.refresh(guest)
 
+    # FR-7: Email Automation
+    # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+    # Send automatic confirmation email (Phase 5.2.4)
+    # Use try-except to prevent email failures from blocking RSVP submission
+    try:
+        from app.services.email_service import EmailService
+        from app.tasks.email_tasks import send_template_email_async
+        from app.core.config import settings
+
+        if settings.AUTO_CONFIRMATION_ENABLED and guest.email_notifications_enabled:
+            email_service = EmailService()
+
+            # Build context for confirmation template
+            context = email_service.build_template_context(
+                event=event,
+                guest=guest
+            )
+
+            # Add unsubscribe link if token exists
+            if guest.unsubscribe_token:
+                context["unsubscribe_url"] = f"{settings.FRONTEND_URL}/rsvp/unsubscribe/{guest.unsubscribe_token}"
+
+            # Queue confirmation email via Celery
+            send_template_email_async.delay(
+                to_email=guest.email,
+                subject=f"RSVP Confirmation - {event.name}",
+                template_name="confirmation.html",
+                context=context
+            )
+    except Exception as e:
+        # Log error but don't fail the RSVP submission
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Failed to queue confirmation email for {guest.email}: {str(e)}")
+
     # Build response message
     status_messages = {
         RsvpStatus.ATTENDING: "Great! We look forward to seeing you!",
@@ -344,3 +383,134 @@ async def update_plus_one(
         "message": "Plus-one information updated successfully",
         "plus_one_name": guest.plus_one_name
     }
+
+# FR-7: Email Automation
+# Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+@router.patch("/rsvp/{token}/email-preferences", response_model=RSVPEmailPreferencesResponse)
+async def update_email_preferences(
+    token: str,
+    request: Request,
+    preferences: RSVPEmailPreferencesUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Update email notification preferences (Phase 5.2.4).
+    Public endpoint - no authentication required.
+    Rate limit: 5 requests per minute per IP.
+    """
+    # Apply rate limiting
+    await check_rate_limit(request, endpoint_type="update")
+
+    # Get guest and validate token
+    guest = await get_guest_by_token(token, db)
+
+    # Update preferences if provided
+    if preferences.email_notifications_enabled is not None:
+        guest.email_notifications_enabled = preferences.email_notifications_enabled
+
+    if preferences.reminder_emails_enabled is not None:
+        guest.reminder_emails_enabled = preferences.reminder_emails_enabled
+
+    if preferences.thank_you_emails_enabled is not None:
+        guest.thank_you_emails_enabled = preferences.thank_you_emails_enabled
+
+    await db.commit()
+    await db.refresh(guest)
+
+    return RSVPEmailPreferencesResponse(
+        success=True,
+        message="Email preferences updated successfully",
+        email_notifications_enabled=guest.email_notifications_enabled,
+        reminder_emails_enabled=guest.reminder_emails_enabled,
+        thank_you_emails_enabled=guest.thank_you_emails_enabled
+    )
+
+
+@router.get("/rsvp/unsubscribe/{unsubscribe_token}", response_model=dict)
+async def get_unsubscribe_page(
+    unsubscribe_token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get unsubscribe page information (Phase 5.2.4).
+    Public endpoint - no authentication required.
+    """
+    # Find guest by unsubscribe token
+    from sqlalchemy import select
+    result = await db.execute(
+        select(Guest).where(Guest.unsubscribe_token == unsubscribe_token)
+    )
+    guest = result.scalar_one_or_none()
+
+    if not guest:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid unsubscribe token"
+        )
+
+    # Get event
+    event = await crud_event.get_event_by_id(db, guest.event_id)
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found"
+        )
+
+    return {
+        "guest_name": f"{guest.first_name} {guest.last_name}",
+        "event_name": event.name,
+        "email": guest.email,
+        "is_unsubscribed": not guest.email_notifications_enabled
+    }
+
+
+@router.post("/rsvp/unsubscribe/{unsubscribe_token}", response_model=UnsubscribeResponse)
+async def unsubscribe_from_emails(
+    unsubscribe_token: str,
+    unsubscribe_data: UnsubscribeRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Unsubscribe from event emails (Phase 5.2.4).
+    Public endpoint - no authentication required.
+    """
+    if not unsubscribe_data.confirm:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unsubscribe confirmation required"
+        )
+
+    # Find guest by unsubscribe token
+    from sqlalchemy import select
+    result = await db.execute(
+        select(Guest).where(Guest.unsubscribe_token == unsubscribe_token)
+    )
+    guest = result.scalar_one_or_none()
+
+    if not guest:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Invalid unsubscribe token"
+        )
+
+    # Get event
+    event = await crud_event.get_event_by_id(db, guest.event_id)
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found"
+        )
+
+    # Disable all email notifications
+    guest.email_notifications_enabled = False
+    guest.reminder_emails_enabled = False
+    guest.thank_you_emails_enabled = False
+
+    await db.commit()
+
+    return UnsubscribeResponse(
+        success=True,
+        message="You have been successfully unsubscribed from all event emails",
+        guest_name=f"{guest.first_name} {guest.last_name}",
+        event_name=event.name
+    )

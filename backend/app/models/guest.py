@@ -56,6 +56,20 @@ class Guest(Base):
     # FR-6: The system shall display an RSVP submission page. 5.1.1
     rsvp_ip_address = Column(String(45))  # IPv4 (15 chars) or IPv6 (45 chars max)
 
+    # FR-7: Email Automation
+    # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+    # Email automation tracking (Phase 5.2.4)
+    last_reminder_sent_at = Column(DateTime(timezone=True))
+    thank_you_sent_at = Column(DateTime(timezone=True))
+
+    # FR-7: Email Automation
+    # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+    # Email preferences (Phase 5.2.4)
+    email_notifications_enabled = Column(Boolean, nullable=False, default=True)
+    reminder_emails_enabled = Column(Boolean, nullable=False, default=True)
+    thank_you_emails_enabled = Column(Boolean, nullable=False, default=True)
+    unsubscribe_token = Column(String(255), unique=True, index=True)
+
     # Tracking timestamps
     invitation_sent_at = Column(DateTime(timezone=True))
     rsvp_responded_at = Column(DateTime(timezone=True))

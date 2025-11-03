@@ -73,5 +73,9 @@ With gratitude,
 
 ===============================================================================
 This thank you message was sent by {{ app_name }}.
+{% if unsubscribe_url %}
+
+Unsubscribe from event emails: {{ unsubscribe_url }}
+{% endif %}
 
 © {{ current_year }} {{ app_name }}. All rights reserved.

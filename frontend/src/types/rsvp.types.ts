@@ -106,3 +106,29 @@ export interface RSVPErrorResponse {
   retry_after?: number;
   reset_at?: string;
 }
+
+/* Unsubscribe Page Information (Phase 5.2.4)
+
+ * FR-7: Email Automation
+ * Phase 5.2.4: Automated Email Flows - Unsubscribe Page
+ */
+
+export interface UnsubscribePageInfo {
+  guest_name: string;
+  event_name: string;
+  email: string;
+  is_unsubscribed: boolean;
+}
+
+// Unsubscribe Request (Phase 5.2.4)
+export interface UnsubscribeRequest {
+  confirm: boolean;
+}
+
+// Unsubscribe Response (Phase 5.2.4)
+export interface UnsubscribeResponse {
+  success: boolean;
+  message: string;
+  guest_name: string;
+  event_name: string;
+}

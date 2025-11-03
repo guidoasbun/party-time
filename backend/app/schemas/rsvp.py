@@ -91,3 +91,32 @@ class RateLimitInfo(BaseModel):
     remaining: int
     reset_at: datetime
     retry_after: Optional[int] = None  # seconds until retry allowed
+
+
+class RSVPEmailPreferencesUpdate(BaseModel):
+    """Update email notification preferences (Phase 5.2.4)."""
+    email_notifications_enabled: Optional[bool] = Field(None, description="Enable/disable all email notifications")
+    reminder_emails_enabled: Optional[bool] = Field(None, description="Enable/disable reminder emails")
+    thank_you_emails_enabled: Optional[bool] = Field(None, description="Enable/disable thank you emails")
+
+
+class RSVPEmailPreferencesResponse(BaseModel):
+    """Response for email preferences."""
+    success: bool
+    message: str
+    email_notifications_enabled: bool
+    reminder_emails_enabled: bool
+    thank_you_emails_enabled: bool
+
+
+class UnsubscribeRequest(BaseModel):
+    """Request to unsubscribe from event emails."""
+    confirm: bool = Field(..., description="Must be true to confirm unsubscribe")
+
+
+class UnsubscribeResponse(BaseModel):
+    """Response after unsubscribe action."""
+    success: bool
+    message: str
+    guest_name: str
+    event_name: str
