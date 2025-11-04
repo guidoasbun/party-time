@@ -28,6 +28,7 @@ export interface TableShapeOptions {
   strokeWidth?: number;
   selectable?: boolean;
   hasControls?: boolean;
+  evented?: boolean;
 }
 
 export interface TableColorScheme {
@@ -172,6 +173,10 @@ export function constrainToCanvasBounds(
   let left = obj.left ?? 0;
   let top = obj.top ?? 0;
 
+  // Track original position to detect if constraints were applied
+  const originalLeft = left;
+  const originalTop = top;
+
   // Constrain horizontal position
   if (objBoundingRect.left < 0) {
     left = Math.max(left - objBoundingRect.left, 0);
@@ -188,8 +193,11 @@ export function constrainToCanvasBounds(
     top = Math.min(top, canvasHeight - objBoundingRect.height);
   }
 
-  obj.set({ left, top });
-  obj.setCoords();
+  // Only update position if it actually changed due to constraints
+  if (left !== originalLeft || top !== originalTop) {
+    obj.set({ left, top });
+    obj.setCoords();
+  }
 }
 
 /**
@@ -261,6 +269,7 @@ export function createRoundTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -328,6 +337,7 @@ export function createRectangularTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -396,6 +406,7 @@ export function createSquareTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
@@ -464,6 +475,7 @@ export function createCustomTable(
     angle: options.rotation,
     selectable: options.selectable ?? true,
     hasControls: options.hasControls ?? true,
+    evented: options.evented ?? true,
     lockScalingFlip: true,
   }) as fabric.Group & { data?: Record<string, unknown> };
 
