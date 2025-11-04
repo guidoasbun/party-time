@@ -145,13 +145,16 @@ export function TableManagementDemo() {
 
   // Handle table move
   const handleTableMove = (tableId: UUID, x: number, y: number) => {
-    setTables((prev) =>
-      prev.map((table) =>
+    console.log('📦 handleTableMove called:', { tableId, x, y });
+    setTables((prev) => {
+      const updated = prev.map((table) =>
         table.id === tableId
           ? { ...table, x_position: x, y_position: y, updated_at: new Date().toISOString() }
           : table
-      )
-    );
+      );
+      console.log('📦 Updated tables state:', updated.find(t => t.id === tableId));
+      return updated;
+    });
   };
 
   // Handle table resize
@@ -318,7 +321,7 @@ export function TableManagementDemo() {
         </div>
 
         {/* Right: Canvas */}
-        <div className="flex-1 flex items-center justify-center relative">
+        <div className="flex-1 flex items-center justify-center">
           <SeatingCanvas
             seatingChart={seatingChartWithTables}
             tables={tables}
@@ -333,23 +336,23 @@ export function TableManagementDemo() {
             theme={resolvedTheme}
             className="border border-border rounded-lg shadow-lg w-full h-full max-w-[1200px] max-h-[800px]"
           />
-
-          {/* Properties Panel */}
-          <TableProperties
-            table={selectedTable}
-            isOpen={isPropertiesOpen}
-            onClose={() => {
-              setIsPropertiesOpen(false);
-              setSelectedTableId(null);
-              setSelectedTableIds([]);
-            }}
-            onSave={handleSaveTable}
-            onDuplicate={handleDuplicateTable}
-            onDelete={handleDeleteTable}
-            isSaving={isSaving}
-          />
         </div>
       </div>
+
+      {/* Properties Panel - Moved outside main content container */}
+      <TableProperties
+        table={selectedTable}
+        isOpen={isPropertiesOpen}
+        onClose={() => {
+          setIsPropertiesOpen(false);
+          setSelectedTableId(null);
+          setSelectedTableIds([]);
+        }}
+        onSave={handleSaveTable}
+        onDuplicate={handleDuplicateTable}
+        onDelete={handleDeleteTable}
+        isSaving={isSaving}
+      />
 
       {/* Templates Modal */}
       <TableTemplates

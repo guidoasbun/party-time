@@ -323,7 +323,7 @@ export function TableProperties({
             <div>
               <label className="block text-xs text-muted-foreground mb-1">X</label>
               <Input
-                value={Math.round(table.x_position)}
+                value={String(Math.round(table?.x_position ?? 0))}
                 disabled
                 readOnly
               />
@@ -331,7 +331,7 @@ export function TableProperties({
             <div>
               <label className="block text-xs text-muted-foreground mb-1">Y</label>
               <Input
-                value={Math.round(table.y_position)}
+                value={String(Math.round(table?.y_position ?? 0))}
                 disabled
                 readOnly
               />

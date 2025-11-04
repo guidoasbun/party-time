@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/6.0.2/fabric.min.js"></script>
+</head>
+<body>
+    <canvas id="test" width="800" height="600"></canvas>
+    <script>
+        const canvas = new fabric.Canvas('test', {
+            backgroundColor: '#fff',
+            selection: true
+        });
+        
+        const circle = new fabric.Circle({
+            radius: 50,
+            fill: 'blue',
+            left: 100,
+            top: 100
+        });
+        
+        const group = new fabric.Group([circle], {
+            left: 200,
+            top: 200,
+            selectable: true,
+            hasControls: true,
+            evented: true
+        });
+        
+        canvas.add(group);
+        console.log('Group properties:', {
+            selectable: group.selectable,
+            hasControls: group.hasControls,
+            evented: group.evented,
+            lockMovementX: group.lockMovementX,
+            lockMovementY: group.lockMovementY
+        });
+    </script>
+</body>
+</html>
