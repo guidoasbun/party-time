@@ -177,8 +177,78 @@ export interface BulkSeatAssignmentCreate {
 export interface AutoAssignRequest {
   seating_chart_id: UUID;
   guest_ids: UUID[];
-  strategy?: "fill_tables" | "distribute" | "custom";
+  strategy?: "fill_tables" | "distribute" | "custom" | "smart";
   preferences?: Record<string, unknown>;
+}
+
+// ============================================================================
+// Smart Seating Types (Phase 6.2.1)
+// ============================================================================
+// FR-21: The system shall provide an interactive seating chart interface
+// Phase 6.2.1 Smart Seating Features
+export interface SmartAssignPreferences {
+  prioritize_dietary: boolean;
+  weight_dietary: number; // 0.0-1.0
+  keep_plus_ones_together: boolean;
+  group_by_organization: boolean;
+  weight_organization: number; // 0.0-1.0
+  group_families: boolean;
+  weight_family: number; // 0.0-1.0
+  cluster_meal_preferences: boolean;
+  weight_meal: number; // 0.0-1.0
+  balance_tables: boolean;
+}
+
+export interface SuggestionScore {
+  guest_id: UUID;
+  guest_name: string;
+  table_id: UUID;
+  table_number: string;
+  seat_number: number;
+  total_score: number; // 0.0-1.0
+  breakdown: Record<string, number>; // e.g., { dietary: 0.8, organization: 0.6 }
+  reasoning: string[]; // Human-readable explanations
+  confidence: "high" | "medium" | "low";
+}
+
+export interface SmartAssignRequest {
+  seating_chart_id: UUID;
+  guest_ids: UUID[];
+  strategy: "smart";
+  preferences?: SmartAssignPreferences;
+}
+
+export interface SmartAssignResponse {
+  seating_chart_id: UUID;
+  strategy: string;
+  total_guests: number;
+  already_assigned: number;
+  newly_assigned: number;
+  total_capacity: number;
+  remaining_capacity: number;
+  assignments: Array<{
+    guest_id: string;
+    guest_name: string;
+    table_id: string;
+    table_number: string;
+    seat_number: number;
+  }>;
+  suggestions: SuggestionScore[];
+  statistics: SmartSeatingStatistics;
+}
+
+export interface SmartSeatingStatistics {
+  avg_confidence_score: number;
+  confidence_distribution: {
+    high: number;
+    medium: number;
+    low: number;
+  };
+  dietary_groups_formed: number;
+  families_seated_together: number;
+  plus_ones_paired: number;
+  organization_clusters: number;
+  total_suggestions: number;
 }
 
 // ============================================================================

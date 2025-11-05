@@ -4,6 +4,7 @@
  * FR-21: Interactive seating chart interface
  * Phase 6.1.2: Seating Chart API Endpoints
  * Phase 6.1.3: Fabric.js Canvas Setup
+ * Phase 6.2.1: Smart Seating Suggestions
  */
 
 import { api, withRetry } from "@/lib/api-client";
@@ -24,6 +25,9 @@ import {
   BulkTableCreate,
   AutoAssignRequest,
   SeatingStatistics,
+  SmartAssignRequest,
+  SmartAssignResponse,
+  SmartAssignPreferences,
 } from "@/types";
 
 /**
@@ -281,6 +285,82 @@ export class SeatingService {
       undefined,
       withRetry({ attempts: 2 })
     );
+  }
+
+  // ============================================================================
+  // Smart Seating Methods (Phase 6.2.1)
+  // ============================================================================
+
+  /**
+   * Auto-assign guests using smart algorithm with compatibility scoring
+   */
+  async smartAssignGuests(
+    eventId: UUID,
+    chartId: UUID,
+    data: SmartAssignRequest
+  ): Promise<SmartAssignResponse> {
+    return api.post<SmartAssignResponse, SmartAssignRequest>(
+      API_ENDPOINTS.SEATING.AUTO_ASSIGN(eventId, chartId),
+      data
+    );
+  }
+
+  /**
+   * Get default smart assignment preferences
+   */
+  getDefaultSmartPreferences(): SmartAssignPreferences {
+    return {
+      prioritize_dietary: true,
+      weight_dietary: 0.8,
+      keep_plus_ones_together: true,
+      group_by_organization: true,
+      weight_organization: 0.6,
+      group_families: true,
+      weight_family: 0.4,
+      cluster_meal_preferences: true,
+      weight_meal: 0.5,
+      balance_tables: true,
+    };
+  }
+
+  /**
+   * Load smart preferences from localStorage or return defaults
+   */
+  loadSmartPreferences(eventId?: UUID): SmartAssignPreferences {
+    if (typeof window === "undefined") {
+      return this.getDefaultSmartPreferences();
+    }
+
+    const key = eventId
+      ? `party-time-smart-prefs-${eventId}`
+      : "party-time-smart-prefs-default";
+
+    const stored = localStorage.getItem(key);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as SmartAssignPreferences;
+      } catch {
+        return this.getDefaultSmartPreferences();
+      }
+    }
+
+    return this.getDefaultSmartPreferences();
+  }
+
+  /**
+   * Save smart preferences to localStorage
+   */
+  saveSmartPreferences(
+    preferences: SmartAssignPreferences,
+    eventId?: UUID
+  ): void {
+    if (typeof window === "undefined") return;
+
+    const key = eventId
+      ? `party-time-smart-prefs-${eventId}`
+      : "party-time-smart-prefs-default";
+
+    localStorage.setItem(key, JSON.stringify(preferences));
   }
 }
 

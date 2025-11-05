@@ -308,7 +308,175 @@ class AutoAssignRequest(BaseModel):
     @classmethod
     def validate_strategy(cls, v: str) -> str:
         """Validate assignment strategy."""
-        valid_strategies = ["fill_tables", "distribute", "custom"]
+        valid_strategies = ["fill_tables", "distribute", "custom", "smart"]
         if v not in valid_strategies:
             raise ValueError(f"Strategy must be one of: {', '.join(valid_strategies)}")
         return v
+
+
+# ============================================================================
+# Smart Seating Schemas (Phase 6.2.1)
+# ============================================================================
+
+"""
+FR-21: The system shall provide an interactive seating chart interface
+Phase 6.2.1 Smart Seating Features
+"""
+
+class SmartAssignPreferences(BaseModel):
+    """
+    Preferences for smart seating assignment algorithm.
+
+    Configurable weights allow event planners to prioritize criteria based
+    on their specific event type (corporate, wedding, conference, etc.).
+    """
+    prioritize_dietary: bool = Field(default=True, description="Group guests by dietary restrictions")
+    weight_dietary: float = Field(default=0.8, ge=0.0, le=1.0, description="Weight for dietary matching (0.0-1.0)")
+
+    keep_plus_ones_together: bool = Field(default=True, description="Always seat plus-ones together (mandatory)")
+
+    group_by_organization: bool = Field(default=True, description="Group guests from same organization/email domain")
+    weight_organization: float = Field(default=0.6, ge=0.0, le=1.0, description="Weight for organization matching (0.0-1.0)")
+
+    group_families: bool = Field(default=True, description="Group guests with same last name (family detection)")
+    weight_family: float = Field(default=0.4, ge=0.0, le=1.0, description="Weight for family matching (0.0-1.0)")
+
+    cluster_meal_preferences: bool = Field(default=True, description="Group guests with same meal preferences")
+    weight_meal: float = Field(default=0.5, ge=0.0, le=1.0, description="Weight for meal preference matching (0.0-1.0)")
+
+    balance_tables: bool = Field(default=True, description="Distribute guests evenly vs filling sequentially")
+
+    @field_validator('weight_dietary', 'weight_organization', 'weight_family', 'weight_meal')
+    @classmethod
+    def validate_weights(cls, v: float) -> float:
+        """Validate weight values are between 0.0 and 1.0."""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("Weight must be between 0.0 and 1.0")
+        return v
+
+
+class SuggestionScore(BaseModel):
+    """
+    Scoring breakdown for a single guest-table assignment suggestion.
+
+    Provides transparency into why the algorithm suggested this placement,
+    allowing event planners to understand and validate the recommendations.
+    """
+    guest_id: UUID
+    guest_name: str
+    table_id: UUID
+    table_number: str
+    seat_number: int
+    total_score: float = Field(..., ge=0.0, le=1.0, description="Overall compatibility score (0.0-1.0)")
+    breakdown: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Individual scores by criterion (dietary, organization, family, meal)"
+    )
+    reasoning: List[str] = Field(
+        default_factory=list,
+        description="Human-readable explanations for the suggestion"
+    )
+    confidence: str = Field(..., description="Confidence level (high, medium, low)")
+
+    @field_validator('total_score')
+    @classmethod
+    def validate_total_score(cls, v: float) -> float:
+        """Validate total score is between 0.0 and 1.0."""
+        if not 0.0 <= v <= 1.0:
+            raise ValueError("Total score must be between 0.0 and 1.0")
+        return v
+
+    @field_validator('confidence')
+    @classmethod
+    def validate_confidence(cls, v: str) -> str:
+        """Validate confidence level."""
+        valid_levels = ["high", "medium", "low"]
+        if v not in valid_levels:
+            raise ValueError(f"Confidence must be one of: {', '.join(valid_levels)}")
+        return v
+
+
+class SmartAssignRequest(AutoAssignRequest):
+    """
+    Extended auto-assign request with smart seating preferences.
+
+    Inherits from AutoAssignRequest and adds smart-specific configuration.
+    """
+    strategy: str = Field(default="smart", description="Must be 'smart' for smart assignment")
+    preferences: Optional[SmartAssignPreferences] = Field(
+        default=None,
+        description="Smart assignment preferences (uses defaults if not provided)"
+    )
+
+    @field_validator('strategy')
+    @classmethod
+    def validate_smart_strategy(cls, v: str) -> str:
+        """Ensure strategy is 'smart' for this request type."""
+        if v != "smart":
+            raise ValueError("SmartAssignRequest requires strategy='smart'")
+        return v
+
+
+class SmartAssignResponse(BaseModel):
+    """
+    Response from smart seating assignment with detailed scoring.
+
+    Includes assignment details, suggestion scores, and enhanced statistics
+    to help event planners understand the algorithm's decisions.
+    """
+    seating_chart_id: UUID
+    strategy: str
+    total_guests: int = Field(..., ge=0, description="Total guests in request")
+    already_assigned: int = Field(..., ge=0, description="Guests already seated (skipped)")
+    newly_assigned: int = Field(..., ge=0, description="Guests assigned in this operation")
+    total_capacity: int = Field(..., ge=0, description="Total seating capacity across all tables")
+    remaining_capacity: int = Field(..., ge=0, description="Empty seats after assignment")
+
+    assignments: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="List of seat assignments with guest/table details"
+    )
+
+    suggestions: List[SuggestionScore] = Field(
+        default_factory=list,
+        description="Detailed scoring breakdown for each assignment"
+    )
+
+    statistics: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Enhanced statistics (avg_confidence_score, dietary_groups_formed, etc.)"
+    )
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class SeatingStatistics(BaseModel):
+    """
+    Detailed seating chart statistics for analytics dashboard.
+
+    Extends the basic statistics endpoint with smart seating insights.
+    """
+    seating_chart_id: UUID
+    total_tables: int = Field(..., ge=0)
+    total_capacity: int = Field(..., ge=0)
+    total_assigned: int = Field(..., ge=0)
+    total_unseated: int = Field(..., ge=0)
+    utilization_rate: float = Field(..., ge=0.0, le=1.0, description="Assigned / Capacity")
+
+    # Table-level statistics
+    tables_full: int = Field(..., ge=0, description="Tables at full capacity")
+    tables_partial: int = Field(..., ge=0, description="Tables with some seats filled")
+    tables_empty: int = Field(..., ge=0, description="Tables with no assignments")
+
+    # Guest-level statistics
+    guests_with_dietary_restrictions: int = Field(..., ge=0)
+    guests_with_plus_ones: int = Field(..., ge=0)
+
+    # Smart seating insights (optional - only if smart assignment used)
+    dietary_groups_formed: Optional[int] = Field(None, ge=0)
+    families_seated_together: Optional[int] = Field(None, ge=0)
+    plus_ones_paired: Optional[int] = Field(None, ge=0)
+    organization_clusters: Optional[int] = Field(None, ge=0)
+    avg_table_compatibility: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+    model_config = ConfigDict(from_attributes=True)
