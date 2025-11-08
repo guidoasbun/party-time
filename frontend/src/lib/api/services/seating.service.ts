@@ -5,6 +5,7 @@
  * Phase 6.1.2: Seating Chart API Endpoints
  * Phase 6.1.3: Fabric.js Canvas Setup
  * Phase 6.2.1: Smart Seating Suggestions
+ * Phase 6.2.2: Venue Layout Integration
  */
 
 import { api, withRetry } from "@/lib/api-client";
@@ -29,6 +30,7 @@ import {
   SmartAssignResponse,
   SmartAssignPreferences,
 } from "@/types";
+import type { VenueMetadata } from "@/types/venue.types";
 
 /**
  * Seating chart service class with typed methods
@@ -361,6 +363,53 @@ export class SeatingService {
       : "party-time-smart-prefs-default";
 
     localStorage.setItem(key, JSON.stringify(preferences));
+  }
+
+  // ============================================================================
+  // Venue Layout Methods (Phase 6.2.2)
+  // ============================================================================
+
+  /**
+   * Update venue metadata (floor plan and special areas)
+   */
+  async updateVenueMetadata(
+    eventId: UUID,
+    chartId: UUID,
+    floorPlanUrl: string | null,
+    venueMetadata: VenueMetadata
+  ): Promise<SeatingChart> {
+    const updateData: SeatingChartUpdate = {
+      background_image_url: floorPlanUrl || undefined,
+      chart_metadata: venueMetadata as unknown as Record<string, unknown>,
+    };
+
+    return this.updateSeatingChart(eventId, chartId, updateData);
+  }
+
+  /**
+   * Upload floor plan and update chart
+   */
+  async uploadFloorPlan(
+    eventId: UUID,
+    chartId: UUID,
+    base64DataUrl: string
+  ): Promise<SeatingChart> {
+    const updateData: SeatingChartUpdate = {
+      background_image_url: base64DataUrl,
+    };
+
+    return this.updateSeatingChart(eventId, chartId, updateData);
+  }
+
+  /**
+   * Remove floor plan from chart
+   */
+  async removeFloorPlan(eventId: UUID, chartId: UUID): Promise<SeatingChart> {
+    const updateData: SeatingChartUpdate = {
+      background_image_url: undefined,
+    };
+
+    return this.updateSeatingChart(eventId, chartId, updateData);
   }
 }
 

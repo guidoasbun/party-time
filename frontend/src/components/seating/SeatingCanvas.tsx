@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 /**
  * Seating chart canvas component using Fabric.js
@@ -7,21 +7,18 @@
  * Phase 6.1.3: Fabric.js Canvas Setup
  */
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as fabric from 'fabric';
-import {
-  SeatingChartWithTables,
-  TableLayout,
-  UUID,
-  ZoomState,
-} from '@/types';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import * as fabric from "fabric";
+import { SeatingChartWithTables, TableLayout, UUID, ZoomState } from "@/types";
 import {
   createTableShape,
   snapToGrid,
   constrainToCanvasBounds,
   GridConfig,
   renderGridLines,
-} from '@/utils/fabric-shapes';
+} from "@/utils/fabric-shapes";
+import type { SpecialArea, FloorPlanSettings } from "@/types/venue.types";
+import { createSpecialAreaShape } from "@/utils/venue-helpers";
 
 // ============================================================================
 // Type Definitions
@@ -39,7 +36,13 @@ export interface SeatingCanvasProps {
   gridConfig?: GridConfig;
   zoomState?: ZoomState;
   onZoomChange?: (newZoom: ZoomState) => void;
-  theme?: 'light' | 'dark';
+  theme?: "light" | "dark";
+  // Phase 6.2.2: Venue Layout Integration
+  floorPlanUrl?: string;
+  floorPlanSettings?: FloorPlanSettings;
+  specialAreas?: SpecialArea[];
+  onSpecialAreaSelect?: (areaId: string | null) => void;
+  onSpecialAreaMove?: (areaId: string, x: number, y: number) => void;
 }
 
 // ============================================================================
@@ -54,11 +57,17 @@ export default function SeatingCanvas({
   onTableResize,
   onTableRotate,
   readOnly = false,
-  className = '',
-  gridConfig = { enabled: true, size: 20, color: '#e5e7eb', showLines: true },
+  className = "",
+  gridConfig = { enabled: true, size: 20, color: "#e5e7eb", showLines: true },
   zoomState = { scale: 1, offsetX: 0, offsetY: 0 },
   onZoomChange,
-  theme = 'light',
+  theme = "light",
+  // Phase 6.2.2: Venue Layout Integration
+  floorPlanUrl,
+  floorPlanSettings,
+  specialAreas = [],
+  onSpecialAreaSelect,
+  onSpecialAreaMove,
 }: SeatingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -70,6 +79,9 @@ export default function SeatingCanvas({
 
   // Track which object is currently being manipulated
   const activeObjectRef = useRef<string | null>(null);
+
+  // Track floor plan image object
+  const floorPlanImageRef = useRef<fabric.Image | null>(null);
 
   // ============================================================================
   // Canvas Initialization
@@ -86,7 +98,7 @@ export default function SeatingCanvas({
     const canvas = new fabric.Canvas(canvasRef.current, {
       width: containerWidth,
       height: containerHeight,
-      backgroundColor: theme === 'dark' ? '#0a0a0a' : '#ffffff',
+      backgroundColor: theme === "dark" ? "#0a0a0a" : "#ffffff",
       selection: !readOnly, // Enable multi-select in edit mode
       preserveObjectStacking: true,
     });
@@ -103,6 +115,128 @@ export default function SeatingCanvas({
   }, [theme, readOnly]);
 
   // ============================================================================
+  // Render Floor Plan
+  // ============================================================================
+
+  // Venue Layout Demo - Client Component
+  // FR-21: The system shall provide an interactive seating chart interface.
+  // Phase 6.2.2: Venue Layout Integration
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas || !isInitialized) return;
+
+    // Remove existing floor plan if it exists
+    if (floorPlanImageRef.current) {
+      canvas.remove(floorPlanImageRef.current);
+      floorPlanImageRef.current = null;
+    }
+
+    // Add new floor plan if URL provided
+    if (floorPlanUrl) {
+      fabric.Image.fromURL(floorPlanUrl, { crossOrigin: "anonymous" }).then(
+        (img) => {
+          if (!img) return;
+
+          const settings = floorPlanSettings || {
+            opacity: 0.5,
+            locked: false,
+            scale: 1,
+          };
+
+          // Scale image to fit canvas while maintaining aspect ratio
+          const canvasWidth = canvas.getWidth();
+          const canvasHeight = canvas.getHeight();
+          const imgWidth = img.width || 1;
+          const imgHeight = img.height || 1;
+
+          const scaleX = (canvasWidth * settings.scale) / imgWidth;
+          const scaleY = (canvasHeight * settings.scale) / imgHeight;
+          const scale = Math.min(scaleX, scaleY);
+
+          img.set({
+            scaleX: scale,
+            scaleY: scale,
+            opacity: settings.opacity,
+            selectable: !settings.locked && !readOnly,
+            evented: !settings.locked && !readOnly,
+            hasControls: false,
+            hasBorders: false,
+            lockMovementX: settings.locked,
+            lockMovementY: settings.locked,
+          });
+
+          // Position at canvas center
+          img.set({
+            left: (canvasWidth - img.width! * scale) / 2,
+            top: (canvasHeight - img.height! * scale) / 2,
+          });
+
+          // Store reference
+          floorPlanImageRef.current = img;
+
+          // Add to canvas as bottom layer
+          canvas.add(img);
+          canvas.sendObjectToBack(img);
+
+          canvas.renderAll();
+        }
+      );
+    }
+  }, [floorPlanUrl, floorPlanSettings, isInitialized, readOnly]);
+
+  // ============================================================================
+  // Render Special Areas
+  // ============================================================================
+
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    if (!canvas || !isInitialized) return;
+
+    // Remove existing special area objects
+    const existingAreas = canvas
+      .getObjects()
+      .filter(
+        (obj) =>
+          (obj as fabric.Group & { data?: { areaType?: string } }).data
+            ?.areaType === "special"
+      );
+    existingAreas.forEach((obj) => canvas.remove(obj));
+
+    // Add special areas
+    specialAreas.forEach((area) => {
+      const areaShape = createSpecialAreaShape(area, theme);
+      areaShape.set({
+        selectable: !readOnly,
+        hasControls: !readOnly,
+        evented: !readOnly,
+      });
+      canvas.add(areaShape);
+    });
+
+    // Ensure proper z-index layering:
+    // 1. Floor plan (bottom)
+    if (floorPlanImageRef.current) {
+      canvas.sendObjectToBack(floorPlanImageRef.current);
+    }
+    // 2. Special areas (middle)
+    specialAreas.forEach((area) => {
+      const areaObj = canvas
+        .getObjects()
+        .find(
+          (obj) =>
+            (obj as fabric.Group & { data?: { areaId?: string } }).data
+              ?.areaId === area.id
+        );
+      if (areaObj) {
+        canvas.bringObjectForward(areaObj);
+      }
+    });
+    // 3. Tables stay on top automatically
+
+    canvas.renderAll();
+  }, [specialAreas, isInitialized, theme, readOnly]);
+
+  // ============================================================================
   // Render Tables
   // ============================================================================
 
@@ -111,12 +245,17 @@ export default function SeatingCanvas({
     if (!canvas || !isInitialized) return;
 
     // Get existing table objects
-    const existingTableObjects = canvas.getObjects().filter(
-      (obj) => !(obj as fabric.Object & { isGridLine?: boolean }).isGridLine
-    ) as (fabric.Group & { data?: Record<string, unknown> })[];
+    const existingTableObjects = canvas
+      .getObjects()
+      .filter(
+        (obj) => !(obj as fabric.Object & { isGridLine?: boolean }).isGridLine
+      ) as (fabric.Group & { data?: Record<string, unknown> })[];
 
     // Create a map of existing tables by ID
-    const existingTableMap = new Map<string, fabric.Group & { data?: Record<string, unknown> }>();
+    const existingTableMap = new Map<
+      string,
+      fabric.Group & { data?: Record<string, unknown> }
+    >();
     existingTableObjects.forEach((obj) => {
       if (obj.data && obj.data.id) {
         existingTableMap.set(obj.data.id as string, obj);
@@ -124,11 +263,15 @@ export default function SeatingCanvas({
     });
 
     // Create a set of current table IDs
-    const currentTableIds = new Set(tables.map(t => t.id));
+    const currentTableIds = new Set(tables.map((t) => t.id));
 
     // Remove tables that no longer exist
     existingTableObjects.forEach((obj) => {
-      if (obj.data && obj.data.id && !currentTableIds.has(obj.data.id as string)) {
+      if (
+        obj.data &&
+        obj.data.id &&
+        !currentTableIds.has(obj.data.id as string)
+      ) {
         canvas.remove(obj);
       }
     });
@@ -147,17 +290,17 @@ export default function SeatingCanvas({
           Math.abs((existing.top ?? 0) - table.y_position) > 2 ||
           Math.abs((existing.angle ?? 0) - table.rotation) > 2;
 
-        console.log('📍 Position sync check:', {
+        console.log("📍 Position sync check:", {
           tableId: table.id,
           isActiveObject,
           activeObjectRef: activeObjectRef.current,
           positionChanged,
           fabricPos: { x: existing.left, y: existing.top },
-          statePos: { x: table.x_position, y: table.y_position }
+          statePos: { x: table.x_position, y: table.y_position },
         });
 
         if (positionChanged && !isActiveObject) {
-          console.log('✅ Syncing position from state to Fabric');
+          console.log("✅ Syncing position from state to Fabric");
           existing.set({
             left: table.x_position,
             top: table.y_position,
@@ -165,14 +308,15 @@ export default function SeatingCanvas({
           });
           existing.setCoords();
         } else if (isActiveObject) {
-          console.log('⏭️ Skipping position sync - table is being dragged');
+          console.log("⏭️ Skipping position sync - table is being dragged");
         }
 
         // Update metadata
         if (existing.data) {
           existing.data.tableNumber = table.table_number;
           existing.data.capacity = table.capacity;
-          existing.data.assignedCount = 'assigned_count' in table ? table.assigned_count ?? 0 : 0;
+          existing.data.assignedCount =
+            "assigned_count" in table ? table.assigned_count ?? 0 : 0;
         }
       } else {
         // Create new table shape
@@ -202,16 +346,19 @@ export default function SeatingCanvas({
     if (!canvas) return;
 
     // Update canvas background color
-    canvas.backgroundColor = theme === 'dark' ? '#0a0a0a' : '#ffffff';
+    canvas.backgroundColor = theme === "dark" ? "#0a0a0a" : "#ffffff";
     canvas.renderAll();
 
     // Re-render all tables to update colors
-    const tableObjects = canvas.getObjects().filter(
-      (obj) => !(obj as fabric.Object & { isGridLine?: boolean }).isGridLine
-    );
+    const tableObjects = canvas
+      .getObjects()
+      .filter(
+        (obj) => !(obj as fabric.Object & { isGridLine?: boolean }).isGridLine
+      );
 
     tableObjects.forEach((obj) => {
-      const data = (obj as fabric.Group & { data?: Record<string, unknown> }).data;
+      const data = (obj as fabric.Group & { data?: Record<string, unknown> })
+        .data;
       if (data && data.id) {
         const table = tables.find((t) => t.id === data.id);
         if (table) {
@@ -281,10 +428,10 @@ export default function SeatingCanvas({
       }
     };
 
-    canvas.on('mouse:wheel', handleWheel);
+    canvas.on("mouse:wheel", handleWheel);
 
     return () => {
-      canvas.off('mouse:wheel', handleWheel);
+      canvas.off("mouse:wheel", handleWheel);
     };
   }, [onZoomChange]);
 
@@ -333,11 +480,11 @@ export default function SeatingCanvas({
         // to prevent position sync from resetting to old state values
 
         debounceTimerRef.current = setTimeout(() => {
-          console.log('🔄 Calling onTableMove:', {
+          console.log("🔄 Calling onTableMove:", {
             tableId,
             x: finalLeft,
             y: finalTop,
-            activeObject: activeObjectRef.current
+            activeObject: activeObjectRef.current,
           });
           onTableMove(tableId, finalLeft, finalTop);
 
@@ -345,8 +492,8 @@ export default function SeatingCanvas({
           // This prevents the position sync from running until the state is updated
           setTimeout(() => {
             activeObjectRef.current = null;
-            console.log('🔓 Cleared activeObjectRef after state update');
-          }, 100);  // Small delay to ensure state update propagates
+            console.log("🔓 Cleared activeObjectRef after state update");
+          }, 100); // Small delay to ensure state update propagates
         }, 500);
       }
 
@@ -362,7 +509,12 @@ export default function SeatingCanvas({
       }
 
       // Handle resize (scaling)
-      if (onTableResize && obj.scaleX && obj.scaleY && (obj.scaleX !== 1 || obj.scaleY !== 1)) {
+      if (
+        onTableResize &&
+        obj.scaleX &&
+        obj.scaleY &&
+        (obj.scaleX !== 1 || obj.scaleY !== 1)
+      ) {
         // Get the original dimensions from the first object in the group
         const items = obj.getObjects();
         if (items && items.length > 0) {
@@ -370,10 +522,10 @@ export default function SeatingCanvas({
           let originalWidth = 0;
           let originalHeight = 0;
 
-          if ('radius' in firstItem && typeof firstItem.radius === 'number') {
+          if ("radius" in firstItem && typeof firstItem.radius === "number") {
             // Round table
             originalWidth = originalHeight = firstItem.radius * 2;
-          } else if ('width' in firstItem && 'height' in firstItem) {
+          } else if ("width" in firstItem && "height" in firstItem) {
             // Rectangular/square table
             originalWidth = (firstItem.width as number) || 0;
             originalHeight = (firstItem.height as number) || 0;
@@ -413,14 +565,14 @@ export default function SeatingCanvas({
       const obj = target as fabric.Group & { data?: Record<string, unknown> };
       if (obj.data && obj.data.id) {
         activeObjectRef.current = obj.data.id as string;
-        console.log('🚀 Started dragging table:', obj.data.id);
+        console.log("🚀 Started dragging table:", obj.data.id);
       }
     };
 
-    canvas.on('object:moving', handleObjectMoving);
+    canvas.on("object:moving", handleObjectMoving);
 
     return () => {
-      canvas.off('object:moving', handleObjectMoving);
+      canvas.off("object:moving", handleObjectMoving);
     };
   }, []);
 
@@ -430,14 +582,14 @@ export default function SeatingCanvas({
 
     const handleModified = (e: Parameters<typeof handleObjectModified>[0]) => {
       // Note: activeObjectRef is cleared in the debounce timer to prevent race conditions
-      console.log('🛑 Finished dragging table');
+      console.log("🛑 Finished dragging table");
       handleObjectModified(e);
     };
 
-    canvas.on('object:modified', handleModified);
+    canvas.on("object:modified", handleModified);
 
     return () => {
-      canvas.off('object:modified', handleModified);
+      canvas.off("object:modified", handleModified);
     };
   }, [handleObjectModified]);
 
@@ -457,7 +609,9 @@ export default function SeatingCanvas({
         return;
       }
 
-      const obj = selected[0] as fabric.Group & { data?: Record<string, unknown> };
+      const obj = selected[0] as fabric.Group & {
+        data?: Record<string, unknown>;
+      };
       const data = obj.data;
 
       if (data && data.id) {
@@ -469,14 +623,14 @@ export default function SeatingCanvas({
       onTableSelect(null);
     };
 
-    canvas.on('selection:created', handleSelection);
-    canvas.on('selection:updated', handleSelection);
-    canvas.on('selection:cleared', handleDeselection);
+    canvas.on("selection:created", handleSelection);
+    canvas.on("selection:updated", handleSelection);
+    canvas.on("selection:cleared", handleDeselection);
 
     return () => {
-      canvas.off('selection:created', handleSelection);
-      canvas.off('selection:updated', handleSelection);
-      canvas.off('selection:cleared', handleDeselection);
+      canvas.off("selection:created", handleSelection);
+      canvas.off("selection:updated", handleSelection);
+      canvas.off("selection:cleared", handleDeselection);
     };
   }, [onTableSelect]);
 
@@ -507,10 +661,10 @@ export default function SeatingCanvas({
       canvas.renderAll();
     };
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
     };
   }, [gridConfig]);
 

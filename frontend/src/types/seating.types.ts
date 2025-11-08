@@ -3,10 +3,12 @@
  *
  * FR-21: The system shall provide an interactive seating chart interface
  * Phase 6.1.1 Seating Chart Data Models
+ * Phase 6.2.2 Venue Layout Integration
  */
 
 import { UUID, Timestamps } from "./common.types";
 import { GuestSummary } from "./guest.types";
+import type { VenueMetadata } from "./venue.types";
 
 // ============================================================================
 // Enums matching backend
@@ -147,6 +149,8 @@ export interface SeatingChartWithTables extends SeatingChart {
   total_tables: number;
   total_capacity: number;
   total_assigned: number;
+  // Phase 6.2.2: Venue Layout Integration
+  venue_metadata?: VenueMetadata; // Parsed from chart_metadata JSONB
 }
 
 export interface SeatingChartSummary extends Timestamps {
