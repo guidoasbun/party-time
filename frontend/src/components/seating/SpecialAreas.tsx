@@ -60,7 +60,7 @@ interface SpecialAreasProps {
 // Icon mapping for special area types
 const AREA_TYPE_ICONS: Record<
   SpecialAreaType,
-  React.ComponentType<{ className?: string }>
+  React.ComponentType<{ className?: string; color?: string }>
 > = {
   [SpecialAreaType.STAGE]: Drama,
   [SpecialAreaType.DANCE_FLOOR]: Music,
@@ -219,7 +219,7 @@ export function SpecialAreas({
                       >
                         <IconComponent
                           className="h-5 w-5"
-                          style={{ color: areaColor }}
+                          color={areaColor}
                         />
                       </div>
 
@@ -280,7 +280,7 @@ export function SpecialAreas({
                         >
                           <IconComponent
                             className="h-5 w-5"
-                            style={{ color: areaColor }}
+                            color={areaColor}
                           />
                         </div>
                         <div className="flex-1">

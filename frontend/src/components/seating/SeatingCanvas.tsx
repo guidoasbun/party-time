@@ -133,8 +133,7 @@ export default function SeatingCanvas({
 
     // Add new floor plan if URL provided
     if (floorPlanUrl) {
-      fabric.Image.fromURL(
-        floorPlanUrl,
+      fabric.Image.fromURL(floorPlanUrl, { crossOrigin: "anonymous" }).then(
         (img) => {
           if (!img) return;
 
@@ -177,11 +176,10 @@ export default function SeatingCanvas({
 
           // Add to canvas as bottom layer
           canvas.add(img);
-          img.sendToBack();
+          canvas.sendObjectToBack(img);
 
           canvas.renderAll();
-        },
-        { crossOrigin: "anonymous" }
+        }
       );
     }
   }, [floorPlanUrl, floorPlanSettings, isInitialized, readOnly]);
@@ -218,7 +216,7 @@ export default function SeatingCanvas({
     // Ensure proper z-index layering:
     // 1. Floor plan (bottom)
     if (floorPlanImageRef.current) {
-      floorPlanImageRef.current.sendToBack();
+      canvas.sendObjectToBack(floorPlanImageRef.current);
     }
     // 2. Special areas (middle)
     specialAreas.forEach((area) => {
@@ -230,7 +228,7 @@ export default function SeatingCanvas({
               ?.areaId === area.id
         );
       if (areaObj) {
-        areaObj.bringForward();
+        canvas.bringObjectForward(areaObj);
       }
     });
     // 3. Tables stay on top automatically
