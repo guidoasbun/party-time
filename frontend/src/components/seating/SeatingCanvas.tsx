@@ -43,6 +43,9 @@ export interface SeatingCanvasProps {
   specialAreas?: SpecialArea[];
   onSpecialAreaSelect?: (areaId: string | null) => void;
   onSpecialAreaMove?: (areaId: string, x: number, y: number) => void;
+  // FR-21: The system shall provide an interactive seating chart interface.
+  // Phase 6.2.3: Export and Sharing Features
+  onCanvasReady?: (canvas: fabric.Canvas) => void;
 }
 
 // ============================================================================
@@ -68,6 +71,9 @@ export default function SeatingCanvas({
   specialAreas = [],
   onSpecialAreaSelect,
   onSpecialAreaMove,
+  // FR-21: The system shall provide an interactive seating chart interface.
+  // Phase 6.2.3: Export and Sharing Features
+  onCanvasReady,
 }: SeatingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -106,13 +112,19 @@ export default function SeatingCanvas({
     fabricCanvasRef.current = canvas;
     setIsInitialized(true);
 
+    // FR-21: The system shall provide an interactive seating chart interface.
+    // Phase 6.2.3: Export and Sharing Features
+    if (onCanvasReady) {
+      onCanvasReady(canvas);
+    }
+
     // Cleanup on unmount
     return () => {
       canvas.dispose();
       fabricCanvasRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [theme, readOnly]);
+  }, [theme, readOnly, onCanvasReady]);
 
   // ============================================================================
   // Render Floor Plan
