@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { ZoomState } from '@/types';
 import { GridConfig } from '@/utils/fabric-shapes';
+import { cn } from '@/lib/utils';
 
 // ============================================================================
 // Type Definitions
@@ -196,7 +197,13 @@ export default function CanvasControls({
 
   return (
     <div
-      className={`flex flex-col gap-2 bg-card border border-border rounded-lg p-3 shadow-lg ${className}`}
+      className={cn(
+        // Phase 6.2.4: Responsive layout
+        'flex flex-col gap-2 bg-card border border-border rounded-lg shadow-lg',
+        // Responsive padding: smaller on mobile
+        'p-2 sm:p-3',
+        className
+      )}
     >
       {/* Zoom Controls */}
       <div className="flex flex-col gap-2">
@@ -206,11 +213,18 @@ export default function CanvasControls({
             type="button"
             onClick={handleZoomOut}
             disabled={zoomState.scale <= 0.1}
-            className="p-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={cn(
+              // Phase 6.2.4: Touch-friendly button size
+              'p-2 sm:p-2.5 rounded-md',
+              'bg-secondary hover:bg-secondary/80',
+              'disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
+              // Minimum 44px touch target on mobile
+              'min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0'
+            )}
             title="Zoom Out"
             aria-label="Zoom Out"
           >
-            <ZoomOut className="w-4 h-4" />
+            <ZoomOut className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <div className="flex flex-col items-center gap-1 flex-1">
             <input
@@ -231,11 +245,16 @@ export default function CanvasControls({
             type="button"
             onClick={handleZoomIn}
             disabled={zoomState.scale >= 5}
-            className="p-2 rounded-md bg-secondary hover:bg-secondary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={cn(
+              'p-2 sm:p-2.5 rounded-md',
+              'bg-secondary hover:bg-secondary/80',
+              'disabled:opacity-50 disabled:cursor-not-allowed transition-colors',
+              'min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0'
+            )}
             title="Zoom In"
             aria-label="Zoom In"
           >
-            <ZoomIn className="w-4 h-4" />
+            <ZoomIn className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
         <div className="flex gap-2">
