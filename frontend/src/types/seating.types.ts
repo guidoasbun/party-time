@@ -408,3 +408,54 @@ export interface TableStatistics {
   fill_percentage: number;
   guest_names: string[];
 }
+
+// FR-21: The system shall provide an interactive seating chart interface.
+// Phase 6.2.4: Mobile & Tablet Views
+// ============================================================================
+// Mobile & Tablet View Types (Phase 6.2.4)
+// ============================================================================
+
+export interface GuestSearchResult {
+  guest_id: UUID;
+  guest_name: string;
+  table_id?: UUID;
+  table_number?: string;
+  seat_number?: number;
+  is_seated: boolean;
+}
+
+export interface FindMySeatProps {
+  seatingChart: SeatingChartWithTables;
+  guests: Array<{
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    email: string;
+  }>;
+  onGuestFound?: (result: GuestSearchResult) => void;
+  onHighlightTable?: (tableId: UUID | null) => void;
+  className?: string;
+}
+
+export interface MobileSeatingViewProps {
+  seatingChart: SeatingChartWithTables;
+  tables: TableLayout[];
+  guests?: Array<{
+    id: UUID;
+    first_name: string;
+    last_name: string;
+    email: string;
+  }>;
+  readOnly?: boolean;
+  showFindMySeat?: boolean;
+  className?: string;
+  theme?: "light" | "dark";
+}
+
+export interface TouchGestureState {
+  isPinching: boolean;
+  initialDistance: number;
+  initialScale: number;
+  touchStartX: number;
+  touchStartY: number;
+}

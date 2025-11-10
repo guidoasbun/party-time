@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 /**
  * GuestSidebar Component
@@ -16,7 +16,7 @@
  * - Theme-aware styling
  */
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Search,
   X,
@@ -28,30 +28,30 @@ import {
   Clock,
   XCircle,
   HelpCircle,
-  Filter
-} from 'lucide-react'
-import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
-import { Input } from '@/components/ui/Input'
-import { cn } from '@/lib/utils'
-import type { Guest, RsvpStatus, UUID, SeatingChartWithTables } from '@/types'
-import { RsvpStatus as RsvpStatusEnum } from '@/types'
+  Filter,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { Input } from "@/components/ui/Input";
+import { cn } from "@/lib/utils";
+import type { Guest, RsvpStatus, UUID, SeatingChartWithTables } from "@/types";
+import { RsvpStatus as RsvpStatusEnum } from "@/types";
 
 interface GuestSidebarProps {
-  guests: Guest[]
-  seatingChart?: SeatingChartWithTables | null
-  isOpen?: boolean
-  onToggle?: () => void
-  onGuestDragStart?: (guest: Guest) => void
-  onGuestDragEnd?: () => void
-  className?: string
+  guests: Guest[];
+  seatingChart?: SeatingChartWithTables | null;
+  isOpen?: boolean;
+  onToggle?: () => void;
+  onGuestDragStart?: (guest: Guest) => void;
+  onGuestDragEnd?: () => void;
+  className?: string;
 }
 
 interface RsvpFilterOption {
-  value: RsvpStatus | 'all'
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  count?: number
+  value: RsvpStatus | "all";
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  count?: number;
 }
 
 /**
@@ -60,65 +60,68 @@ interface RsvpFilterOption {
 const getRsvpStatusConfig = (status: RsvpStatus) => {
   const configs = {
     [RsvpStatusEnum.ATTENDING]: {
-      label: 'Attending',
+      label: "Attending",
       icon: CheckCircle2,
-      bgColor: 'bg-green-100 dark:bg-green-900/30',
-      textColor: 'text-green-800 dark:text-green-300',
-      borderColor: 'border-green-300 dark:border-green-700'
+      bgColor: "bg-green-100 dark:bg-green-900/30",
+      textColor: "text-green-800 dark:text-green-300",
+      borderColor: "border-green-300 dark:border-green-700",
     },
     [RsvpStatusEnum.NOT_ATTENDING]: {
-      label: 'Not Attending',
+      label: "Not Attending",
       icon: XCircle,
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
-      textColor: 'text-red-800 dark:text-red-300',
-      borderColor: 'border-red-300 dark:border-red-700'
+      bgColor: "bg-red-100 dark:bg-red-900/30",
+      textColor: "text-red-800 dark:text-red-300",
+      borderColor: "border-red-300 dark:border-red-700",
     },
     [RsvpStatusEnum.PENDING]: {
-      label: 'Pending',
+      label: "Pending",
       icon: Clock,
-      bgColor: 'bg-amber-100 dark:bg-amber-900/30',
-      textColor: 'text-amber-800 dark:text-amber-300',
-      borderColor: 'border-amber-300 dark:border-amber-700'
+      bgColor: "bg-amber-100 dark:bg-amber-900/30",
+      textColor: "text-amber-800 dark:text-amber-300",
+      borderColor: "border-amber-300 dark:border-amber-700",
     },
     [RsvpStatusEnum.MAYBE]: {
-      label: 'Maybe',
+      label: "Maybe",
       icon: HelpCircle,
-      bgColor: 'bg-blue-100 dark:bg-blue-900/30',
-      textColor: 'text-blue-800 dark:text-blue-300',
-      borderColor: 'border-blue-300 dark:border-blue-700'
-    }
-  }
-  return configs[status] || configs[RsvpStatusEnum.PENDING]
-}
+      bgColor: "bg-blue-100 dark:bg-blue-900/30",
+      textColor: "text-blue-800 dark:text-blue-300",
+      borderColor: "border-blue-300 dark:border-blue-700",
+    },
+  };
+  return configs[status] || configs[RsvpStatusEnum.PENDING];
+};
 
 /**
  * Check if a guest is already seated in the chart
  */
-const isGuestSeated = (guestId: UUID, chart?: SeatingChartWithTables | null): boolean => {
-  if (!chart || !chart.tables) return false
+const isGuestSeated = (
+  guestId: UUID,
+  chart?: SeatingChartWithTables | null
+): boolean => {
+  if (!chart || !chart.tables) return false;
 
   // Check if any table has a seat assignment for this guest
   // For TableLayoutWithSeats[], we check seat_assignments
   for (const table of chart.tables) {
-    if ('seat_assignments' in table && Array.isArray(table.seat_assignments)) {
+    if ("seat_assignments" in table && Array.isArray(table.seat_assignments)) {
       const hasAssignment = table.seat_assignments.some(
         (assignment) => assignment.guest_id === guestId
-      )
-      if (hasAssignment) return true
+      );
+      if (hasAssignment) return true;
     }
   }
 
-  return false
-}
+  return false;
+};
 
 /**
  * Get guest initials for avatar
  */
 const getGuestInitials = (guest: Guest): string => {
-  const firstInitial = guest.first_name?.charAt(0)?.toUpperCase() || ''
-  const lastInitial = guest.last_name?.charAt(0)?.toUpperCase() || ''
-  return `${firstInitial}${lastInitial}` || 'G'
-}
+  const firstInitial = guest.first_name?.charAt(0)?.toUpperCase() || "";
+  const lastInitial = guest.last_name?.charAt(0)?.toUpperCase() || "";
+  return `${firstInitial}${lastInitial}` || "G";
+};
 
 export function GuestSidebar({
   guests,
@@ -127,289 +130,347 @@ export function GuestSidebar({
   onToggle,
   onGuestDragStart,
   onGuestDragEnd,
-  className
+  className,
 }: GuestSidebarProps) {
   // State management
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedSearch, setDebouncedSearch] = useState('')
-  const [selectedRsvpFilter, setSelectedRsvpFilter] = useState<RsvpStatus | 'all'>('all')
-  const [showFilters, setShowFilters] = useState(false)
-  const [draggedGuestId, setDraggedGuestId] = useState<UUID | null>(null)
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [selectedRsvpFilter, setSelectedRsvpFilter] = useState<
+    RsvpStatus | "all"
+  >("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [draggedGuestId, setDraggedGuestId] = useState<UUID | null>(null);
 
   // Debounce search input
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery)
-    }, 300)
+      setDebouncedSearch(searchQuery);
+    }, 300);
 
-    return () => clearTimeout(timer)
-  }, [searchQuery])
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Calculate unseated guests (attending guests without seat assignments)
   const unseatedGuests = useMemo(() => {
-    return guests.filter(guest => {
+    return guests.filter((guest) => {
       // Only show attending guests (primary filter)
-      if (guest.rsvp_status !== RsvpStatusEnum.ATTENDING) return false
+      if (guest.rsvp_status !== RsvpStatusEnum.ATTENDING) return false;
 
       // Check if guest is not seated
-      return !isGuestSeated(guest.id, seatingChart)
-    })
-  }, [guests, seatingChart])
+      return !isGuestSeated(guest.id, seatingChart);
+    });
+  }, [guests, seatingChart]);
 
   // Apply search and RSVP filters
   const filteredGuests = useMemo(() => {
-    let filtered = [...unseatedGuests]
+    let filtered = [...unseatedGuests];
 
     // Apply search filter
     if (debouncedSearch) {
-      const query = debouncedSearch.toLowerCase()
+      const query = debouncedSearch.toLowerCase();
       filtered = filtered.filter(
-        guest =>
+        (guest) =>
           guest.first_name.toLowerCase().includes(query) ||
           guest.last_name.toLowerCase().includes(query) ||
           guest.email.toLowerCase().includes(query)
-      )
+      );
     }
 
     // Apply RSVP status filter (if showing all statuses)
-    if (selectedRsvpFilter !== 'all') {
-      filtered = filtered.filter(guest => guest.rsvp_status === selectedRsvpFilter)
+    if (selectedRsvpFilter !== "all") {
+      filtered = filtered.filter(
+        (guest) => guest.rsvp_status === selectedRsvpFilter
+      );
     }
 
-    return filtered
-  }, [unseatedGuests, debouncedSearch, selectedRsvpFilter])
+    return filtered;
+  }, [unseatedGuests, debouncedSearch, selectedRsvpFilter]);
 
   // RSVP filter options
   const rsvpFilterOptions: RsvpFilterOption[] = useMemo(() => {
-    const attendingCount = unseatedGuests.filter(g => g.rsvp_status === RsvpStatusEnum.ATTENDING).length
-    const pendingCount = unseatedGuests.filter(g => g.rsvp_status === RsvpStatusEnum.PENDING).length
-    const maybeCount = unseatedGuests.filter(g => g.rsvp_status === RsvpStatusEnum.MAYBE).length
+    const attendingCount = unseatedGuests.filter(
+      (g) => g.rsvp_status === RsvpStatusEnum.ATTENDING
+    ).length;
+    const pendingCount = unseatedGuests.filter(
+      (g) => g.rsvp_status === RsvpStatusEnum.PENDING
+    ).length;
+    const maybeCount = unseatedGuests.filter(
+      (g) => g.rsvp_status === RsvpStatusEnum.MAYBE
+    ).length;
 
     return [
-      { value: 'all', label: 'All Statuses', icon: Users, count: unseatedGuests.length },
-      { value: RsvpStatusEnum.ATTENDING, label: 'Attending', icon: CheckCircle2, count: attendingCount },
-      { value: RsvpStatusEnum.PENDING, label: 'Pending', icon: Clock, count: pendingCount },
-      { value: RsvpStatusEnum.MAYBE, label: 'Maybe', icon: HelpCircle, count: maybeCount }
-    ]
-  }, [unseatedGuests])
+      {
+        value: "all",
+        label: "All Statuses",
+        icon: Users,
+        count: unseatedGuests.length,
+      },
+      {
+        value: RsvpStatusEnum.ATTENDING,
+        label: "Attending",
+        icon: CheckCircle2,
+        count: attendingCount,
+      },
+      {
+        value: RsvpStatusEnum.PENDING,
+        label: "Pending",
+        icon: Clock,
+        count: pendingCount,
+      },
+      {
+        value: RsvpStatusEnum.MAYBE,
+        label: "Maybe",
+        icon: HelpCircle,
+        count: maybeCount,
+      },
+    ];
+  }, [unseatedGuests]);
 
   // Drag handlers
-  const handleDragStart = useCallback((e: React.DragEvent<HTMLDivElement>, guest: Guest) => {
-    e.dataTransfer.effectAllowed = 'move'
-    e.dataTransfer.setData('guestId', guest.id)
-    e.dataTransfer.setData('guestName', `${guest.first_name} ${guest.last_name}`)
-    setDraggedGuestId(guest.id)
-    onGuestDragStart?.(guest)
-  }, [onGuestDragStart])
+  const handleDragStart = useCallback(
+    (e: React.DragEvent<HTMLDivElement>, guest: Guest) => {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("guestId", guest.id);
+      e.dataTransfer.setData(
+        "guestName",
+        `${guest.first_name} ${guest.last_name}`
+      );
+      setDraggedGuestId(guest.id);
+      onGuestDragStart?.(guest);
+    },
+    [onGuestDragStart]
+  );
 
   const handleDragEnd = useCallback(() => {
-    setDraggedGuestId(null)
-    onGuestDragEnd?.()
-  }, [onGuestDragEnd])
+    setDraggedGuestId(null);
+    onGuestDragEnd?.();
+  }, [onGuestDragEnd]);
 
   // Clear search
   const handleClearSearch = () => {
-    setSearchQuery('')
-    setDebouncedSearch('')
-  }
+    setSearchQuery("");
+    setDebouncedSearch("");
+  };
 
   return (
-    <div
-      className={cn(
-        'fixed right-0 top-0 h-full bg-card border-l border-border shadow-lg',
-        'transform transition-all duration-300 ease-in-out z-10',
-        'flex flex-col',
-        isOpen ? 'translate-x-0 w-80' : 'translate-x-full w-0',
-        className
-      )}
-    >
-      {/* Toggle Button */}
-      <button
-        onClick={onToggle}
-        className={cn(
-          'absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full',
-          'w-8 h-16 bg-card border border-r-0 border-border rounded-l-lg',
-          'flex items-center justify-center',
-          'hover:bg-accent transition-colors',
-          'shadow-md'
-        )}
-        aria-label={isOpen ? 'Close guest sidebar' : 'Open guest sidebar'}
-      >
-        {isOpen ? (
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        ) : (
-          <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-        )}
-      </button>
-
-      {/* Sidebar Content */}
+    /*
+     * FR-21: The system shall provide an interactive seating chart interface.
+     * Phase 6.2.4: Mobile & Tablet Views
+     */
+    <>
+      {/* Phase 6.2.4: Mobile backdrop overlay */}
       {isOpen && (
-        <>
-          {/* Header */}
-          <div className="p-4 border-b border-border">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-semibold text-foreground">
-                Unseated Guests
-              </h2>
-              <Badge
-                variant={unseatedGuests.length === 0 ? 'secondary' : 'outline'}
-                className={cn(
-                  "text-xs",
-                  unseatedGuests.length === 0
-                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                    : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
-                )}
-              >
-                {unseatedGuests.length} unseated
-              </Badge>
-            </div>
+        <div
+          className="fixed inset-0 bg-black/50 z-20 md:hidden"
+          onClick={onToggle}
+          aria-hidden="true"
+        />
+      )}
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search guests..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-9"
-              />
-              {searchQuery && (
-                <button
-                  onClick={handleClearSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label="Clear search"
+      <div
+        className={cn(
+          // Phase 6.2.4: Responsive positioning
+          "fixed right-0 top-0 h-full bg-card border-l border-border shadow-lg",
+          "transform transition-all duration-300 ease-in-out",
+          "flex flex-col",
+          // Mobile: Full overlay drawer with higher z-index
+          "md:relative md:z-10 z-30",
+          // Width: Full width on mobile, fixed on desktop
+          isOpen ? "translate-x-0" : "translate-x-full",
+          isOpen ? "w-full sm:w-96 md:w-80" : "w-0",
+          className
+        )}
+      >
+        {/* Toggle Button */}
+        <button
+          onClick={onToggle}
+          className={cn(
+            "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full",
+            "w-8 h-16 bg-card border border-r-0 border-border rounded-l-lg",
+            "flex items-center justify-center",
+            "hover:bg-accent transition-colors",
+            "shadow-md"
+          )}
+          aria-label={isOpen ? "Close guest sidebar" : "Open guest sidebar"}
+        >
+          {isOpen ? (
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
+          ) : (
+            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+          )}
+        </button>
+
+        {/* Sidebar Content */}
+        {isOpen && (
+          <>
+            {/* Header */}
+            <div className="p-4 border-b border-border">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-lg font-semibold text-foreground">
+                  Unseated Guests
+                </h2>
+                <Badge
+                  variant={
+                    unseatedGuests.length === 0 ? "secondary" : "outline"
+                  }
+                  className={cn(
+                    "text-xs",
+                    unseatedGuests.length === 0
+                      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                      : "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+                  )}
                 >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            {/* Filter Toggle */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="w-full mt-2 justify-start"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Filters
-              {selectedRsvpFilter !== 'all' && (
-                <Badge variant="default" className="ml-auto text-xs">
-                  1 active
+                  {unseatedGuests.length} unseated
                 </Badge>
-              )}
-            </Button>
-
-            {/* Filter Options */}
-            {showFilters && (
-              <div className="mt-2 space-y-1 p-2 bg-muted/50 rounded-lg">
-                {rsvpFilterOptions.map((option) => {
-                  const Icon = option.icon
-                  const isSelected = selectedRsvpFilter === option.value
-
-                  return (
-                    <button
-                      key={option.value}
-                      onClick={() => setSelectedRsvpFilter(option.value)}
-                      className={cn(
-                        'w-full flex items-center justify-between px-3 py-2 rounded-md',
-                        'text-sm transition-colors',
-                        isSelected
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-accent text-foreground'
-                      )}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Icon className="w-4 h-4" />
-                        <span>{option.label}</span>
-                      </div>
-                      <Badge
-                        variant={isSelected ? 'secondary' : 'outline'}
-                        className="text-xs"
-                      >
-                        {option.count}
-                      </Badge>
-                    </button>
-                  )
-                })}
               </div>
-            )}
-          </div>
 
-          {/* Guest List */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {filteredGuests.length === 0 ? (
-              <div className="text-center py-8">
-                <User className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-sm text-muted-foreground">
-                  {unseatedGuests.length === 0
-                    ? 'All guests are seated!'
-                    : 'No guests match your search'}
-                </p>
-              </div>
-            ) : (
-              filteredGuests.map((guest) => {
-                const statusConfig = getRsvpStatusConfig(guest.rsvp_status)
-                const StatusIcon = statusConfig.icon
-                const isDragging = draggedGuestId === guest.id
-
-                return (
-                  <div
-                    key={guest.id}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, guest)}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      'flex items-center gap-3 p-3 rounded-lg border border-border',
-                      'bg-card hover:bg-accent cursor-move transition-all',
-                      'active:scale-95',
-                      isDragging && 'opacity-50 scale-95'
-                    )}
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  type="text"
+                  placeholder="Search guests..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9 pr-9"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label="Clear search"
                   >
-                    {/* Avatar */}
-                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="text-sm font-medium text-primary">
-                        {getGuestInitials(guest)}
-                      </span>
-                    </div>
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
-                    {/* Guest Info */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {guest.first_name} {guest.last_name}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {guest.email}
-                      </p>
-                    </div>
+              {/* Filter Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="w-full mt-2 justify-start"
+              >
+                <Filter className="w-4 h-4 mr-2" />
+                Filters
+                {selectedRsvpFilter !== "all" && (
+                  <Badge variant="default" className="ml-auto text-xs">
+                    1 active
+                  </Badge>
+                )}
+              </Button>
 
-                    {/* RSVP Status Badge */}
-                    <div className="flex-shrink-0">
-                      <div
+              {/* Filter Options */}
+              {showFilters && (
+                <div className="mt-2 space-y-1 p-2 bg-muted/50 rounded-lg">
+                  {rsvpFilterOptions.map((option) => {
+                    const Icon = option.icon;
+                    const isSelected = selectedRsvpFilter === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => setSelectedRsvpFilter(option.value)}
                         className={cn(
-                          'flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium',
-                          statusConfig.bgColor,
-                          statusConfig.textColor
+                          "w-full flex items-center justify-between px-3 py-2 rounded-md",
+                          "text-sm transition-colors",
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "hover:bg-accent text-foreground"
                         )}
                       >
-                        <StatusIcon className="w-3 h-3" />
+                        <div className="flex items-center gap-2">
+                          <Icon className="w-4 h-4" />
+                          <span>{option.label}</span>
+                        </div>
+                        <Badge
+                          variant={isSelected ? "secondary" : "outline"}
+                          className="text-xs"
+                        >
+                          {option.count}
+                        </Badge>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Guest List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+              {filteredGuests.length === 0 ? (
+                <div className="text-center py-8">
+                  <User className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-sm text-muted-foreground">
+                    {unseatedGuests.length === 0
+                      ? "All guests are seated!"
+                      : "No guests match your search"}
+                  </p>
+                </div>
+              ) : (
+                filteredGuests.map((guest) => {
+                  const statusConfig = getRsvpStatusConfig(guest.rsvp_status);
+                  const StatusIcon = statusConfig.icon;
+                  const isDragging = draggedGuestId === guest.id;
+
+                  return (
+                    <div
+                      key={guest.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, guest)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        "flex items-center gap-3 p-3 rounded-lg border border-border",
+                        "bg-card hover:bg-accent cursor-move transition-all",
+                        "active:scale-95",
+                        isDragging && "opacity-50 scale-95"
+                      )}
+                    >
+                      {/* Avatar */}
+                      <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="text-sm font-medium text-primary">
+                          {getGuestInitials(guest)}
+                        </span>
+                      </div>
+
+                      {/* Guest Info */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {guest.first_name} {guest.last_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {guest.email}
+                        </p>
+                      </div>
+
+                      {/* RSVP Status Badge */}
+                      <div className="flex-shrink-0">
+                        <div
+                          className={cn(
+                            "flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium",
+                            statusConfig.bgColor,
+                            statusConfig.textColor
+                          )}
+                        >
+                          <StatusIcon className="w-3 h-3" />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )
-              })
-            )}
-          </div>
+                  );
+                })
+              )}
+            </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-border bg-muted/50">
-            <p className="text-xs text-muted-foreground text-center">
-              Drag guests to tables on the canvas to assign seats
-            </p>
-          </div>
-        </>
-      )}
-    </div>
-  )
+            {/* Footer */}
+            <div className="p-4 border-t border-border bg-muted/50">
+              <p className="text-xs text-muted-foreground text-center">
+                Drag guests to tables on the canvas to assign seats
+              </p>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
 }

@@ -88,6 +88,22 @@ export default function SeatingCanvas({
 
   // Track floor plan image object
   const floorPlanImageRef = useRef<fabric.Image | null>(null);
+  // FR-21: The system shall provide an interactive seating chart interface.
+  // Phase 6.2.4: Mobile & Tablet Views
+  // Phase 6.2.4: Touch gesture state for pinch-to-zoom
+  const touchStateRef = useRef<{
+    isPinching: boolean;
+    initialDistance: number;
+    initialScale: number;
+    lastTouchX: number;
+    lastTouchY: number;
+  }>({
+    isPinching: false,
+    initialDistance: 0,
+    initialScale: 1,
+    lastTouchX: 0,
+    lastTouchY: 0,
+  });
 
   // ============================================================================
   // Canvas Initialization
@@ -679,6 +695,114 @@ export default function SeatingCanvas({
       window.removeEventListener("resize", handleResize);
     };
   }, [gridConfig]);
+
+  // ============================================================================
+  // Touch Gesture Handling (Phase 6.2.4: Pinch-to-Zoom)
+  // ============================================================================
+
+  useEffect(() => {
+    const canvas = fabricCanvasRef.current;
+    const canvasElement = canvasRef.current;
+    if (!canvas || !canvasElement) return;
+
+    // Calculate distance between two touch points
+    const getTouchDistance = (touches: TouchList): number => {
+      if (touches.length < 2) return 0;
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.sqrt(dx * dx + dy * dy);
+    };
+
+    // Get center point between two touches
+    const getTouchCenter = (touches: TouchList): { x: number; y: number } => {
+      if (touches.length < 2) {
+        return { x: touches[0].clientX, y: touches[0].clientY };
+      }
+      return {
+        x: (touches[0].clientX + touches[1].clientX) / 2,
+        y: (touches[0].clientY + touches[1].clientY) / 2,
+      };
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        // Two-finger pinch gesture started
+        e.preventDefault();
+        touchStateRef.current.isPinching = true;
+        touchStateRef.current.initialDistance = getTouchDistance(e.touches);
+        touchStateRef.current.initialScale = canvas.getZoom();
+
+        const center = getTouchCenter(e.touches);
+        touchStateRef.current.lastTouchX = center.x;
+        touchStateRef.current.lastTouchY = center.y;
+      } else if (e.touches.length === 1) {
+        // Single touch (potential pan gesture)
+        touchStateRef.current.lastTouchX = e.touches[0].clientX;
+        touchStateRef.current.lastTouchY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && touchStateRef.current.isPinching) {
+        // Pinch-to-zoom
+        e.preventDefault();
+
+        const currentDistance = getTouchDistance(e.touches);
+        const scale =
+          (currentDistance / touchStateRef.current.initialDistance) *
+          touchStateRef.current.initialScale;
+
+        // Constrain zoom (0.1x to 5.0x)
+        const constrainedScale = Math.max(0.1, Math.min(5, scale));
+
+        // Get center point for zoom
+        const center = getTouchCenter(e.touches);
+        const rect = canvasElement.getBoundingClientRect();
+        const point = new fabric.Point(
+          center.x - rect.left,
+          center.y - rect.top
+        );
+
+        // Apply zoom
+        canvas.zoomToPoint(point, constrainedScale);
+
+        // Emit zoom change
+        if (onZoomChange && canvas.viewportTransform) {
+          onZoomChange({
+            scale: constrainedScale,
+            offsetX: canvas.viewportTransform[4],
+            offsetY: canvas.viewportTransform[5],
+          });
+        }
+
+        canvas.renderAll();
+      }
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length < 2) {
+        // End pinch gesture
+        touchStateRef.current.isPinching = false;
+      }
+    };
+
+    // Add touch event listeners
+    canvasElement.addEventListener("touchstart", handleTouchStart, {
+      passive: false,
+    });
+    canvasElement.addEventListener("touchmove", handleTouchMove, {
+      passive: false,
+    });
+    canvasElement.addEventListener("touchend", handleTouchEnd);
+    canvasElement.addEventListener("touchcancel", handleTouchEnd);
+
+    return () => {
+      canvasElement.removeEventListener("touchstart", handleTouchStart);
+      canvasElement.removeEventListener("touchmove", handleTouchMove);
+      canvasElement.removeEventListener("touchend", handleTouchEnd);
+      canvasElement.removeEventListener("touchcancel", handleTouchEnd);
+    };
+  }, [onZoomChange]);
 
   // ============================================================================
   // Render
