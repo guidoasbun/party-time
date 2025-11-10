@@ -411,6 +411,53 @@ export class SeatingService {
 
     return this.updateSeatingChart(eventId, chartId, updateData);
   }
+
+  // ============================================================================
+  // FR-21: The system shall provide an interactive seating chart interface.
+  // Phase 6.2.3: Export and Sharing Features
+  // ============================================================================
+
+  /**
+   * Generate shareable link for seating chart (frontend-only)
+   * Future enhancement: Backend token generation for secure sharing
+   */
+  generateShareLink(eventId: UUID, chartId: UUID): string {
+    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    return `${baseUrl}/seating/share/${eventId}/${chartId}`;
+  }
+
+  /**
+   * Future: Create backend share token with expiration
+   * This would require a new backend endpoint
+   */
+  // async createShareToken(
+  //   eventId: UUID,
+  //   chartId: UUID,
+  //   options?: { expiresInDays?: number }
+  // ): Promise<{ share_token: string; share_url: string; expires_at: string }> {
+  //   return api.post(
+  //     API_ENDPOINTS.SEATING.CREATE_SHARE_TOKEN(eventId, chartId),
+  //     options || {}
+  //   );
+  // }
+
+  /**
+   * Future: Get public seating chart by share token
+   */
+  // async getPublicSeatingChart(shareToken: string): Promise<SeatingChartWithTables> {
+  //   return api.get(
+  //     API_ENDPOINTS.SEATING.PUBLIC_VIEW(shareToken)
+  //   );
+  // }
+
+  /**
+   * Future: Revoke share token
+   */
+  // async revokeShareToken(eventId: UUID, chartId: UUID): Promise<void> {
+  //   return api.delete(
+  //     API_ENDPOINTS.SEATING.REVOKE_SHARE_TOKEN(eventId, chartId)
+  //   );
+  // }
 }
 
 /**
