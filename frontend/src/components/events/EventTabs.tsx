@@ -1,6 +1,8 @@
 "use client";
 
 /**
+ * FR-21: The system shall provide an interactive seating chart interface.
+ * Phase 6.2.5: Seating Chart Polish & Integration
  * EventTabs Component
  * Main tabbed interface for event detail pages with URL-based tab persistence
  */
@@ -15,6 +17,7 @@ import {
   Settings as SettingsIcon,
   FileText,
   Mail,
+  LayoutGrid,
 } from "lucide-react";
 import type { Event, Guest, PaginatedResponse } from "@/types";
 import { RSVPDashboard } from "./RSVPDashboard";
@@ -22,12 +25,19 @@ import { InvitationStats } from "./InvitationStats";
 import { SendInvitationsModal } from "./SendInvitationsModal";
 import { Button } from "@/components/ui/Button";
 import { guestsService } from "@/lib/api/services";
+import { SeatingChartTab } from "@/components/seating/SeatingChartTab";
 
 interface EventTabsProps {
   event: Event;
 }
 
-type TabId = "overview" | "guests" | "budget" | "timeline" | "settings";
+type TabId =
+  | "overview"
+  | "guests"
+  | "seating"
+  | "budget"
+  | "timeline"
+  | "settings";
 
 interface Tab {
   id: TabId;
@@ -49,7 +59,14 @@ export function EventTabs({ event }: EventTabsProps) {
   useEffect(() => {
     if (
       urlTab &&
-      ["overview", "guests", "budget", "timeline", "settings"].includes(urlTab)
+      [
+        "overview",
+        "guests",
+        "seating",
+        "budget",
+        "timeline",
+        "settings",
+      ].includes(urlTab)
     ) {
       setActiveTab(urlTab);
     } else if (urlTab) {
@@ -75,6 +92,7 @@ export function EventTabs({ event }: EventTabsProps) {
     const tabs: TabId[] = [
       "overview",
       "guests",
+      "seating",
       "budget",
       "timeline",
       "settings",
@@ -107,6 +125,13 @@ export function EventTabs({ event }: EventTabsProps) {
       icon: Users,
       badge: event.guest_count || 0,
       content: <GuestsTabPlaceholder event={event} />,
+    },
+    {
+      id: "seating",
+      label: "Seating",
+      icon: LayoutGrid,
+      badge: undefined, // TODO: Add seated count badge
+      content: <SeatingChartTab event={event} />,
     },
     {
       id: "budget",

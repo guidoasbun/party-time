@@ -58,11 +58,10 @@ export class SeatingService {
    * Get a seating chart with all tables
    */
   async getSeatingChart(
-    eventId: UUID,
-    chartId: UUID
+    eventId: UUID
   ): Promise<SeatingChartWithTables> {
     return api.get<SeatingChartWithTables>(
-      API_ENDPOINTS.SEATING.GET_CHART(eventId, chartId),
+      API_ENDPOINTS.SEATING.GET_CHART(eventId),
       undefined,
       withRetry({ attempts: 2 })
     );

@@ -459,3 +459,115 @@ export interface TouchGestureState {
   touchStartX: number;
   touchStartY: number;
 }
+
+// ============================================================================
+// Phase 6.2.5: Seating Chart Polish & Integration Types
+/*
+ * FR-21: The system shall provide an interactive seating chart interface.
+ * Phase 6.2.5: Seating Chart Polish & Integration
+ */
+// ============================================================================
+
+// Autosave types
+export type SaveStatus = "saved" | "saving" | "unsaved" | "error";
+
+export interface AutosaveState {
+  status: SaveStatus;
+  lastSaved: Date | null;
+  error?: string;
+}
+
+// History types
+export type HistoryActionType =
+  | "table_add"
+  | "table_delete"
+  | "table_move"
+  | "table_resize"
+  | "table_rotate"
+  | "table_update"
+  | "guest_assign"
+  | "guest_unassign"
+  | "bulk_operation";
+
+export interface HistoryAction<T = unknown> {
+  id: string;
+  type: HistoryActionType;
+  timestamp: Date;
+  data: T; // Current state
+  inverseData?: T; // State to restore for undo
+}
+
+export interface HistoryState {
+  undoStack: HistoryAction[];
+  redoStack: HistoryAction[];
+  maxSize: number;
+}
+
+// Keyboard shortcut types
+export type ShortcutCategory =
+  | "canvas"
+  | "table"
+  | "guest"
+  | "navigation"
+  | "general";
+
+export interface KeyboardShortcut {
+  key: string;
+  modifiers?: ("ctrl" | "shift" | "alt" | "meta")[];
+  label: string;
+  description: string;
+  category: ShortcutCategory;
+}
+
+// Hook return types
+export interface UseSeatingChartReturn {
+  // Data
+  chart: SeatingChartWithTables | null;
+  tables: TableLayout[];
+  seatAssignments: SeatAssignment[];
+  statistics: SeatingStatistics | null;
+
+  // State
+  selectedTableId: UUID | null;
+  isLoading: boolean;
+  error: Error | null;
+
+  // Autosave
+  saveStatus: SaveStatus;
+  lastSaved: Date | null;
+  hasUnsavedChanges: boolean;
+
+  // History
+  canUndo: boolean;
+  canRedo: boolean;
+
+  // Methods
+  save: () => Promise<void>;
+  undo: () => void;
+  redo: () => void;
+  selectTable: (tableId: UUID | null) => void;
+  refetch: () => Promise<void>;
+  updateTable: (tableId: UUID, updates: TableLayoutUpdate) => Promise<void>;
+  deleteTable: (tableId: UUID) => Promise<void>;
+  assignGuest: (
+    tableId: UUID,
+    guestId: UUID,
+    seatNumber: number
+  ) => Promise<void>;
+  unassignSeat: (seatId: UUID) => Promise<void>;
+}
+
+export interface UseSeatingHistoryReturn {
+  // State
+  canUndo: boolean;
+  canRedo: boolean;
+  undoCount: number;
+  redoCount: number;
+
+  // Methods
+  undo: () => HistoryAction | null;
+  redo: () => HistoryAction | null;
+  recordAction: (action: Omit<HistoryAction, "id" | "timestamp">) => void;
+  clearHistory: () => void;
+  getHistory: () => HistoryState;
+}

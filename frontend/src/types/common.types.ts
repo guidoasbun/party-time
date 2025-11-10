@@ -196,8 +196,8 @@ export const API_ENDPOINTS = {
 
   SEATING: {
     CREATE: (eventId: string) => `/api/v1/events/${eventId}/seating`,
-    GET_CHART: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}`,
+    GET_CHART: (eventId: string) =>
+      `/api/v1/events/${eventId}/seating`,
     UPDATE_CHART: (eventId: string, chartId: string) =>
       `/api/v1/events/${eventId}/seating/${chartId}`,
     DELETE_CHART: (eventId: string, chartId: string) =>
