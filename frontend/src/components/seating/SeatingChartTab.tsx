@@ -20,18 +20,10 @@ import {
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { useSeatingChart } from "@/hooks/useSeatingChart";
-import SeatingCanvas from "./SeatingCanvas";
-import { TableToolbar } from "./TableToolbar";
-import { GuestSidebar } from "./GuestSidebar";
-import { TableProperties } from "./TableProperties";
-import { UnseatedGuestsIndicator } from "./UnseatedGuestsIndicator";
 import MobileSeatingView from "./MobileSeatingView";
-import { SaveIndicator } from "./SaveIndicator";
-import { SeatingHistory } from "./SeatingHistory";
-import { SeatingHelp } from "./SeatingHelp";
-import { FeatureTooltips } from "./FeatureTooltips";
+import { SeatingOverview } from "./SeatingOverview";
 import { cn } from "@/lib/utils";
-import type { UUID, Event } from "@/types";
+import type { Event } from "@/types";
 
 interface SeatingChartTabProps {
   event: Event;
@@ -50,22 +42,7 @@ export function SeatingChartTab({ event, className }: SeatingChartTabProps) {
     enableAutosave: true,
   });
 
-  const {
-    chart,
-    statistics,
-    isLoading,
-    error,
-    saveStatus,
-    lastSaved,
-    hasUnsavedChanges,
-    canUndo,
-    canRedo,
-    undo,
-    redo,
-    refetch,
-    selectedTableId,
-    selectTable,
-  } = seatingChart;
+  const { chart, statistics, isLoading, error, refetch } = seatingChart;
 
   // Detect mobile/tablet viewport
   useEffect(() => {
@@ -169,140 +146,23 @@ export function SeatingChartTab({ event, className }: SeatingChartTabProps) {
   }
 
   // ============================================================================
-  // Desktop View
+  // Desktop View - Read-Only Overview
+  /**
+   * FR-21: The system shall provide an interactive seating chart interface.
+   * Phase 6.3.1: Basic Tab Integration With Read Only View
+   */
   // ============================================================================
 
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-      {/* Top Bar */}
-      <div className="border-b border-border bg-card p-4">
-        <div className="flex items-center justify-between gap-4">
-          {/* Left: Title and Stats */}
-          <div className="flex items-center gap-4">
-            <div>
-              <h2 className="text-lg font-semibold">{chart.name}</h2>
-              {statistics && (
-                <p className="text-sm text-muted-foreground">
-                  {statistics.total_assigned} of {statistics.total_capacity}{" "}
-                  seats assigned
-                  {" • "}
-                  {statistics.total_tables} tables
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Right: Actions */}
-          <div className="flex items-center gap-2">
-            {/* Save Indicator */}
-            <SaveIndicator
-              status={saveStatus}
-              lastSaved={lastSaved}
-              className="hidden sm:flex"
-            />
-
-            {/* Undo/Redo */}
-            <SeatingHistory
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onUndo={undo}
-              onRedo={redo}
-            />
-
-            {/* Help */}
-            <SeatingHelp />
-          </div>
-        </div>
-      </div>
-
-      {/* Feature Tooltips */}
-      <div className="p-4 pb-0">
-        <FeatureTooltips />
-      </div>
-
-      {/* Main Content Area - Canvas Integration Coming Soon */}
-      <div className="flex-1 p-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Seating Chart Editor - Integration Ready</CardTitle>
-            <CardDescription>
-              Phase 6.2.5 infrastructure is complete! All canvas components are
-              built and tested.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold mb-2">
-                  ✅ Phase 6.2.5 Features Working:
-                </h3>
-                <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-                  <li>
-                    Autosave with 30-second debounce (status indicator above)
-                  </li>
-                  <li>Undo/Redo with keyboard shortcuts (Cmd/Ctrl+Z)</li>
-                  <li>Keyboard shortcuts help (press ? key)</li>
-                  <li>Feature onboarding tooltips</li>
-                  <li>Mobile/desktop responsive detection</li>
-                  <li>Full API integration with authentication</li>
-                  <li>
-                    Statistics tracking: {statistics?.total_assigned || 0} of{" "}
-                    {statistics?.total_capacity || 0} seats assigned across{" "}
-                    {statistics?.total_tables || 0} tables
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <h3 className="text-sm font-semibold mb-2">
-                  🔨 Next Integration Step:
-                </h3>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Canvas components (SeatingCanvas, TableToolbar, GuestSidebar,
-                  etc.) need prop interface updates to work with useSeatingChart
-                  hook.
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  All components are production-ready and tested in demo pages
-                  (/demo/seating-canvas, /demo/table-management,
-                  /demo/guest-assignment). They just need adapter props to
-                  integrate with the live API data from useSeatingChart.
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    (window.location.href = "/demo/seating-canvas")
-                  }
-                >
-                  View Canvas Demo
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    (window.location.href = "/demo/guest-assignment")
-                  }
-                >
-                  View Guest Assignment Demo
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bottom Bar: Additional Info (Optional) */}
-      {hasUnsavedChanges && (
-        <div className="border-t border-border bg-muted/50 p-2 text-center">
-          <p className="text-xs text-muted-foreground">
-            You have unsaved changes. Changes will be saved automatically.
-          </p>
-        </div>
-      )}
+    <div className={cn("p-6", className)}>
+      <SeatingOverview
+        event={event}
+        chart={chart}
+        statistics={statistics}
+        tables={chart.tables || []}
+        isLoading={isLoading}
+        onCreateChart={() => refetch()}
+      />
     </div>
   );
 }
