@@ -59,6 +59,9 @@ export default function SeatingEditPage() {
     undo,
     redo,
     refetch: refetchChart,
+    createTable,
+    bulkCreateTables,
+    updateChart,
   } = useSeatingChart({ eventId, enableAutosave: true });
 
   // Fetch guests for assignment
@@ -277,6 +280,9 @@ export default function SeatingEditPage() {
             onSave={handleSave}
             onUndo={undo}
             onRedo={redo}
+            onCreateTable={createTable}
+            onBulkCreateTables={bulkCreateTables}
+            onUpdateChart={updateChart}
           />
         </div>
       </div>

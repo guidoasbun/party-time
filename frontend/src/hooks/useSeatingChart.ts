@@ -17,10 +17,12 @@ import type {
   TableLayout,
   SeatAssignment,
   TableLayoutUpdate,
+  TableLayoutCreate,
+  SeatingChartUpdate,
   SaveStatus,
   UseSeatingChartReturn,
 } from "@/types";
-import { VenueUnit } from "@/types";
+import { VenueUnit, TableType } from "@/types";
 
 const AUTOSAVE_DELAY = 30000; // 30 seconds
 
@@ -75,7 +77,6 @@ export function useSeatingChart({
         // ApiException from api-client.ts has status property
         const apiError = err as { status?: number };
         if (apiError.status === 404) {
-          console.log("No seating chart found, creating default chart...");
           const newChart = await seatingService.createSeatingChart(eventId, {
             event_id: eventId,
             name: "Seating Chart",
@@ -83,12 +84,19 @@ export function useSeatingChart({
             venue_height: 800,
             venue_unit: VenueUnit.FEET,
           });
-          return newChart as unknown as SeatingChartWithTables;
+          // When creating a new chart, it won't have tables yet
+          return {
+            ...newChart,
+            tables: [],
+            total_tables: 0,
+            total_capacity: 0,
+            total_assigned: 0
+          } as SeatingChartWithTables;
         }
         throw err;
       }
     },
-    staleTime: 60000, // 1 minute
+    staleTime: 30000, // 30 seconds - reduced for more frequent updates
     retry: 1,
   });
 
@@ -128,14 +136,90 @@ export function useSeatingChart({
         updates
       );
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
-      queryClient.invalidateQueries({
-        queryKey: ["seatingStatistics", eventId],
+    // IMPORTANT: Use onMutate for IMMEDIATE optimistic update before API call
+    onMutate: async ({ tableId, updates }) => {
+      console.log("🔄 [MUTATION] onMutate called:", { tableId, updates });
+
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ["seatingChart", eventId] });
+
+      // Snapshot the previous value for rollback
+      const previousData = queryClient.getQueryData<SeatingChartWithTables>(["seatingChart", eventId]);
+
+      // Optimistic update - immediately update cache with new position
+      queryClient.setQueryData<SeatingChartWithTables>(["seatingChart", eventId], (oldData) => {
+        if (!oldData) return oldData;
+
+        const oldTable = oldData.tables?.find((t) => t.id === tableId);
+        console.log("🔄 [MUTATION] Applying optimistic update to cache:", {
+          tableId,
+          updates,
+          oldTablePosition: oldTable ? { x: oldTable.x_position, y: oldTable.y_position } : null
+        });
+
+        const newTables = (oldData.tables || []).map((t) =>
+          t.id === tableId ? { ...t, ...updates } : t
+        );
+
+        const result = {
+          ...oldData,
+          tables: newTables,
+        };
+
+        console.log("🔄 [MUTATION] New cache data:", {
+          tableId,
+          newPosition: newTables.find(t => t.id === tableId)
+            ? { x: newTables.find(t => t.id === tableId)!.x_position, y: newTables.find(t => t.id === tableId)!.y_position }
+            : null
+        });
+
+        return result;
       });
+
+      // Return context for rollback
+      return { previousData, tableId, updates };
+    },
+    onSuccess: async (updatedTable, { tableId, updates }, context) => {
+      console.log("✅ [MUTATION] onSuccess called:", {
+        tableId,
+        updates,
+        updatedTable,
+        serverPosition: updatedTable ? {
+          x: updatedTable.x_position,
+          y: updatedTable.y_position
+        } : null
+      });
+
+      // Re-apply our optimistic update to ensure server response doesn't overwrite it
+      // This is needed because React Query will replace cache with server response
+      queryClient.setQueryData<SeatingChartWithTables>(["seatingChart", eventId], (oldData) => {
+        if (!oldData) return oldData;
+        console.log("✅ [MUTATION] Re-applying update in onSuccess:", { tableId, updates });
+
+        // Use the updates from our original mutation, not from the server response
+        // because the server response is the full table and might have stale position data
+        // if another request was in flight
+        const newTables = (oldData.tables || []).map((t) =>
+          t.id === tableId ? { ...t, ...updates } : t
+        );
+
+        return {
+          ...oldData,
+          tables: newTables,
+        };
+      });
+
+      // Also invalidate statistics if capacity changed
+      if (updates.capacity !== undefined) {
+        queryClient.invalidateQueries({ queryKey: ["seatingStatistics", eventId] });
+      }
       markUnsavedChanges();
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback on error
+      if (context?.previousData) {
+        queryClient.setQueryData(["seatingChart", eventId], context.previousData);
+      }
       console.error("Failed to update table:", (error as Error).message);
     },
   });
@@ -148,14 +232,15 @@ export function useSeatingChart({
       if (!chart?.id) throw new Error("No chart loaded");
       return await seatingService.deleteTable(eventId, chart.id, tableId);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
-      queryClient.invalidateQueries({
-        queryKey: ["seatingStatistics", eventId],
-      });
+    onSuccess: async (_, tableId) => {
+      // Invalidate and refetch the chart to get fresh data from backend
+      await queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
+      await refetchChart();
+
+      // Also invalidate statistics
+      queryClient.invalidateQueries({ queryKey: ["seatingStatistics", eventId] });
       setSelectedTableId(null);
       markUnsavedChanges();
-      console.log("Table deleted");
     },
     onError: (error) => {
       console.error("Failed to delete table:", (error as Error).message);
@@ -213,10 +298,76 @@ export function useSeatingChart({
         queryKey: ["seatingStatistics", eventId],
       });
       markUnsavedChanges();
-      console.log("Seat unassigned");
     },
     onError: (error) => {
       console.error("Failed to unassign seat:", (error as Error).message);
+    },
+  });
+
+  /**
+   * Create table mutation
+   */
+  const createTableMutation = useMutation({
+    mutationFn: async (tableData: Omit<TableLayoutCreate, 'seating_chart_id'>) => {
+      if (!chart?.id) throw new Error("No chart loaded");
+      return await seatingService.createTable(eventId, chart.id, {
+        ...tableData,
+        seating_chart_id: chart.id,
+      });
+    },
+    onSuccess: async (newTable) => {
+      // Invalidate and refetch the chart to get fresh data from backend
+      await queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
+      await refetchChart();
+
+      // Also invalidate statistics
+      queryClient.invalidateQueries({ queryKey: ["seatingStatistics", eventId] });
+      markUnsavedChanges();
+    },
+    onError: (error) => {
+      console.error("Failed to create table:", (error as Error).message);
+    },
+  });
+
+  /**
+   * Bulk create tables mutation
+   */
+  const bulkCreateTablesMutation = useMutation({
+    mutationFn: async (tables: Omit<TableLayoutCreate, 'seating_chart_id'>[]) => {
+      if (!chart?.id) throw new Error("No chart loaded");
+      return await seatingService.bulkCreateTables(eventId, chart.id, {
+        seating_chart_id: chart.id,
+        tables: tables as any[], // TableLayoutBase[]
+      });
+    },
+    onSuccess: async (newTables) => {
+      // Invalidate and refetch the chart to get fresh data from backend
+      await queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
+      await refetchChart();
+
+      // Also invalidate statistics
+      queryClient.invalidateQueries({ queryKey: ["seatingStatistics", eventId] });
+      markUnsavedChanges();
+    },
+    onError: (error) => {
+      console.error("Failed to create tables:", (error as Error).message);
+    },
+  });
+
+  /**
+   * Update chart mutation (for venue metadata)
+   */
+  const updateChartMutation = useMutation({
+    mutationFn: async (updates: SeatingChartUpdate) => {
+      if (!chart?.id) throw new Error("No chart loaded");
+      return await seatingService.updateSeatingChart(eventId, chart.id, updates);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["seatingChart", eventId] });
+      markUnsavedChanges();
+    },
+    onError: (error) => {
+      console.error("Failed to update chart:", (error as Error).message);
     },
   });
 
@@ -249,6 +400,11 @@ export function useSeatingChart({
 
   /**
    * Manual save function
+   *
+   * Note: Changes are automatically saved to the server via individual mutations
+   * (createTable, updateTable, deleteTable, etc.). This function just acknowledges
+   * the save and updates the UI state. We do NOT refetch here because that would
+   * overwrite the optimistic updates in the cache with potentially stale server data.
    */
   const save = useCallback(async () => {
     if (!chart?.id || !pendingChangesRef.current) return;
@@ -256,20 +412,24 @@ export function useSeatingChart({
     setSaveStatus("saving");
 
     try {
-      // Force refetch to save current state
-      await refetchChart();
+      // All changes are already saved via mutations (optimistic updates + API calls)
+      // Just acknowledge the save without refetching
+      //
+      // If we need to ensure the server has the latest data, we could add
+      // a dedicated "sync" endpoint in the future, but for now we trust
+      // that the individual mutations have saved the data correctly.
 
       setHasUnsavedChanges(false);
       setSaveStatus("saved");
       setLastSaved(new Date());
       pendingChangesRef.current = false;
 
-      console.log("Seating chart saved");
+      console.log("Seating chart saved - changes already persisted via mutations");
     } catch (error) {
       setSaveStatus("error");
       console.error("Failed to save seating chart:", (error as Error).message);
     }
-  }, [chart?.id, refetchChart]);
+  }, [chart?.id]);
 
   // ============================================================================
   // Undo/Redo Logic
@@ -559,6 +719,24 @@ export function useSeatingChart({
       }
 
       await unassignSeatMutation.mutateAsync(seatId);
+    },
+    createTable: async (tableData: Omit<TableLayoutCreate, 'seating_chart_id'>) => {
+      const newTable = await createTableMutation.mutateAsync(tableData);
+
+      // Record action for undo
+      history.recordAction({
+        type: "table_add",
+        data: { tableId: newTable.id },
+        inverseData: null,
+      });
+
+      return newTable;
+    },
+    bulkCreateTables: async (tables: Omit<TableLayoutCreate, 'seating_chart_id'>[]) => {
+      return await bulkCreateTablesMutation.mutateAsync(tables);
+    },
+    updateChart: async (updates: SeatingChartUpdate) => {
+      return await updateChartMutation.mutateAsync(updates);
     },
   };
 }

@@ -6,6 +6,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { TableTemplates } from "./TableTemplates";
 import {
   ChevronLeft,
   ChevronRight,
@@ -29,9 +30,12 @@ import type {
   SeatingChart,
   SeatingChartWithTables,
   TableLayout,
+  TableLayoutCreate,
+  SeatingChartUpdate,
   SeatAssignment,
   SeatingStatistics,
 } from "@/types/seating.types";
+import { TableType } from "@/types/seating.types";
 import type { Guest } from "@/types/guest.types";
 import type { Event } from "@/types/event.types";
 import { cn } from "@/lib/utils";
@@ -58,6 +62,9 @@ interface SeatingEditorLayoutProps {
   onSave: () => Promise<void>;
   onUndo: () => void;
   onRedo: () => void;
+  onCreateTable: (tableData: Omit<TableLayoutCreate, 'seating_chart_id'>) => Promise<TableLayout>;
+  onBulkCreateTables: (tables: Omit<TableLayoutCreate, 'seating_chart_id'>[]) => Promise<TableLayout[]>;
+  onUpdateChart: (updates: SeatingChartUpdate) => Promise<SeatingChart>;
 }
 
 export function SeatingEditorLayout({
@@ -78,11 +85,17 @@ export function SeatingEditorLayout({
   onSave,
   onUndo,
   onRedo,
+  onCreateTable,
+  onBulkCreateTables,
+  onUpdateChart,
 }: SeatingEditorLayoutProps) {
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [rightTab, setRightTab] = useState("tables");
   const [showGrid, setShowGrid] = useState(true);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
 
   // Filter attending guests for sidebar
   const attendingGuests = guests.filter(
@@ -102,10 +115,23 @@ export function SeatingEditorLayout({
     : [];
 
   // Handle table creation
-  const handleCreateTable = useCallback(() => {
-    // This would be handled by the parent component through mutations
-    console.log("Create table");
-  }, []);
+  const handleCreateTable = useCallback(async () => {
+    // Create a default table in the center of the canvas
+    const centerX = (chart?.venue_width || 1200) / 2 - 50; // 50 is half of default width
+    const centerY = (chart?.venue_height || 800) / 2 - 50; // 50 is half of default height
+    const tableNumber = `Table ${tables.length + 1}`;
+
+    await onCreateTable({
+      table_number: tableNumber,
+      table_type: TableType.ROUND,
+      capacity: 8,
+      width: 100,
+      height: 100,
+      x_position: centerX,
+      y_position: centerY,
+      rotation: 0,
+    });
+  }, [chart, tables.length, onCreateTable]);
 
   // Responsive adjustments
   useEffect(() => {
@@ -151,8 +177,9 @@ export function SeatingEditorLayout({
             <div className="flex-1 overflow-hidden">
               <GuestSidebar
                 guests={unseatedGuests}
-                onGuestDragStart={(guestId) => {
-                  console.log("Drag start:", guestId);
+                onGuestDragStart={(guest) => {
+                  // Set dragged guest ID for canvas to detect
+                  setDraggedGuestId(guest.id);
                 }}
               />
             </div>
@@ -208,17 +235,32 @@ export function SeatingEditorLayout({
                 selectedTableIds={selectedTableId ? [selectedTableId] : []}
                 onAddTable={handleCreateTable}
                 onAddFromTemplate={() => {
-                  // Handle template creation
-                  console.log("Add from template");
+                  // Open template modal
+                  setShowTemplateModal(true);
                 }}
                 onDeleteSelected={
                   selectedTableId
                     ? () => onDeleteTable(selectedTableId)
                     : () => {}
                 }
-                onDuplicateSelected={() => {
-                  // Handle duplicate
-                  console.log("Duplicate selected tables");
+                onDuplicateSelected={async () => {
+                  // Duplicate selected tables with offset positions
+                  if (selectedTableId) {
+                    const tableToClone = tables.find(t => t.id === selectedTableId);
+                    if (tableToClone) {
+                      const offset = 50; // Offset duplicated tables
+                      await onCreateTable({
+                        table_number: `Table ${tables.length + 1}`,
+                        table_type: tableToClone.table_type,
+                        capacity: tableToClone.capacity,
+                        width: tableToClone.width,
+                        height: tableToClone.height,
+                        x_position: tableToClone.x_position + offset,
+                        y_position: tableToClone.y_position + offset,
+                        rotation: tableToClone.rotation,
+                      });
+                    }
+                  }
                 }}
               />
 
@@ -235,21 +277,23 @@ export function SeatingEditorLayout({
               </Button>
             </div>
 
-            {/* Zoom controls placeholder - CanvasControls requires canvas ref */}
+            {/* Zoom controls */}
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => console.log("Zoom in")}
+                onClick={() => setZoomLevel(Math.min(5, zoomLevel * 1.2))}
                 title="Zoom In"
               >
                 +
               </Button>
-              <span className="text-sm text-muted-foreground px-2">100%</span>
+              <span className="text-sm text-muted-foreground px-2">
+                {Math.round(zoomLevel * 100)}%
+              </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => console.log("Zoom out")}
+                onClick={() => setZoomLevel(Math.max(0.1, zoomLevel / 1.2))}
                 title="Zoom Out"
               >
                 -
@@ -266,7 +310,8 @@ export function SeatingEditorLayout({
               tables={tables}
               onTableSelect={onSelectTable}
               onTableMove={(tableId, x, y) => {
-                onUpdateTable(tableId, { x_position: x, y_position: y });
+                console.log("🎯 [EDITOR LAYOUT] onTableMove called:", { tableId, x, y, xType: typeof x, yType: typeof y });
+                onUpdateTable(tableId, { x_position: Number(x), y_position: Number(y) });
               }}
               onTableRotate={(tableId, rotation) => {
                 onUpdateTable(tableId, { rotation });
@@ -281,6 +326,8 @@ export function SeatingEditorLayout({
                   ? "dark"
                   : "light"
               }
+              zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
+              onZoomChange={(newZoom) => setZoomLevel(newZoom.scale)}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -409,12 +456,11 @@ export function SeatingEditorLayout({
                         : "light"
                     }
                     onSave={async (floorPlanUrl, metadata) => {
-                      // Handle venue metadata update
-                      console.log(
-                        "Update venue metadata:",
-                        metadata,
-                        floorPlanUrl
-                      );
+                      // Update venue metadata
+                      await onUpdateChart({
+                        background_image_url: floorPlanUrl || undefined,
+                        chart_metadata: metadata as unknown as Record<string, unknown>,
+                      });
                     }}
                   />
                 </TabsContent>
@@ -464,6 +510,21 @@ export function SeatingEditorLayout({
           </div>
         )}
       </div>
+
+      {/* Template Modal */}
+      {showTemplateModal && chart && (
+        <TableTemplates
+          isOpen={showTemplateModal}
+          onClose={() => setShowTemplateModal(false)}
+          onApplyTemplate={async (templateTables) => {
+            await onBulkCreateTables(templateTables);
+            setShowTemplateModal(false);
+          }}
+          canvasWidth={chart.venue_width}
+          canvasHeight={chart.venue_height}
+          existingTableCount={tables.length}
+        />
+      )}
     </div>
   );
 }
