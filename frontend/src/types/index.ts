@@ -51,8 +51,12 @@ export type {
   TimeoutException,
 } from "../lib/api-client";
 
+// Export enums as values
+export { UserRole } from "./user.types";
+export { EventType, EventStatus } from "./event.types";
+
+// Export types
 export type {
-  UserRole,
   User,
   UserCreate,
   UserUpdate,
@@ -60,8 +64,6 @@ export type {
 } from "./user.types";
 
 export type {
-  EventType,
-  EventStatus,
   Event,
   EventCreate,
   EventUpdate,

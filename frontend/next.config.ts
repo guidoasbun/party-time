@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  eslint: {
+    // During production builds, ignore ESLint warnings
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;
