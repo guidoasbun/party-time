@@ -555,6 +555,9 @@ export interface UseSeatingChartReturn {
     seatNumber: number
   ) => Promise<void>;
   unassignSeat: (seatId: UUID) => Promise<void>;
+  createTable: (tableData: Omit<TableLayoutCreate, 'seating_chart_id'>) => Promise<TableLayout>;
+  bulkCreateTables: (tables: Omit<TableLayoutCreate, 'seating_chart_id'>[]) => Promise<TableLayout[]>;
+  updateChart: (updates: SeatingChartUpdate) => Promise<SeatingChart>;
 }
 
 export interface UseSeatingHistoryReturn {

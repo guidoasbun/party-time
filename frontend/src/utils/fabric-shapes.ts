@@ -52,20 +52,41 @@ export interface GridConfig {
 // ============================================================================
 
 /**
- * Extract CSS variables from document root
+ * Extract CSS variables from document root with theme-aware fallbacks
  */
-function getCSSVariable(variableName: string): string {
-  if (typeof window === 'undefined') return '#000000';
+function getCSSVariable(variableName: string, theme: 'light' | 'dark'): string {
+  // Fallback colors for each theme
+  const fallbacks: Record<'light' | 'dark', Record<string, string>> = {
+    light: {
+      '--muted': '#f9fafb',
+      '--border': '#e5e7eb',
+      '--primary': '#2563eb',
+      '--foreground': '#171717'
+    },
+    dark: {
+      '--muted': '#1f2937',
+      '--border': '#374151',
+      '--primary': '#3b82f6',
+      '--foreground': '#ededed'
+    }
+  };
+
+  if (typeof window === 'undefined') {
+    // Return theme-appropriate fallback for SSR
+    return fallbacks[theme][variableName] || '#808080';
+  }
 
   const value = getComputedStyle(document.documentElement)
     .getPropertyValue(variableName)
     .trim();
 
-  // If it's a hex color, return it
-  if (value.startsWith('#')) return value;
+  console.log('🎨 [CSS VARIABLE]', { variableName, value, theme });
 
-  // If it's an rgb value, convert to hex
-  if (value.startsWith('rgb')) {
+  // If we got a valid hex color
+  if (value && value.startsWith('#')) return value;
+
+  // If we got an rgb value, convert to hex
+  if (value && value.startsWith('rgb')) {
     const rgb = value.match(/\d+/g);
     if (rgb && rgb.length >= 3) {
       const hex = '#' + rgb.slice(0, 3).map(x => {
@@ -76,7 +97,10 @@ function getCSSVariable(variableName: string): string {
     }
   }
 
-  return value || '#000000';
+  // Fallback to theme-appropriate color instead of black
+  const fallback = fallbacks[theme][variableName] || '#808080';
+  console.log('⚠️ [CSS VARIABLE FALLBACK]', { variableName, fallback, theme });
+  return fallback;
 }
 
 /**
@@ -84,10 +108,10 @@ function getCSSVariable(variableName: string): string {
  */
 export function getThemeAwareTableColors(theme: 'light' | 'dark'): TableColorScheme {
   return {
-    fill: getCSSVariable('--card'),
-    stroke: getCSSVariable('--border'),
-    selectedFill: getCSSVariable('--primary'),
-    text: getCSSVariable('--foreground'),
+    fill: getCSSVariable('--muted', theme),
+    stroke: getCSSVariable('--border', theme),
+    selectedFill: getCSSVariable('--primary', theme),
+    text: getCSSVariable('--foreground', theme),
     emptySeat: theme === 'dark' ? '#4b5563' : '#d1d5db',
     occupiedSeat: theme === 'dark' ? '#10b981' : '#059669',
   };
@@ -124,7 +148,7 @@ export function renderGridLines(
   );
   existingGridLines.forEach((line) => canvas.remove(line));
 
-  // Draw vertical lines (grid lines are added first, so they're automatically behind tables)
+  // Draw vertical lines (send to back to ensure they appear behind tables)
   for (let x = 0; x <= canvasWidth; x += gridSize) {
     const line = new fabric.Line([x, 0, x, canvasHeight], {
       stroke: config.color,
@@ -136,6 +160,7 @@ export function renderGridLines(
     }) as fabric.Line & { isGridLine?: boolean };
     line.isGridLine = true;
     canvas.add(line);
+    canvas.sendObjectToBack(line);
   }
 
   // Draw horizontal lines
@@ -150,6 +175,7 @@ export function renderGridLines(
     }) as fabric.Line & { isGridLine?: boolean };
     line.isGridLine = true;
     canvas.add(line);
+    canvas.sendObjectToBack(line);
   }
 
   canvas.renderAll();
@@ -498,29 +524,70 @@ export function createTableShape(
   tableLayout: TableLayout,
   options?: Partial<TableShapeOptions>
 ): fabric.Group {
+  console.log("🏭 [CREATE TABLE SHAPE] Input data:", {
+    tableLayout: {
+      id: tableLayout.id,
+      table_number: tableLayout.table_number,
+      table_type: tableLayout.table_type,
+      x_position: tableLayout.x_position,
+      y_position: tableLayout.y_position,
+      width: tableLayout.width,
+      height: tableLayout.height,
+      rotation: tableLayout.rotation,
+      capacity: tableLayout.capacity,
+    },
+    options,
+  });
+
+  // Convert string coordinates to numbers (PostgreSQL Decimal types come as strings)
   const shapeOptions: TableShapeOptions = {
     id: tableLayout.id,
     tableNumber: tableLayout.table_number,
-    x: tableLayout.x_position,
-    y: tableLayout.y_position,
-    width: tableLayout.width,
-    height: tableLayout.height,
-    rotation: tableLayout.rotation,
+    x: typeof tableLayout.x_position === 'string' ? parseFloat(tableLayout.x_position) : tableLayout.x_position,
+    y: typeof tableLayout.y_position === 'string' ? parseFloat(tableLayout.y_position) : tableLayout.y_position,
+    width: typeof tableLayout.width === 'string' ? parseFloat(tableLayout.width) : tableLayout.width,
+    height: typeof tableLayout.height === 'string' ? parseFloat(tableLayout.height) : tableLayout.height,
+    rotation: typeof tableLayout.rotation === 'string' ? parseFloat(tableLayout.rotation) : tableLayout.rotation,
     capacity: tableLayout.capacity,
     tableType: tableLayout.table_type,
     ...options,
   };
 
+  console.log("🏭 [CREATE TABLE SHAPE] Shape options (after number conversion):", shapeOptions);
+
+  let shape: fabric.Group;
   switch (tableLayout.table_type) {
     case TableType.ROUND:
-      return createRoundTable(shapeOptions);
+      shape = createRoundTable(shapeOptions);
+      break;
     case TableType.RECTANGULAR:
-      return createRectangularTable(shapeOptions);
+      shape = createRectangularTable(shapeOptions);
+      break;
     case TableType.SQUARE:
-      return createSquareTable(shapeOptions);
+      shape = createSquareTable(shapeOptions);
+      break;
     case TableType.CUSTOM:
-      return createCustomTable(shapeOptions);
+      shape = createCustomTable(shapeOptions);
+      break;
     default:
-      return createRectangularTable(shapeOptions);
+      shape = createRectangularTable(shapeOptions);
   }
+
+  console.log("🏭 [CREATE TABLE SHAPE] Result shape:", {
+    type: shape.type,
+    left: shape.left,
+    top: shape.top,
+    width: shape.width,
+    height: shape.height,
+    angle: shape.angle,
+    scaleX: shape.scaleX,
+    scaleY: shape.scaleY,
+    visible: shape.visible,
+    opacity: shape.opacity,
+    fill: shape.fill,
+    stroke: shape.stroke,
+    objectsLength: shape._objects?.length,
+  });
+
+  return shape;
 }

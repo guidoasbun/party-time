@@ -306,13 +306,18 @@ export default function ClientOnlyDemo({
               tables={tables}
               onTableSelect={setSelectedTableId}
               onTableMove={(tableId, x, y) => {
-                console.log(`Table ${tableId} moved to (${x}, ${y})`);
+                console.log(`✅ Table ${tableId} moved to (${x}, ${y})`);
+                // In a real app, this would update state via useSeatingChart hook
+                // Demo uses hardcoded data, so position changes aren't persisted
+                console.log("⚠️ Demo limitation: Position not persisted in state");
               }}
               onTableResize={(tableId, width, height) => {
-                console.log(`Table ${tableId} resized to ${width}x${height}`);
+                console.log(`✅ Table ${tableId} resized to ${width}x${height}`);
+                console.log("⚠️ Demo limitation: Size not persisted in state");
               }}
               onTableRotate={(tableId, rotation) => {
-                console.log(`Table ${tableId} rotated to ${rotation}°`);
+                console.log(`✅ Table ${tableId} rotated to ${rotation}°`);
+                console.log("⚠️ Demo limitation: Rotation not persisted in state");
               }}
               readOnly={readOnlyMode}
               gridConfig={gridConfig}

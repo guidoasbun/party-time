@@ -80,11 +80,33 @@ export default function SeatingCanvas({
   const containerRef = useRef<HTMLDivElement>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Debounce timer for API updates
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Debounce timers for API updates - one per table to prevent conflicts
+  const debounceTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
-  // Track which object is currently being manipulated
-  const activeObjectRef = useRef<string | null>(null);
+  // Pending updates to batch together (position, rotation, resize)
+  const pendingUpdatesRef = useRef<Map<string, { x?: number; y?: number; rotation?: number; width?: number; height?: number }>>(new Map());
+
+  // Track which objects are currently being manipulated
+  const activeObjectsRef = useRef<Set<string>>(new Set());
+
+  // Track last drag end time to prevent snap-back from delayed state updates
+  const lastDragEndRef = useRef<number>(0);
+
+  // Track which tables have been dragged and their current canvas positions
+  // This prevents stale state from overwriting canvas positions
+  const draggedPositionsRef = useRef<Map<string, { x: number; y: number }>>(new Map());
+
+  // Store callbacks in refs to avoid stale closures
+  const onTableMoveRef = useRef(onTableMove);
+  const onTableRotateRef = useRef(onTableRotate);
+  const onTableResizeRef = useRef(onTableResize);
+
+  // Keep refs synchronized with latest callbacks
+  useEffect(() => {
+    onTableMoveRef.current = onTableMove;
+    onTableRotateRef.current = onTableRotate;
+    onTableResizeRef.current = onTableResize;
+  }, [onTableMove, onTableRotate, onTableResize]);
 
   // Track floor plan image object
   const floorPlanImageRef = useRef<fabric.Image | null>(null);
@@ -202,6 +224,9 @@ export default function SeatingCanvas({
           // Store reference
           floorPlanImageRef.current = img;
 
+          // Mark as floor plan so it doesn't get removed
+          (img as any).isFloorPlan = true;
+
           // Add to canvas as bottom layer
           canvas.add(img);
           canvas.sendObjectToBack(img);
@@ -268,16 +293,95 @@ export default function SeatingCanvas({
   // Render Tables
   // ============================================================================
 
+  // Track tables prop changes
+  const tablesDebugRef = useRef<string>('');
+
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
-    if (!canvas || !isInitialized) return;
 
-    // Get existing table objects
+    // Create a debug string of table positions to track changes
+    const tablesDebugString = tables.map(t => `${t.id}:${t.x_position},${t.y_position}`).join('|');
+    const tablesChanged = tablesDebugString !== tablesDebugRef.current;
+
+    console.log("🔍 [RENDER EFFECT] Starting render effect", {
+      canvas: !!canvas,
+      isInitialized,
+      tablesCount: tables.length,
+      activeObjectsCount: activeObjectsRef.current.size,
+      tablesChanged,
+      previousDebug: tablesDebugRef.current ? tablesDebugRef.current.substring(0, 100) : 'none',
+      currentDebug: tablesDebugString.substring(0, 100),
+      tables: tables.map(t => ({ id: t.id, number: t.table_number, x: t.x_position, y: t.y_position, type: t.table_type }))
+    });
+
+    // Update debug ref after logging
+    tablesDebugRef.current = tablesDebugString;
+
+    if (!canvas || !isInitialized) {
+      console.log("🚫 [RENDER EFFECT] Skipping - canvas or not initialized");
+      return;
+    }
+
+    // CRITICAL: Skip canvas rebuild if any tables are being actively dragged
+    // This prevents React Query refetches from wiping out in-progress drags
+    if (activeObjectsRef.current.size > 0) {
+      console.log("⏸️ [RENDER EFFECT] Skipping - tables are being dragged:", Array.from(activeObjectsRef.current));
+      return;
+    }
+
+    // CRITICAL: Skip position updates if a drag operation completed recently
+    // This prevents stale state from React Query from overwriting the new position
+    // Increased to 5 seconds to allow for API call, cache update, and React re-render
+    const timeSinceDrag = Date.now() - lastDragEndRef.current;
+    console.log("🕐 [RENDER EFFECT] Time since drag check:", {
+      timeSinceDrag,
+      lastDragEndRef: lastDragEndRef.current,
+      now: Date.now(),
+      threshold: 5000,
+      shouldSkip: timeSinceDrag < 5000
+    });
+    if (timeSinceDrag < 5000) {
+      console.log("⏸️ [RENDER EFFECT] Skipping - recent drag operation");
+      return;
+    }
+
+    // Get existing table objects (exclude grid lines, floor plan, and special areas)
+    const allObjects = canvas.getObjects();
+    console.log("🔍 [CANVAS OBJECTS] All canvas objects:", allObjects.length, allObjects.map(obj => {
+      const customObj = obj as fabric.Object & {
+        isGridLine?: boolean;
+        isFloorPlan?: boolean;
+        data?: Record<string, unknown>;
+      };
+      return {
+        type: obj.type,
+        isGridLine: customObj.isGridLine,
+        isFloorPlan: customObj.isFloorPlan,
+        areaType: customObj.data?.areaType,
+        left: obj.left,
+        top: obj.top,
+        width: obj.width,
+        height: obj.height,
+      };
+    }));
+
     const existingTableObjects = canvas
       .getObjects()
       .filter(
-        (obj) => !(obj as fabric.Object & { isGridLine?: boolean }).isGridLine
+        (obj) => {
+          const customObj = obj as fabric.Object & {
+            isGridLine?: boolean;
+            isFloorPlan?: boolean;
+            data?: Record<string, unknown>;
+          };
+          // Keep objects that are NOT grid lines, NOT floor plans, and NOT special areas
+          return !customObj.isGridLine &&
+                 !customObj.isFloorPlan &&
+                 customObj.data?.areaType !== "special";
+        }
       ) as (fabric.Group & { data?: Record<string, unknown> })[];
+
+    console.log("🔍 [EXISTING TABLES] Existing table objects:", existingTableObjects.length);
 
     // Create a map of existing tables by ID
     const existingTableMap = new Map<
@@ -300,6 +404,7 @@ export default function SeatingCanvas({
         obj.data.id &&
         !currentTableIds.has(obj.data.id as string)
       ) {
+        console.log("🗑️ [REMOVE TABLE] Removing table:", obj.data.id);
         canvas.remove(obj);
       }
     });
@@ -309,8 +414,9 @@ export default function SeatingCanvas({
       const existing = existingTableMap.get(table.id);
 
       if (existing) {
+        console.log("♻️ [UPDATE TABLE] Updating existing table:", table.id);
         // Skip position updates if this table is currently being manipulated
-        const isActiveObject = activeObjectRef.current === table.id;
+        const isActiveObject = activeObjectsRef.current.has(table.id);
 
         // Only update position if it differs significantly AND table isn't being moved
         const positionChanged =
@@ -318,25 +424,51 @@ export default function SeatingCanvas({
           Math.abs((existing.top ?? 0) - table.y_position) > 2 ||
           Math.abs((existing.angle ?? 0) - table.rotation) > 2;
 
-        console.log("📍 Position sync check:", {
+        // Check if we have a stored dragged position for this table
+        const storedDragPosition = draggedPositionsRef.current.get(table.id);
+        const stateMatchesDrag = storedDragPosition &&
+          Math.abs(table.x_position - storedDragPosition.x) < 5 &&
+          Math.abs(table.y_position - storedDragPosition.y) < 5;
+
+        console.log("🔍 Position sync check:", {
           tableId: table.id,
           isActiveObject,
-          activeObjectRef: activeObjectRef.current,
           positionChanged,
-          fabricPos: { x: existing.left, y: existing.top },
+          storedDragPosition,
+          stateMatchesDrag,
+          activeObjects: Array.from(activeObjectsRef.current),
+          existingPos: { x: existing.left, y: existing.top },
           statePos: { x: table.x_position, y: table.y_position },
         });
 
         if (positionChanged && !isActiveObject) {
-          console.log("✅ Syncing position from state to Fabric");
-          existing.set({
-            left: table.x_position,
-            top: table.y_position,
-            angle: table.rotation,
-          });
-          existing.setCoords();
+          // If we have a stored drag position and the incoming state doesn't match it,
+          // the state is stale - skip the sync
+          if (storedDragPosition && !stateMatchesDrag) {
+            console.log("⏭️ Skipping position sync - state is stale, canvas has correct position");
+          } else {
+            console.log("📍 Syncing position from state to canvas");
+            existing.set({
+              left: table.x_position,
+              top: table.y_position,
+              angle: table.rotation,
+            });
+            existing.setCoords();
+
+            // Clear the stored drag position since state now matches canvas
+            if (stateMatchesDrag) {
+              draggedPositionsRef.current.delete(table.id);
+              console.log("🗑️ Cleared stored drag position - state now matches");
+            }
+          }
         } else if (isActiveObject) {
           console.log("⏭️ Skipping position sync - table is being dragged");
+        } else if (!positionChanged) {
+          console.log("⏭️ Skipping position sync - position unchanged");
+          // Clear stored position if state and canvas match
+          if (storedDragPosition) {
+            draggedPositionsRef.current.delete(table.id);
+          }
         }
 
         // Update metadata
@@ -347,22 +479,66 @@ export default function SeatingCanvas({
             "assigned_count" in table ? table.assigned_count ?? 0 : 0;
         }
       } else {
+        console.log("➕ [CREATE TABLE] Creating new table:", {
+          id: table.id,
+          number: table.table_number,
+          type: table.table_type,
+          x: table.x_position,
+          y: table.y_position,
+          width: table.width,
+          height: table.height,
+          rotation: table.rotation,
+        });
         // Create new table shape
         const tableShape = createTableShape(table, {
           selectable: !readOnly,
           hasControls: !readOnly,
           evented: !readOnly,
         });
+        console.log("📦 [TABLE SHAPE] Created table shape:", {
+          type: tableShape.type,
+          left: tableShape.left,
+          top: tableShape.top,
+          width: tableShape.width,
+          height: tableShape.height,
+          angle: tableShape.angle,
+          fill: tableShape.fill,
+          stroke: tableShape.stroke,
+          visible: tableShape.visible,
+          opacity: tableShape.opacity,
+          objectsInGroup: tableShape._objects?.length,
+          firstObjectInGroup: tableShape._objects?.[0] ? {
+            type: tableShape._objects[0].type,
+            fill: tableShape._objects[0].fill,
+            stroke: tableShape._objects[0].stroke,
+            radius: (tableShape._objects[0] as any).radius,
+          } : null,
+        });
         canvas.add(tableShape);
+        console.log("✅ [TABLE ADDED] Table added to canvas, total objects:", canvas.getObjects().length);
       }
     });
 
-    // Render grid lines
-    if (gridConfig.enabled && gridConfig.showLines) {
-      renderGridLines(canvas, gridConfig);
-    }
+    // Render grid lines - TEMPORARILY DISABLED FOR DEBUGGING
+    // if (gridConfig.enabled && gridConfig.showLines) {
+    //   renderGridLines(canvas, gridConfig);
+    // }
+
+    console.log("🎨 [RENDER ALL] Before renderAll - canvas state:", {
+      objectsCount: canvas.getObjects().length,
+      backgroundColor: canvas.backgroundColor,
+      width: canvas.width,
+      height: canvas.height,
+      viewportTransform: canvas.viewportTransform,
+    });
 
     canvas.renderAll();
+
+    console.log("✅ [RENDER ALL] After renderAll - final canvas state:", {
+      objectsCount: canvas.getObjects().length,
+      canvasWidth: canvas.width,
+      canvasHeight: canvas.height,
+    });
   }, [tables, isInitialized, readOnly, gridConfig]);
 
   // ============================================================================
@@ -376,6 +552,19 @@ export default function SeatingCanvas({
     // Update canvas background color
     canvas.backgroundColor = theme === "dark" ? "#0a0a0a" : "#ffffff";
     canvas.renderAll();
+
+    // CRITICAL: Skip table recreation if drag operation in progress or recently completed
+    // This prevents the theme effect from recreating tables with stale positions
+    if (activeObjectsRef.current.size > 0) {
+      console.log("⏸️ [THEME EFFECT] Skipping table recreation - drag in progress");
+      return;
+    }
+
+    const timeSinceDrag = Date.now() - lastDragEndRef.current;
+    if (timeSinceDrag < 5000) {
+      console.log("⏸️ [THEME EFFECT] Skipping table recreation - recent drag:", { timeSinceDrag });
+      return;
+    }
 
     // Re-render all tables to update colors
     const tableObjects = canvas
@@ -470,79 +659,75 @@ export default function SeatingCanvas({
   const handleObjectModified = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (e: any) => {
+      console.log("🎯 handleObjectModified called", { event: e.type, target: !!e.target });
+
       const canvas = fabricCanvasRef.current;
       const target = e.target as fabric.Object | undefined;
-      if (!canvas || !target) return;
+      if (!canvas || !target) {
+        console.log("⚠️ Early exit: no canvas or target", { canvas: !!canvas, target: !!target });
+        return;
+      }
 
       const obj = target as fabric.Group & { data?: Record<string, unknown> };
       const data = obj.data;
 
-      if (!data || !data.id) return;
+      if (!data || !data.id) {
+        console.log("⚠️ Early exit: no data or id", { data: !!data, id: data?.id });
+        return;
+      }
 
       const tableId = data.id as UUID;
+      console.log("✅ handleObjectModified proceeding with tableId:", tableId);
+
+      // Record drag end time to prevent snap-back from stale state updates
+      lastDragEndRef.current = Date.now();
+      console.log("⏱️ Recorded drag end time:", lastDragEndRef.current);
+
       let left = obj.left ?? 0;
       let top = obj.top ?? 0;
+      console.log("📍 Initial position:", { left, top });
 
       // Apply grid snap
       if (gridConfig.enabled) {
+        console.log("🔲 Applying grid snap...");
         left = snapToGrid(left, gridConfig.size);
         top = snapToGrid(top, gridConfig.size);
         obj.set({ left, top });
+        console.log("✅ Grid snap applied:", { left, top });
       }
+
+      // Store the final canvas position for this table AFTER grid snap
+      // This will be used to verify incoming state updates
+      draggedPositionsRef.current.set(tableId, { x: left, y: top });
+      console.log("📍 Stored dragged position (after grid snap):", { tableId, x: left, y: top });
 
       // Constrain to canvas bounds
+      console.log("🔒 Constraining to canvas bounds...");
       constrainToCanvasBounds(obj, canvas);
+      console.log("✅ Bounds constraint applied");
+
       obj.setCoords();
+      console.log("📐 Coordinates updated");
+
       canvas.renderAll();
+      console.log("🎨 Canvas rendered");
 
-      // Debounced API update for position
-      if (onTableMove) {
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
+      // Get or create pending updates for this table
+      const existingUpdates = pendingUpdatesRef.current.get(tableId) || {};
 
-        const finalLeft = obj.left ?? 0;
-        const finalTop = obj.top ?? 0;
+      // Always update position (the main operation when dragging)
+      const finalLeft = obj.left ?? 0;
+      const finalTop = obj.top ?? 0;
+      existingUpdates.x = finalLeft;
+      existingUpdates.y = finalTop;
 
-        // Keep activeObjectRef set during the debounce period
-        // to prevent position sync from resetting to old state values
-
-        debounceTimerRef.current = setTimeout(() => {
-          console.log("🔄 Calling onTableMove:", {
-            tableId,
-            x: finalLeft,
-            y: finalTop,
-            activeObject: activeObjectRef.current,
-          });
-          onTableMove(tableId, finalLeft, finalTop);
-
-          // Clear AFTER calling onTableMove to allow state to update first
-          // This prevents the position sync from running until the state is updated
-          setTimeout(() => {
-            activeObjectRef.current = null;
-            console.log("🔓 Cleared activeObjectRef after state update");
-          }, 100); // Small delay to ensure state update propagates
-        }, 500);
-      }
-
-      // Handle rotation
-      if (onTableRotate && obj.angle !== undefined) {
-        const rotation = obj.angle % 360;
-        if (debounceTimerRef.current) {
-          clearTimeout(debounceTimerRef.current);
-        }
-        debounceTimerRef.current = setTimeout(() => {
-          onTableRotate(tableId, rotation);
-        }, 500);
+      // Handle rotation - always include current rotation
+      if (obj.angle !== undefined) {
+        existingUpdates.rotation = obj.angle % 360;
       }
 
       // Handle resize (scaling)
-      if (
-        onTableResize &&
-        obj.scaleX &&
-        obj.scaleY &&
-        (obj.scaleX !== 1 || obj.scaleY !== 1)
-      ) {
+      if (obj.scaleX && obj.scaleY && (obj.scaleX !== 1 || obj.scaleY !== 1)) {
         // Get the original dimensions from the first object in the group
         const items = obj.getObjects();
         if (items && items.length > 0) {
@@ -560,24 +745,73 @@ export default function SeatingCanvas({
           }
 
           // Calculate new dimensions based on scale
-          const newWidth = Math.round(originalWidth * obj.scaleX);
-          const newHeight = Math.round(originalHeight * obj.scaleY);
+          existingUpdates.width = Math.round(originalWidth * obj.scaleX);
+          existingUpdates.height = Math.round(originalHeight * obj.scaleY);
 
           // Reset scale to 1 and update actual dimensions
           obj.scaleX = 1;
           obj.scaleY = 1;
           obj.setCoords();
-
-          if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
-          }
-          debounceTimerRef.current = setTimeout(() => {
-            onTableResize(tableId, newWidth, newHeight);
-          }, 500);
         }
       }
+
+      // Store the pending updates
+      pendingUpdatesRef.current.set(tableId, existingUpdates);
+
+      console.log("📦 Pending updates for table:", { tableId, updates: existingUpdates });
+
+      // Clear existing timer and set new one
+      const existingTimer = debounceTimersRef.current.get(tableId);
+      if (existingTimer) {
+        console.log("⏱️ Clearing previous debounce timer for table:", tableId);
+        clearTimeout(existingTimer);
+      }
+
+      console.log("⏱️ Creating setTimeout for 500ms...");
+      const timer = setTimeout(() => {
+        const updates = pendingUpdatesRef.current.get(tableId);
+        if (!updates) return;
+
+        console.log("🔄 Calling callbacks with batched updates:", {
+          tableId,
+          updates,
+          activeObjects: Array.from(activeObjectsRef.current),
+        });
+
+        // Call position update if position changed
+        if (updates.x !== undefined && updates.y !== undefined && onTableMoveRef.current) {
+          console.log("📍 Calling onTableMove:", { tableId, x: updates.x, y: updates.y });
+          onTableMoveRef.current(tableId, updates.x, updates.y);
+        }
+
+        // Call rotation update if rotation changed (and there's no position update)
+        // If there's a position update, we include rotation in onTableMove via the update object
+        if (updates.rotation !== undefined && onTableRotateRef.current && updates.x === undefined) {
+          console.log("🔄 Calling onTableRotate:", { tableId, rotation: updates.rotation });
+          onTableRotateRef.current(tableId, updates.rotation);
+        }
+
+        // Call resize update if dimensions changed
+        if (updates.width !== undefined && updates.height !== undefined && onTableResizeRef.current) {
+          console.log("📐 Calling onTableResize:", { tableId, width: updates.width, height: updates.height });
+          onTableResizeRef.current(tableId, updates.width, updates.height);
+        }
+
+        // Clear pending updates
+        pendingUpdatesRef.current.delete(tableId);
+
+        // Clear AFTER calling callbacks to allow state to update first
+        // Increased delay to ensure React Query mutation and optimistic update complete
+        setTimeout(() => {
+          activeObjectsRef.current.delete(tableId);
+          debounceTimersRef.current.delete(tableId);
+          console.log("🔓 Cleared active state for table:", tableId);
+        }, 1000); // 1 second delay to ensure mutation completes
+      }, 500);
+
+      debounceTimersRef.current.set(tableId, timer);
     },
-    [gridConfig, onTableMove, onTableRotate, onTableResize]
+    [gridConfig]
   );
 
   // Track object being moved
@@ -592,8 +826,11 @@ export default function SeatingCanvas({
 
       const obj = target as fabric.Group & { data?: Record<string, unknown> };
       if (obj.data && obj.data.id) {
-        activeObjectRef.current = obj.data.id as string;
-        console.log("🚀 Started dragging table:", obj.data.id);
+        const tableId = obj.data.id as string;
+        if (!activeObjectsRef.current.has(tableId)) {
+          activeObjectsRef.current.add(tableId);
+          console.log("🚀 Started dragging table:", tableId);
+        }
       }
     };
 
@@ -611,7 +848,11 @@ export default function SeatingCanvas({
     const handleModified = (e: Parameters<typeof handleObjectModified>[0]) => {
       // Note: activeObjectRef is cleared in the debounce timer to prevent race conditions
       console.log("🛑 Finished dragging table");
-      handleObjectModified(e);
+      try {
+        handleObjectModified(e);
+      } catch (error) {
+        console.error("❌ Error in handleObjectModified:", error);
+      }
     };
 
     canvas.on("object:modified", handleModified);
