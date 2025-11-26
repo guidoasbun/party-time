@@ -20,6 +20,7 @@ import {
 import { Skeleton } from "@/components/ui/Skeleton";
 import { Alert, AlertDescription } from "@/components/ui/Alert";
 import { useSeatingChart } from "@/hooks/useSeatingChart";
+import { useEventGuests } from "@/hooks/useEventGuests";
 import MobileSeatingView from "./MobileSeatingView";
 import { SeatingOverview } from "./SeatingOverview";
 import { cn } from "@/lib/utils";
@@ -43,6 +44,9 @@ export function SeatingChartTab({ event, className }: SeatingChartTabProps) {
   });
 
   const { chart, statistics, isLoading, error, refetch } = seatingChart;
+
+  // Fetch guests for headcount calculation
+  const { guests } = useEventGuests(event.id);
 
   // Detect mobile/tablet viewport
   useEffect(() => {
@@ -160,6 +164,7 @@ export function SeatingChartTab({ event, className }: SeatingChartTabProps) {
         chart={chart}
         statistics={statistics}
         tables={chart.tables || []}
+        guests={guests || []}
         isLoading={isLoading}
         onCreateChart={() => refetch()}
       />

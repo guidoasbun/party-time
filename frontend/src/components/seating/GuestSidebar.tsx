@@ -29,6 +29,8 @@ import {
   XCircle,
   HelpCircle,
   Filter,
+  UtensilsCrossed,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -442,6 +444,31 @@ export function GuestSidebar({
                         <p className="text-xs text-muted-foreground truncate">
                           {guest.email}
                         </p>
+                        {/* Dietary restrictions and plus-one info */}
+                        <div className="flex items-center gap-2 mt-1">
+                          {guest.dietary_restrictions && (
+                            <span
+                              className="inline-flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400"
+                              title={`Dietary: ${guest.dietary_restrictions}`}
+                            >
+                              <UtensilsCrossed className="w-3 h-3" />
+                              <span className="truncate max-w-[80px]">
+                                {guest.dietary_restrictions}
+                              </span>
+                            </span>
+                          )}
+                          {guest.plus_one_name && (
+                            <span
+                              className="inline-flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400"
+                              title={`Plus one: ${guest.plus_one_name}`}
+                            >
+                              <UserPlus className="w-3 h-3" />
+                              <span className="truncate max-w-[60px]">
+                                {guest.plus_one_name}
+                              </span>
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* RSVP Status Badge */}

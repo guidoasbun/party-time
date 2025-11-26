@@ -92,7 +92,7 @@ export function UnseatedGuestsIndicator({
   const [shouldPulse, setShouldPulse] = useState(false)
 
   // Calculate unseated guests (attending guests without seat assignments)
-  const { unseatedCount, totalAttending, percentageSeated } = useMemo(() => {
+  const { unseatedCount, totalAttending, percentageSeated, plusOneCount, totalHeadcount } = useMemo(() => {
     const attendingGuests = guests.filter(g => g.rsvp_status === RsvpStatusEnum.ATTENDING)
     const unseatedGuests = attendingGuests.filter(g => !isGuestSeated(g.id, seatingChart))
 
@@ -102,10 +102,16 @@ export function UnseatedGuestsIndicator({
       ? ((totalAttending - unseatedCount) / totalAttending) * 100
       : 0
 
+    // Count plus-ones (guests with plus_one_name set)
+    const plusOneCount = attendingGuests.filter(g => g.plus_one_name && g.plus_one_name.trim() !== '').length
+    const totalHeadcount = totalAttending + plusOneCount
+
     return {
       unseatedCount,
       totalAttending,
-      percentageSeated
+      percentageSeated,
+      plusOneCount,
+      totalHeadcount
     }
   }, [guests, seatingChart])
 
@@ -175,16 +181,26 @@ export function UnseatedGuestsIndicator({
         </Badge>
 
         {totalAttending > 0 && (
-          <span
-            className={cn(
-              'text-xs font-medium mt-0.5',
-              variant === 'success' && 'text-green-700 dark:text-green-300',
-              variant === 'default' && 'text-yellow-700 dark:text-yellow-300',
-              variant === 'destructive' && 'text-red-700 dark:text-red-300'
+          <div className="flex flex-col items-start">
+            <span
+              className={cn(
+                'text-xs font-medium mt-0.5',
+                variant === 'success' && 'text-green-700 dark:text-green-300',
+                variant === 'default' && 'text-yellow-700 dark:text-yellow-300',
+                variant === 'destructive' && 'text-red-700 dark:text-red-300'
+              )}
+            >
+              {percentageSeated.toFixed(0)}% seated
+            </span>
+            {plusOneCount > 0 && (
+              <span
+                className="text-xs text-muted-foreground"
+                title={`Total headcount: ${totalHeadcount} (${totalAttending} guests + ${plusOneCount} plus-ones)`}
+              >
+                Headcount: {totalHeadcount}
+              </span>
             )}
-          >
-            {percentageSeated.toFixed(0)}% seated
-          </span>
+          </div>
         )}
       </div>
 
