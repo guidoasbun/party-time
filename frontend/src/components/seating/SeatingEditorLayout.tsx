@@ -37,6 +37,7 @@ import type {
 } from "@/types/seating.types";
 import { TableType } from "@/types/seating.types";
 import type { Guest } from "@/types/guest.types";
+import { RsvpStatus } from "@/types/guest.types";
 import type { Event } from "@/types/event.types";
 import { cn } from "@/lib/utils";
 
@@ -97,15 +98,12 @@ export function SeatingEditorLayout({
   const [zoomLevel, setZoomLevel] = useState(1);
   const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
 
-  // Filter attending guests for sidebar
+  // Filter guests for sidebar - include attending and pending
+  // GuestSidebar and UnseatedGuestsIndicator will further filter to attending only
   const attendingGuests = guests.filter(
-    (g) => g.rsvp_status === "attending" || g.rsvp_status === "pending"
-  );
-
-  // Get unseated guests
-  const seatedGuestIds = new Set(seatAssignments.map((sa) => sa.guest_id));
-  const unseatedGuests = attendingGuests.filter(
-    (g) => !seatedGuestIds.has(g.id)
+    (g) =>
+      g.rsvp_status === RsvpStatus.ATTENDING ||
+      g.rsvp_status === RsvpStatus.PENDING
   );
 
   // Get selected table details
@@ -171,12 +169,13 @@ export function SeatingEditorLayout({
               </div>
               <UnseatedGuestsIndicator
                 guests={attendingGuests}
-                seatingChart={{ ...chart, tables } as any}
+                seatingChart={chart ? { ...chart, tables } : undefined}
               />
             </div>
             <div className="flex-1 overflow-hidden">
               <GuestSidebar
-                guests={unseatedGuests}
+                guests={attendingGuests}
+                seatingChart={chart ? { ...chart, tables } : undefined}
                 onGuestDragStart={(guest) => {
                   // Set dragged guest ID for canvas to detect
                   setDraggedGuestId(guest.id);

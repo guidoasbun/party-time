@@ -34,6 +34,7 @@ import type {
   TableType,
 } from "@/types/seating.types";
 import type { Event } from "@/types/event.types";
+import type { Guest } from "@/types/guest.types";
 
 /**
  * Props for the SeatingOverview component
@@ -55,6 +56,10 @@ export interface SeatingOverviewProps {
    * List of tables in the seating chart
    */
   tables: TableLayout[];
+  /**
+   * Guest list for headcount calculation
+   */
+  guests?: Guest[];
   /**
    * Loading state
    */
@@ -94,6 +99,7 @@ export function SeatingOverview({
   chart,
   statistics,
   tables,
+  guests = [],
   isLoading = false,
   onCreateChart,
 }: SeatingOverviewProps): React.ReactElement {
@@ -159,7 +165,7 @@ export function SeatingOverview({
       {/* Statistics Cards */}
       <section>
         <h2 className="text-lg font-semibold mb-4">Seating Statistics</h2>
-        <SeatingStatsCards statistics={statistics} isLoading={isLoading} />
+        <SeatingStatsCards statistics={statistics} guests={guests} isLoading={isLoading} />
       </section>
 
       {/* Quick Actions */}

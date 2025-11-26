@@ -5,10 +5,12 @@
 
 "use client";
 
-import React from "react";
-import { Users, UserX, Table, PieChart } from "lucide-react";
+import React, { useMemo } from "react";
+import { Users, UserX, Table, PieChart, UserPlus, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import type { SeatingStatistics } from "@/types/seating.types";
+import type { Guest } from "@/types/guest.types";
+import { RsvpStatus } from "@/types/guest.types";
 
 /**
  * Props for the SeatingStatsCards component
@@ -18,6 +20,10 @@ export interface SeatingStatsCardsProps {
    * Statistics data for the seating chart
    */
   statistics: SeatingStatistics | null;
+  /**
+   * Guest list to calculate headcount including plus-ones
+   */
+  guests?: Guest[];
   /**
    * Loading state
    */
@@ -61,8 +67,21 @@ interface StatCard {
  */
 export function SeatingStatsCards({
   statistics,
+  guests = [],
   isLoading = false,
 }: SeatingStatsCardsProps): React.ReactElement {
+  // Calculate headcount including plus-ones
+  const { totalAttending, plusOneCount, totalHeadcount } = useMemo(() => {
+    const attendingGuests = guests.filter(g => g.rsvp_status === RsvpStatus.ATTENDING);
+    const totalAttending = attendingGuests.length;
+    const plusOneCount = attendingGuests.filter(
+      g => g.plus_one_name && g.plus_one_name.trim() !== ''
+    ).length;
+    const totalHeadcount = totalAttending + plusOneCount;
+
+    return { totalAttending, plusOneCount, totalHeadcount };
+  }, [guests]);
+
   // Show loading skeleton
   if (isLoading) {
     return (
@@ -120,6 +139,9 @@ export function SeatingStatsCards({
         )
       : 0;
 
+  // Check if headcount exceeds capacity
+  const isOverCapacity = totalHeadcount > statistics.total_capacity;
+
   // Define statistics cards
   const statCards: StatCard[] = [
     {
@@ -163,6 +185,20 @@ export function SeatingStatsCards({
       color: getUtilizationColor(utilizationPercentage),
     },
   ];
+
+  // Add headcount card if there are plus-ones
+  if (plusOneCount > 0) {
+    statCards.push({
+      id: "headcount",
+      title: "Total Headcount",
+      value: totalHeadcount,
+      icon: isOverCapacity ? AlertTriangle : UserPlus,
+      description: `${totalAttending} guests + ${plusOneCount} plus-one${plusOneCount !== 1 ? 's' : ''}`,
+      color: isOverCapacity
+        ? "text-red-600 dark:text-red-400"
+        : "text-purple-600 dark:text-purple-400",
+    });
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
