@@ -140,12 +140,42 @@ export default function SeatingEditPage() {
         return;
       }
 
+      // Delete selected table (Delete or Backspace key)
+      /**
+       * FR-21: The system shall provide an interactive seating chart interface.
+       * Phase 6.2.5: Seating Chart Polish & Integration
+       */
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedTableId) {
+        // Don't trigger if user is typing in an input
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+          return;
+        }
+        e.preventDefault();
+        deleteTable(selectedTableId)
+          .then(() => {
+            toast({
+              title: "Table deleted",
+              description: "The selected table has been removed.",
+            });
+          })
+          .catch((error) => {
+            console.error("Delete failed:", error);
+            toast({
+              title: "Delete failed",
+              description: "Failed to delete the table. Please try again.",
+              variant: "destructive",
+            });
+          });
+        return;
+      }
+
       // Undo/Redo handled by useSeatingChart hook
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [hasUnsavedChanges]);
+  }, [hasUnsavedChanges, selectedTableId, deleteTable]);
 
   // Loading state
   if (isLoading) {
