@@ -188,6 +188,7 @@ export function SeatingEditorLayout({
                 guests={attendingGuests}
                 seatingChart={chart ? { ...chart, tables } : undefined}
                 seatAssignments={seatAssignments}
+                inline={true}
                 onGuestDragStart={(guest) => {
                   // Set dragged guest ID for canvas to detect
                   setDraggedGuestId(guest.id);
