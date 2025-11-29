@@ -349,9 +349,12 @@ export default function SeatingCanvas({
           return;
         }
 
-        // Get the rect from the group to check dimensions
+        // Get the shape from the group to check dimensions
+        // Phase 6.3.7: Handle both rectangle and circle shapes
         const items = existing.getObjects();
-        const rect = items[0] as fabric.Rect | undefined;
+        const shape = items[0] as fabric.Rect | fabric.Circle | undefined;
+        const existingData = (existing as fabric.Group & { data?: { shapeType?: string } }).data;
+        const isCircle = existingData?.shapeType === "circle" || area.shape === "circle";
 
         // Check if position/rotation changed
         const positionChanged =
@@ -360,27 +363,58 @@ export default function SeatingCanvas({
           Math.abs((existing.angle ?? 0) - area.rotation) > 2;
 
         // Check if dimensions changed
-        const dimensionsChanged =
-          rect &&
-          (Math.abs((rect.width ?? 0) - area.width) > 2 ||
-            Math.abs((rect.height ?? 0) - area.height) > 2);
-
-        if (positionChanged) {
-          existing.set({
-            left: area.x,
-            top: area.y,
-            angle: area.rotation,
-          });
-          existing.setCoords();
+        let dimensionsChanged = false;
+        if (shape) {
+          if (isCircle) {
+            const circle = shape as fabric.Circle;
+            const expectedRadius = Math.min(area.width, area.height) / 2;
+            dimensionsChanged = Math.abs((circle.radius ?? 0) - expectedRadius) > 2;
+          } else {
+            const rect = shape as fabric.Rect;
+            dimensionsChanged =
+              Math.abs((rect.width ?? 0) - area.width) > 2 ||
+              Math.abs((rect.height ?? 0) - area.height) > 2;
+          }
         }
 
-        // Update dimensions if changed (from Properties panel manual input)
-        if (dimensionsChanged && rect) {
-          rect.set({
-            width: area.width,
-            height: area.height,
+        // Check if shape type changed (need to recreate the object)
+        const shapeTypeChanged = (existingData?.shapeType || "rectangle") !== (area.shape || "rectangle");
+
+        if (shapeTypeChanged) {
+          // Shape type changed - remove old and recreate with new shape
+          canvas.remove(existing);
+          const areaShape = createSpecialAreaShape(area, theme);
+          areaShape.set({
+            selectable: !readOnly,
+            hasControls: !readOnly,
+            evented: !readOnly,
           });
-          existing.setCoords();
+          canvas.add(areaShape);
+        } else {
+          if (positionChanged) {
+            existing.set({
+              left: area.x,
+              top: area.y,
+              angle: area.rotation,
+            });
+            existing.setCoords();
+          }
+
+          // Update dimensions if changed (from Properties panel manual input)
+          if (dimensionsChanged && shape) {
+            if (isCircle) {
+              const circle = shape as fabric.Circle;
+              const newRadius = Math.min(area.width, area.height) / 2;
+              circle.set({ radius: newRadius });
+            } else {
+              const rect = shape as fabric.Rect;
+              rect.set({
+                width: area.width,
+                height: area.height,
+              });
+            }
+            existing.setCoords();
+          }
         }
       } else {
         // Create new area shape
@@ -693,10 +727,12 @@ export default function SeatingCanvas({
         // Mark this area as being actively manipulated
         activeSpecialAreasRef.current.add(areaId);
 
-        // Get the rect (first child) from the group to calculate dimensions
+        // Get the shape (first child) from the group to calculate dimensions
+        // Phase 6.3.7: Handle both rectangle and circle shapes
         const items = obj.getObjects();
-        const rect = items[0] as fabric.Rect | undefined;
-        const text = items[1] as fabric.Text | undefined;
+        const shape = items[0] as fabric.Rect | fabric.Circle | undefined;
+        const text = items[1] as fabric.FabricText | undefined;
+        const isCircle = data.shapeType === "circle";
 
         let width: number | undefined;
         let height: number | undefined;
@@ -707,19 +743,35 @@ export default function SeatingCanvas({
           obj.scaleY !== undefined &&
           (obj.scaleX !== 1 || obj.scaleY !== 1);
 
-        if (rect && hasScale) {
-          // Calculate actual dimensions from scale
-          width = Math.round((rect.width || 0) * (obj.scaleX || 1));
-          height = Math.round((rect.height || 0) * (obj.scaleY || 1));
+        if (shape && hasScale) {
+          if (isCircle) {
+            // For circles, calculate new radius from scale
+            const circle = shape as fabric.Circle;
+            const currentRadius = circle.radius || 0;
+            // Use the minimum scale to maintain circular shape
+            const scaleFactor = Math.min(obj.scaleX || 1, obj.scaleY || 1);
+            const newRadius = Math.round(currentRadius * scaleFactor);
 
-          // CRITICAL: Update the internal rect's dimensions to match the scaled size
-          // This prevents visual snap-back when we reset the group's scale
-          rect.set({
-            width: width,
-            height: height,
-          });
+            // Update circle radius
+            circle.set({ radius: newRadius });
 
-          // Re-center the text within the new rect dimensions
+            // Width and height are both diameter for circles
+            width = newRadius * 2;
+            height = newRadius * 2;
+          } else {
+            // Rectangle: calculate actual dimensions from scale
+            const rect = shape as fabric.Rect;
+            width = Math.round((rect.width || 0) * (obj.scaleX || 1));
+            height = Math.round((rect.height || 0) * (obj.scaleY || 1));
+
+            // Update the internal rect's dimensions to match the scaled size
+            rect.set({
+              width: width,
+              height: height,
+            });
+          }
+
+          // Re-center the text within the new shape dimensions
           if (text) {
             text.set({
               left: 0,
@@ -733,10 +785,18 @@ export default function SeatingCanvas({
 
           // Update the group's internal cache
           obj.setCoords();
-        } else if (rect) {
-          // No scaling - just moving or rotating, use current rect dimensions
-          width = rect.width;
-          height = rect.height;
+        } else if (shape) {
+          // No scaling - just moving or rotating, use current shape dimensions
+          if (isCircle) {
+            const circle = shape as fabric.Circle;
+            const radius = circle.radius || 0;
+            width = radius * 2;
+            height = radius * 2;
+          } else {
+            const rect = shape as fabric.Rect;
+            width = rect.width;
+            height = rect.height;
+          }
         }
 
         // Apply grid snap for special areas too

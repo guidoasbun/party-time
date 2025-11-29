@@ -11,6 +11,7 @@ import * as fabric from "fabric";
 import {
   SpecialArea,
   SpecialAreaType,
+  SpecialAreaShape,
   FloorPlanUploadData,
   SPECIAL_AREA_COLORS,
   MAX_FLOOR_PLAN_SIZE_BYTES,
@@ -150,13 +151,15 @@ export function getDefaultSpecialAreaDimensions(type: SpecialAreaType): {
 export function createDefaultSpecialArea(
   type: SpecialAreaType,
   theme: "light" | "dark",
-  position?: { x: number; y: number }
+  position?: { x: number; y: number },
+  shape: SpecialAreaShape = "rectangle"
 ): Omit<SpecialArea, "id"> {
   const dimensions = getDefaultSpecialAreaDimensions(type);
   const color = getDefaultSpecialAreaColor(type, theme);
 
   return {
     type,
+    shape,
     label: SPECIAL_AREA_LABELS[type],
     x: position?.x ?? 100,
     y: position?.y ?? 100,
@@ -171,6 +174,7 @@ export function createDefaultSpecialArea(
 /**
  * Create Fabric.js shape for special area
  * Returns a Fabric.Group containing the shape and label
+ * Phase 6.3.7: Supports both rectangle and circle shapes
  */
 export function createSpecialAreaShape(
   area: SpecialArea,
@@ -179,22 +183,42 @@ export function createSpecialAreaShape(
   const color = area.color || getDefaultSpecialAreaColor(area.type, theme);
   const strokeColor = theme === "dark" ? "#ffffff" : "#000000";
   const textColor = theme === "dark" ? "#ffffff" : "#000000";
+  const shapeType = area.shape || "rectangle";
 
-  // Create rectangle shape
-  const rect = new fabric.Rect({
-    width: area.width,
-    height: area.height,
+  // Common shape properties
+  const shapeProps = {
     fill: color,
     opacity: area.isObstacle ? 0.3 : 0.5,
     stroke: area.isObstacle ? "#dc2626" : strokeColor,
     strokeWidth: area.isObstacle ? 3 : 2,
     strokeDashArray: area.isObstacle ? [10, 5] : undefined,
-    rx: 8,
-    ry: 8,
-  });
+  };
+
+  // Create shape based on type
+  let shape: fabric.Rect | fabric.Circle;
+
+  if (shapeType === "circle") {
+    // For circles, use the smaller dimension as diameter
+    const radius = Math.min(area.width, area.height) / 2;
+    shape = new fabric.Circle({
+      ...shapeProps,
+      radius,
+      originX: "center",
+      originY: "center",
+    });
+  } else {
+    // Default: rectangle
+    shape = new fabric.Rect({
+      ...shapeProps,
+      width: area.width,
+      height: area.height,
+      rx: 8,
+      ry: 8,
+    });
+  }
 
   // Create label text
-  const text = new fabric.Text(area.label, {
+  const text = new fabric.FabricText(area.label, {
     fontSize: 14,
     fontFamily: "Inter, system-ui, sans-serif",
     fill: textColor,
@@ -204,7 +228,7 @@ export function createSpecialAreaShape(
   });
 
   // Create group
-  const group = new fabric.Group([rect, text], {
+  const group = new fabric.Group([shape, text], {
     left: area.x,
     top: area.y,
     angle: area.rotation,
@@ -214,8 +238,12 @@ export function createSpecialAreaShape(
     lockScalingFlip: true,
   });
 
-  // Store area ID in group data
-  group.set("data", { areaId: area.id, areaType: "special" });
+  // Store area ID and shape type in group data for resize handling
+  group.set("data", {
+    areaId: area.id,
+    areaType: "special",
+    shapeType: shapeType,
+  });
 
   return group;
 }

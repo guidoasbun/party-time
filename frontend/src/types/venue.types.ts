@@ -19,6 +19,9 @@ export enum SpecialAreaType {
   OBSTACLE = "obstacle",
 }
 
+// Phase 6.3.7: Shape type for special areas (rectangle or circle)
+export type SpecialAreaShape = "rectangle" | "circle";
+
 export const SPECIAL_AREA_LABELS: Record<SpecialAreaType, string> = {
   [SpecialAreaType.STAGE]: "Stage",
   [SpecialAreaType.DANCE_FLOOR]: "Dance Floor",
@@ -35,6 +38,7 @@ export const SPECIAL_AREA_LABELS: Record<SpecialAreaType, string> = {
 export interface SpecialArea {
   id: string; // UUID
   type: SpecialAreaType;
+  shape?: SpecialAreaShape; // Phase 6.3.7: Optional shape (defaults to "rectangle")
   label: string;
   x: number;
   y: number;
