@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
+import { cn } from '@/lib/utils';
 import { TableType, TableLayout, TableLayoutWithSeats, TableLayoutUpdate } from '@/types';
 
 // ============================================================================
@@ -39,6 +40,8 @@ export interface TablePropertiesProps {
   onDelete: (tableId: string) => void;
   onClearSeats?: (tableId: string) => void;
   isOpen: boolean;
+  /** When true, renders as inline block element instead of fixed sidebar */
+  inline?: boolean;
   isSaving?: boolean;
   className?: string;
 }
@@ -64,6 +67,7 @@ export function TableProperties({
   onDelete,
   onClearSeats,
   isOpen,
+  inline = false,
   isSaving = false,
   className = '',
 }: TablePropertiesProps) {
@@ -182,9 +186,17 @@ export function TableProperties({
 
   return (
     <div
-      className={`fixed right-0 top-0 h-full w-96 bg-card border-l border-border shadow-xl z-40 transform transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : 'translate-x-full'
-      } ${className}`}
+      className={cn(
+        'bg-card border-l border-border shadow-xl',
+        inline
+          ? 'relative w-full'
+          : [
+              'fixed right-0 top-0 h-full w-96 z-40',
+              'transform transition-transform duration-300',
+              isOpen ? 'translate-x-0' : 'translate-x-full',
+            ],
+        className
+      )}
       role="complementary"
       aria-label="Table properties panel"
     >

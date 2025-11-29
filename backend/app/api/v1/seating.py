@@ -102,10 +102,66 @@ async def get_seating_chart(
         total_capacity = await crud_seating.get_total_capacity(db, chart.id)
         total_assigned = await crud_seating.get_total_assigned(db, chart.id)
 
+        # Build tables with seat assignments included
+
+        """
+        FR-21: The system shall provide an interactive seating chart interface
+        Phase 6.3.5: Drag and Drop Assignments
+        """
+        tables_with_seats = []
+        for table in chart.tables:
+            seat_assignments = table.seat_assignments if hasattr(table, 'seat_assignments') else []
+            assigned_count = len(seat_assignments)
+
+            # Properly serialize seat assignments
+            serialized_assignments = [
+                {
+                    "id": sa.id,
+                    "table_layout_id": sa.table_layout_id,
+                    "guest_id": sa.guest_id,
+                    "seat_number": sa.seat_number,
+                    "seat_position": sa.seat_position,
+                    "notes": sa.notes,
+                    "created_at": sa.created_at,
+                    "updated_at": sa.updated_at,
+                }
+                for sa in seat_assignments
+            ]
+
+            tables_with_seats.append({
+                "id": table.id,
+                "seating_chart_id": table.seating_chart_id,
+                "table_number": table.table_number,
+                "table_type": table.table_type,
+                "x_position": table.x_position,
+                "y_position": table.y_position,
+                "width": table.width,
+                "height": table.height,
+                "rotation": table.rotation,
+                "capacity": table.capacity,
+                "table_metadata": table.table_metadata,
+                "created_at": table.created_at,
+                "updated_at": table.updated_at,
+                "seat_assignments": serialized_assignments,
+                "assigned_count": assigned_count,
+                "empty_seats": table.capacity - assigned_count,
+            })
+
         # Build response with statistics
         return {
-            **chart.__dict__,
-            "tables": chart.tables,
+            "id": chart.id,
+            "event_id": chart.event_id,
+            "name": chart.name,
+            "venue_width": chart.venue_width,
+            "venue_height": chart.venue_height,
+            "venue_unit": chart.venue_unit,
+            "background_image_url": chart.background_image_url,
+            "chart_metadata": chart.chart_metadata,
+            "version": chart.version,
+            "is_active": chart.is_active,
+            "created_at": chart.created_at,
+            "updated_at": chart.updated_at,
+            "tables": tables_with_seats,
             "total_tables": total_tables,
             "total_capacity": total_capacity,
             "total_assigned": total_assigned,

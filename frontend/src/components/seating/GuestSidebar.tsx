@@ -42,6 +42,8 @@ import { RsvpStatus as RsvpStatusEnum } from "@/types";
 interface GuestSidebarProps {
   guests: Guest[];
   seatingChart?: SeatingChartWithTables | null;
+  /** Optional direct seat assignments - if provided, used instead of chart.tables.seat_assignments */
+  seatAssignments?: Array<{ guest_id?: string }>;
   isOpen?: boolean;
   onToggle?: () => void;
   onGuestDragStart?: (guest: Guest) => void;
@@ -95,11 +97,21 @@ const getRsvpStatusConfig = (status: RsvpStatus) => {
 
 /**
  * Check if a guest is already seated in the chart
+ * @param guestId - The guest ID to check
+ * @param chart - The seating chart (optional, used if seatAssignments not provided)
+ * @param seatAssignments - Direct seat assignments array (takes precedence over chart)
  */
 const isGuestSeated = (
   guestId: UUID,
-  chart?: SeatingChartWithTables | null
+  chart?: SeatingChartWithTables | null,
+  seatAssignments?: Array<{ guest_id?: string }>
 ): boolean => {
+  // If seatAssignments array is provided directly, use it (more up-to-date)
+  if (seatAssignments) {
+    return seatAssignments.some((sa) => sa.guest_id === guestId);
+  }
+
+  // Fallback to checking chart.tables.seat_assignments
   if (!chart || !chart.tables) return false;
 
   // Check if any table has a seat assignment for this guest
@@ -128,6 +140,7 @@ const getGuestInitials = (guest: Guest): string => {
 export function GuestSidebar({
   guests,
   seatingChart,
+  seatAssignments,
   isOpen = true,
   onToggle,
   onGuestDragStart,
@@ -158,10 +171,11 @@ export function GuestSidebar({
       // Only show attending guests (primary filter)
       if (guest.rsvp_status !== RsvpStatusEnum.ATTENDING) return false;
 
-      // Check if guest is not seated
-      return !isGuestSeated(guest.id, seatingChart);
+      // Check if guest is not seated - use seatAssignments if provided (more up-to-date)
+      const isSeated = isGuestSeated(guest.id, seatingChart, seatAssignments);
+      return !isSeated;
     });
-  }, [guests, seatingChart]);
+  }, [guests, seatingChart, seatAssignments]);
 
   // Apply search and RSVP filters
   const filteredGuests = useMemo(() => {

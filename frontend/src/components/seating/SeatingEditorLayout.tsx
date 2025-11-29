@@ -30,11 +30,13 @@ import type {
   SeatingChart,
   SeatingChartWithTables,
   TableLayout,
+  TableLayoutWithSeats,
   TableLayoutCreate,
   SeatingChartUpdate,
   SeatAssignment,
   SeatingStatistics,
 } from "@/types/seating.types";
+import type { SpecialArea } from "@/types/venue.types";
 import { TableType } from "@/types/seating.types";
 import type { Guest } from "@/types/guest.types";
 import { RsvpStatus } from "@/types/guest.types";
@@ -63,8 +65,12 @@ interface SeatingEditorLayoutProps {
   onSave: () => Promise<void>;
   onUndo: () => void;
   onRedo: () => void;
-  onCreateTable: (tableData: Omit<TableLayoutCreate, 'seating_chart_id'>) => Promise<TableLayout>;
-  onBulkCreateTables: (tables: Omit<TableLayoutCreate, 'seating_chart_id'>[]) => Promise<TableLayout[]>;
+  onCreateTable: (
+    tableData: Omit<TableLayoutCreate, "seating_chart_id">
+  ) => Promise<TableLayout>;
+  onBulkCreateTables: (
+    tables: Omit<TableLayoutCreate, "seating_chart_id">[]
+  ) => Promise<TableLayout[]>;
   onUpdateChart: (updates: SeatingChartUpdate) => Promise<SeatingChart>;
 }
 
@@ -97,6 +103,10 @@ export function SeatingEditorLayout({
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
+  // Track pending assignments to prevent race conditions / double-drops
+  const [pendingAssignments, setPendingAssignments] = useState<Set<string>>(
+    () => new Set()
+  );
 
   // Filter guests for sidebar - include attending and pending
   // GuestSidebar and UnseatedGuestsIndicator will further filter to attending only
@@ -170,15 +180,21 @@ export function SeatingEditorLayout({
               <UnseatedGuestsIndicator
                 guests={attendingGuests}
                 seatingChart={chart ? { ...chart, tables } : undefined}
+                seatAssignments={seatAssignments}
               />
             </div>
             <div className="flex-1 overflow-hidden">
               <GuestSidebar
                 guests={attendingGuests}
                 seatingChart={chart ? { ...chart, tables } : undefined}
+                seatAssignments={seatAssignments}
                 onGuestDragStart={(guest) => {
                   // Set dragged guest ID for canvas to detect
                   setDraggedGuestId(guest.id);
+                }}
+                onGuestDragEnd={() => {
+                  // Clear dragged guest ID when drag ends
+                  setDraggedGuestId(null);
                 }}
               />
             </div>
@@ -245,7 +261,9 @@ export function SeatingEditorLayout({
                 onDuplicateSelected={async () => {
                   // Duplicate selected tables with offset positions
                   if (selectedTableId) {
-                    const tableToClone = tables.find(t => t.id === selectedTableId);
+                    const tableToClone = tables.find(
+                      (t) => t.id === selectedTableId
+                    );
                     if (tableToClone) {
                       const offset = 50; // Offset duplicated tables
                       await onCreateTable({
@@ -305,12 +323,21 @@ export function SeatingEditorLayout({
         <div className="flex-1 relative bg-muted/10">
           {chart ? (
             <SeatingCanvas
-              seatingChart={{ ...chart, tables } as any}
+              seatingChart={{ ...chart, tables } as SeatingChartWithTables}
               tables={tables}
               onTableSelect={onSelectTable}
               onTableMove={(tableId, x, y) => {
-                console.log("🎯 [EDITOR LAYOUT] onTableMove called:", { tableId, x, y, xType: typeof x, yType: typeof y });
-                onUpdateTable(tableId, { x_position: Number(x), y_position: Number(y) });
+                console.log("🎯 [EDITOR LAYOUT] onTableMove called:", {
+                  tableId,
+                  x,
+                  y,
+                  xType: typeof x,
+                  yType: typeof y,
+                });
+                onUpdateTable(tableId, {
+                  x_position: Number(x),
+                  y_position: Number(y),
+                });
               }}
               onTableRotate={(tableId, rotation) => {
                 onUpdateTable(tableId, { rotation });
@@ -319,7 +346,9 @@ export function SeatingEditorLayout({
                 onUpdateTable(tableId, { width, height });
               }}
               floorPlanUrl={chart.background_image_url || undefined}
-              specialAreas={(chart.chart_metadata?.specialAreas as any[]) || []}
+              specialAreas={
+                (chart.chart_metadata?.specialAreas as SpecialArea[]) || []
+              }
               theme={
                 document.documentElement.classList.contains("dark")
                   ? "dark"
@@ -327,6 +356,67 @@ export function SeatingEditorLayout({
               }
               zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
               onZoomChange={(newZoom) => setZoomLevel(newZoom.scale)}
+              // Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware
+
+              //FR-21: The system shall provide an interactive seating chart interface
+              // Phase 6.3.5: Drag and Drop Assignments
+              draggedGuestId={draggedGuestId}
+              seatAssignments={seatAssignments}
+              onGuestDrop={async (tableId, guestId) => {
+                // Find table to validate capacity
+                const table = tables.find((t) => t.id === tableId);
+                if (!table) return;
+
+                // Check if assignment is already in-flight (prevent double-drops)
+                if (pendingAssignments.has(guestId)) {
+                  console.warn("Assignment already in progress for this guest");
+                  setDraggedGuestId(null);
+                  return;
+                }
+
+                // Check if guest is already assigned to ANY table
+                const existingAssignment = seatAssignments.find(
+                  (sa) => sa.guest_id === guestId
+                );
+                if (existingAssignment) {
+                  console.warn("Guest is already assigned to a table");
+                  setDraggedGuestId(null);
+                  return;
+                }
+
+                // Get existing seat numbers for this table
+                const tableAssignments = seatAssignments.filter(
+                  (sa) => sa.table_layout_id === tableId
+                );
+                const takenSeats = new Set(
+                  tableAssignments.map((sa) => sa.seat_number)
+                );
+
+                // Find next available seat number (1-based)
+                let nextSeat = 1;
+                while (takenSeats.has(nextSeat) && nextSeat <= table.capacity) {
+                  nextSeat++;
+                }
+
+                // Validate capacity
+                if (nextSeat <= table.capacity) {
+                  // Mark guest as pending to prevent race conditions
+                  setPendingAssignments((prev) => new Set(prev).add(guestId));
+
+                  try {
+                    await onAssignGuest(tableId, guestId, nextSeat);
+                  } finally {
+                    // Always remove from pending, whether success or failure
+                    setPendingAssignments((prev) => {
+                      const next = new Set(prev);
+                      next.delete(guestId);
+                      return next;
+                    });
+                    // Clear dragged state
+                    setDraggedGuestId(null);
+                  }
+                }
+              }}
             />
           ) : (
             <div className="flex items-center justify-center h-full">
@@ -424,6 +514,7 @@ export function SeatingEditorLayout({
                     <TableProperties
                       table={selectedTable}
                       isOpen={true}
+                      inline={true}
                       onClose={() => onSelectTable(null)}
                       onSave={(tableId, updates) =>
                         onUpdateTable(tableId, updates)
@@ -458,7 +549,10 @@ export function SeatingEditorLayout({
                       // Update venue metadata
                       await onUpdateChart({
                         background_image_url: floorPlanUrl || undefined,
-                        chart_metadata: metadata as unknown as Record<string, unknown>,
+                        chart_metadata: metadata as unknown as Record<
+                          string,
+                          unknown
+                        >,
                       });
                     }}
                   />
@@ -475,10 +569,11 @@ export function SeatingEditorLayout({
                           empty_seats:
                             selectedTable.capacity -
                             selectedTableAssignments.length,
-                        } as any
+                        } as TableLayoutWithSeats
                       }
                       guests={guests}
                       isOpen={true}
+                      inline={true}
                       onAssignSeat={async (
                         seatNumber: number,
                         guestId: string | null
