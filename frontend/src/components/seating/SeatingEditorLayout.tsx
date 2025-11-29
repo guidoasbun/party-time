@@ -379,6 +379,23 @@ export function SeatingEditorLayout({
               floorPlanSettings={localFloorPlanSettings}
               specialAreas={localSpecialAreas}
               theme={resolvedTheme}
+              // Phase 6.3.7: Handle special area canvas drag/resize updates
+              onSpecialAreaUpdate={(areaId, updates) => {
+                setLocalSpecialAreas((prev) =>
+                  prev.map((area) =>
+                    area.id === areaId
+                      ? {
+                          ...area,
+                          x: updates.x ?? area.x,
+                          y: updates.y ?? area.y,
+                          width: updates.width ?? area.width,
+                          height: updates.height ?? area.height,
+                          rotation: updates.rotation ?? area.rotation,
+                        }
+                      : area
+                  )
+                );
+              }}
               zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
               onZoomChange={(newZoom) => setZoomLevel(newZoom.scale)}
               // Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware
@@ -606,6 +623,8 @@ export function SeatingEditorLayout({
                     floorPlanUrl={chart?.background_image_url || undefined}
                     chartMetadata={chart?.chart_metadata || {}}
                     theme={resolvedTheme}
+                    // Phase 6.3.7: Pass canvas-updated special areas back to VenueLayout
+                    externalSpecialAreas={localSpecialAreas}
                     // Phase 6.3.7: Real-time canvas updates as venue layout changes
                     onChange={(floorPlanUrl: string | null, metadata: VenueMetadata) => {
                       setLocalFloorPlanUrl(floorPlanUrl || undefined);

@@ -47,6 +47,17 @@ export interface SeatingCanvasProps {
   specialAreas?: SpecialArea[];
   onSpecialAreaSelect?: (areaId: string | null) => void;
   onSpecialAreaMove?: (areaId: string, x: number, y: number) => void;
+  // Phase 6.3.7: Special area update callback for canvas drag/resize
+  onSpecialAreaUpdate?: (
+    areaId: string,
+    updates: {
+      x?: number;
+      y?: number;
+      width?: number;
+      height?: number;
+      rotation?: number;
+    }
+  ) => void;
   // FR-21: The system shall provide an interactive seating chart interface.
   // Phase 6.2.3: Export and Sharing Features
   onCanvasReady?: (canvas: fabric.Canvas) => void;
@@ -79,6 +90,7 @@ export default function SeatingCanvas({
   specialAreas = [],
   onSpecialAreaSelect,
   onSpecialAreaMove,
+  onSpecialAreaUpdate,
   // FR-21: The system shall provide an interactive seating chart interface.
   // Phase 6.2.3: Export and Sharing Features
   onCanvasReady,
@@ -139,13 +151,15 @@ export default function SeatingCanvas({
   const onTableMoveRef = useRef(onTableMove);
   const onTableRotateRef = useRef(onTableRotate);
   const onTableResizeRef = useRef(onTableResize);
+  const onSpecialAreaUpdateRef = useRef(onSpecialAreaUpdate);
 
   // Keep refs synchronized with latest callbacks
   useEffect(() => {
     onTableMoveRef.current = onTableMove;
     onTableRotateRef.current = onTableRotate;
     onTableResizeRef.current = onTableResize;
-  }, [onTableMove, onTableRotate, onTableResize]);
+    onSpecialAreaUpdateRef.current = onSpecialAreaUpdate;
+  }, [onTableMove, onTableRotate, onTableResize, onSpecialAreaUpdate]);
 
   // Track floor plan image object
   const floorPlanImageRef = useRef<fabric.Image | null>(null);
@@ -280,29 +294,104 @@ export default function SeatingCanvas({
   // Render Special Areas
   // ============================================================================
 
+  // Track which special areas are currently being manipulated on canvas
+  const activeSpecialAreasRef = useRef<Set<string>>(new Set());
+  const lastSpecialAreaModifiedRef = useRef<number>(0);
+
   useEffect(() => {
     const canvas = fabricCanvasRef.current;
     if (!canvas || !isInitialized) return;
 
-    // Remove existing special area objects
-    const existingAreas = canvas
+    // Skip updates if a special area was recently modified on canvas
+    // This prevents snap-back when state updates from onSpecialAreaUpdate
+    const timeSinceModified = Date.now() - lastSpecialAreaModifiedRef.current;
+    if (timeSinceModified < 500) {
+      return;
+    }
+
+    // Get existing special area objects on canvas
+    const existingAreaObjects = canvas
       .getObjects()
       .filter(
         (obj) =>
           (obj as fabric.Group & { data?: { areaType?: string } }).data
             ?.areaType === "special"
-      );
-    existingAreas.forEach((obj) => canvas.remove(obj));
+      ) as (fabric.Group & { data?: { areaId?: string } })[];
 
-    // Add special areas
+    // Create a map of existing areas by ID
+    const existingAreaMap = new Map<
+      string,
+      fabric.Group & { data?: { areaId?: string } }
+    >();
+    existingAreaObjects.forEach((obj) => {
+      if (obj.data?.areaId) {
+        existingAreaMap.set(obj.data.areaId, obj);
+      }
+    });
+
+    // Create a set of current area IDs
+    const currentAreaIds = new Set(specialAreas.map((a) => a.id));
+
+    // Remove areas that no longer exist
+    existingAreaObjects.forEach((obj) => {
+      if (obj.data?.areaId && !currentAreaIds.has(obj.data.areaId)) {
+        canvas.remove(obj);
+      }
+    });
+
+    // Update existing areas or add new ones
     specialAreas.forEach((area) => {
-      const areaShape = createSpecialAreaShape(area, theme);
-      areaShape.set({
-        selectable: !readOnly,
-        hasControls: !readOnly,
-        evented: !readOnly,
-      });
-      canvas.add(areaShape);
+      const existing = existingAreaMap.get(area.id);
+
+      if (existing) {
+        // Skip position/size updates if this area is being actively manipulated
+        if (activeSpecialAreasRef.current.has(area.id)) {
+          return;
+        }
+
+        // Get the rect from the group to check dimensions
+        const items = existing.getObjects();
+        const rect = items[0] as fabric.Rect | undefined;
+
+        // Check if position/rotation changed
+        const positionChanged =
+          Math.abs((existing.left ?? 0) - area.x) > 2 ||
+          Math.abs((existing.top ?? 0) - area.y) > 2 ||
+          Math.abs((existing.angle ?? 0) - area.rotation) > 2;
+
+        // Check if dimensions changed
+        const dimensionsChanged =
+          rect &&
+          (Math.abs((rect.width ?? 0) - area.width) > 2 ||
+            Math.abs((rect.height ?? 0) - area.height) > 2);
+
+        if (positionChanged) {
+          existing.set({
+            left: area.x,
+            top: area.y,
+            angle: area.rotation,
+          });
+          existing.setCoords();
+        }
+
+        // Update dimensions if changed (from Properties panel manual input)
+        if (dimensionsChanged && rect) {
+          rect.set({
+            width: area.width,
+            height: area.height,
+          });
+          existing.setCoords();
+        }
+      } else {
+        // Create new area shape
+        const areaShape = createSpecialAreaShape(area, theme);
+        areaShape.set({
+          selectable: !readOnly,
+          hasControls: !readOnly,
+          evented: !readOnly,
+        });
+        canvas.add(areaShape);
+      }
     });
 
     // Ensure proper z-index layering:
@@ -310,7 +399,7 @@ export default function SeatingCanvas({
     if (floorPlanImageRef.current) {
       canvas.sendObjectToBack(floorPlanImageRef.current);
     }
-    // 2. Special areas (middle)
+    // 2. Special areas (middle) - bring each forward after floor plan
     specialAreas.forEach((area) => {
       const areaObj = canvas
         .getObjects()
@@ -590,7 +679,99 @@ export default function SeatingCanvas({
       const obj = target as fabric.Group & { data?: Record<string, unknown> };
       const data = obj.data;
 
-      if (!data || !data.id) {
+      if (!data) {
+        return;
+      }
+
+      // Phase 6.3.7: Handle special area modifications
+      if (data.areaType === "special" && data.areaId) {
+        const areaId = data.areaId as string;
+
+        // Record modification time to prevent snap-back from state updates
+        lastSpecialAreaModifiedRef.current = Date.now();
+
+        // Mark this area as being actively manipulated
+        activeSpecialAreasRef.current.add(areaId);
+
+        // Get the rect (first child) from the group to calculate dimensions
+        const items = obj.getObjects();
+        const rect = items[0] as fabric.Rect | undefined;
+        const text = items[1] as fabric.Text | undefined;
+
+        let width: number | undefined;
+        let height: number | undefined;
+
+        // Check if scaling occurred (resize via handles)
+        const hasScale =
+          obj.scaleX !== undefined &&
+          obj.scaleY !== undefined &&
+          (obj.scaleX !== 1 || obj.scaleY !== 1);
+
+        if (rect && hasScale) {
+          // Calculate actual dimensions from scale
+          width = Math.round((rect.width || 0) * (obj.scaleX || 1));
+          height = Math.round((rect.height || 0) * (obj.scaleY || 1));
+
+          // CRITICAL: Update the internal rect's dimensions to match the scaled size
+          // This prevents visual snap-back when we reset the group's scale
+          rect.set({
+            width: width,
+            height: height,
+          });
+
+          // Re-center the text within the new rect dimensions
+          if (text) {
+            text.set({
+              left: 0,
+              top: 0,
+            });
+          }
+
+          // Reset group scale to 1 after updating internal dimensions
+          obj.scaleX = 1;
+          obj.scaleY = 1;
+
+          // Update the group's internal cache
+          obj.setCoords();
+        } else if (rect) {
+          // No scaling - just moving or rotating, use current rect dimensions
+          width = rect.width;
+          height = rect.height;
+        }
+
+        // Apply grid snap for special areas too
+        let left = obj.left ?? 0;
+        let top = obj.top ?? 0;
+        if (gridConfig.enabled) {
+          left = snapToGrid(left, gridConfig.size);
+          top = snapToGrid(top, gridConfig.size);
+          obj.set({ left, top });
+        }
+
+        obj.setCoords();
+        canvas.renderAll();
+
+        // Call the update callback immediately (no debounce needed for special areas)
+        if (onSpecialAreaUpdateRef.current) {
+          onSpecialAreaUpdateRef.current(areaId, {
+            x: left,
+            y: top,
+            width,
+            height,
+            rotation: obj.angle ?? 0,
+          });
+        }
+
+        // Clear active status after a short delay to allow state updates
+        setTimeout(() => {
+          activeSpecialAreasRef.current.delete(areaId);
+        }, 1000);
+
+        return; // Don't process as table
+      }
+
+      // Tables require data.id
+      if (!data.id) {
         return;
       }
 
