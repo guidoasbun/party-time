@@ -26,6 +26,7 @@ import { VenueLayout } from "./VenueLayout";
 import { UnseatedGuestsIndicator } from "./UnseatedGuestsIndicator";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
+import { useToast } from "@/hooks/useToast";
 import type {
   SeatingChart,
   SeatingChartWithTables,
@@ -96,6 +97,7 @@ export function SeatingEditorLayout({
   onBulkCreateTables,
   onUpdateChart,
 }: SeatingEditorLayoutProps) {
+  const { toast } = useToast();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [rightTab, setRightTab] = useState("tables");
@@ -256,7 +258,13 @@ export function SeatingEditorLayout({
                 }}
                 onDeleteSelected={
                   selectedTableId
-                    ? () => onDeleteTable(selectedTableId)
+                    ? async () => {
+                        await onDeleteTable(selectedTableId);
+                        toast({
+                          title: "Table deleted",
+                          description: "The selected table has been removed.",
+                        });
+                      }
                     : () => {}
                 }
                 onDuplicateSelected={async () => {
@@ -267,8 +275,9 @@ export function SeatingEditorLayout({
                     );
                     if (tableToClone) {
                       const offset = 50; // Offset duplicated tables
+                      const newTableNumber = `Table ${tables.length + 1}`;
                       await onCreateTable({
-                        table_number: `Table ${tables.length + 1}`,
+                        table_number: newTableNumber,
                         table_type: tableToClone.table_type,
                         capacity: tableToClone.capacity,
                         width: tableToClone.width,
@@ -276,6 +285,10 @@ export function SeatingEditorLayout({
                         x_position: tableToClone.x_position + offset,
                         y_position: tableToClone.y_position + offset,
                         rotation: tableToClone.rotation,
+                      });
+                      toast({
+                        title: "Table duplicated",
+                        description: `Created ${newTableNumber}`,
                       });
                     }
                   }
@@ -520,10 +533,50 @@ export function SeatingEditorLayout({
                       onSave={(tableId, updates) =>
                         onUpdateTable(tableId, updates)
                       }
-                      onDuplicate={(tableId) =>
-                        console.log("Duplicate table:", tableId)
-                      }
-                      onDelete={(tableId) => onDeleteTable(tableId)}
+                      onDuplicate={async (tableId) => {
+                        const tableToClone = tables.find(
+                          (t) => t.id === tableId
+                        );
+                        if (tableToClone) {
+                          const offset = 50;
+                          const newTableNumber = `Table ${tables.length + 1}`;
+                          await onCreateTable({
+                            table_number: newTableNumber,
+                            table_type: tableToClone.table_type,
+                            capacity: tableToClone.capacity,
+                            width: tableToClone.width,
+                            height: tableToClone.height,
+                            x_position: tableToClone.x_position + offset,
+                            y_position: tableToClone.y_position + offset,
+                            rotation: tableToClone.rotation,
+                          });
+                          toast({
+                            title: "Table duplicated",
+                            description: `Created ${newTableNumber}`,
+                          });
+                        }
+                      }}
+                      onDelete={async (tableId) => {
+                        await onDeleteTable(tableId);
+                        toast({
+                          title: "Table deleted",
+                          description: "The selected table has been removed.",
+                        });
+                      }}
+                      onClearSeats={async (tableId) => {
+                        const tableAssignments = seatAssignments.filter(
+                          (sa) => sa.table_layout_id === tableId
+                        );
+                        for (const sa of tableAssignments) {
+                          await onUnassignSeat(sa.id);
+                        }
+                        if (tableAssignments.length > 0) {
+                          toast({
+                            title: "Seats cleared",
+                            description: `Removed ${tableAssignments.length} seat assignment${tableAssignments.length === 1 ? "" : "s"}.`,
+                          });
+                        }
+                      }}
                     />
                   ) : (
                     <>
@@ -614,6 +667,10 @@ export function SeatingEditorLayout({
           onApplyTemplate={async (templateTables) => {
             await onBulkCreateTables(templateTables);
             setShowTemplateModal(false);
+            toast({
+              title: "Template applied",
+              description: `Created ${templateTables.length} table${templateTables.length === 1 ? "" : "s"} from template.`,
+            });
           }}
           canvasWidth={chart.venue_width}
           canvasHeight={chart.venue_height}

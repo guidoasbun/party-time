@@ -256,18 +256,20 @@ export function useSeatingChart({
       if (!chart?.id) throw new Error("No chart loaded");
       return await seatingService.deleteTable(eventId, chart.id, tableId);
     },
-    onSuccess: async (_, tableId) => {
-      // Invalidate and refetch the chart to get fresh data from backend
+    onSuccess: async () => {
+      // Clear selection first to prevent any stale state
+      setSelectedTableId(null);
+
+      // Invalidate queries to trigger refetch - this is sufficient, no need for manual refetchChart()
       await queryClient.invalidateQueries({
         queryKey: ["seatingChart", eventId],
       });
-      await refetchChart();
 
       // Also invalidate statistics
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ["seatingStatistics", eventId],
       });
-      setSelectedTableId(null);
+
       markUnsavedChanges();
     },
     onError: (error) => {
@@ -666,30 +668,8 @@ export function useSeatingChart({
         redo();
       }
 
-      // Cmd/Ctrl + S: Manual save
-      if (ctrlOrCmd && e.key === "s") {
-        e.preventDefault();
-        save();
-      }
-
-      // Delete/Backspace: Delete selected table
-      if (
-        (e.key === "Delete" || e.key === "Backspace") &&
-        selectedTableId &&
-        !e.ctrlKey &&
-        !e.metaKey
-      ) {
-        // Only if not in an input field
-        const target = e.target as HTMLElement;
-        if (
-          target.tagName !== "INPUT" &&
-          target.tagName !== "TEXTAREA" &&
-          !target.isContentEditable
-        ) {
-          e.preventDefault();
-          deleteTableMutation.mutate(selectedTableId);
-        }
-      }
+      // Note: Cmd/Ctrl + S (Save) and Delete/Backspace (Delete table) are handled
+      // by the SeatingEditPage component to provide toast feedback
 
       // Escape: Deselect table
       if (e.key === "Escape") {
@@ -702,7 +682,7 @@ export function useSeatingChart({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [undo, redo, save, selectedTableId, deleteTableMutation]);
+  }, [undo, redo]);
 
   // ============================================================================
   // Cleanup
