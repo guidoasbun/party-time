@@ -27,6 +27,7 @@ import { UnseatedGuestsIndicator } from "./UnseatedGuestsIndicator";
 import { Button } from "@/components/ui/Button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { useToast } from "@/hooks/useToast";
+import { useTheme } from "@/contexts/ThemeContext";
 import type {
   SeatingChart,
   SeatingChartWithTables,
@@ -37,7 +38,7 @@ import type {
   SeatAssignment,
   SeatingStatistics,
 } from "@/types/seating.types";
-import type { SpecialArea } from "@/types/venue.types";
+import type { SpecialArea, FloorPlanSettings, VenueMetadata } from "@/types/venue.types";
 import { TableType } from "@/types/seating.types";
 import type { Guest } from "@/types/guest.types";
 import { RsvpStatus } from "@/types/guest.types";
@@ -98,6 +99,7 @@ export function SeatingEditorLayout({
   onUpdateChart,
 }: SeatingEditorLayoutProps) {
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(true);
   const [rightSidebarOpen, setRightSidebarOpen] = useState(true);
   const [rightTab, setRightTab] = useState("tables");
@@ -109,6 +111,26 @@ export function SeatingEditorLayout({
   const [pendingAssignments, setPendingAssignments] = useState<Set<string>>(
     () => new Set()
   );
+
+  // Phase 6.3.7: Local state for real-time venue layout updates
+  const [localFloorPlanUrl, setLocalFloorPlanUrl] = useState<string | undefined>(
+    chart?.background_image_url || undefined
+  );
+  const [localSpecialAreas, setLocalSpecialAreas] = useState<SpecialArea[]>(
+    (chart?.chart_metadata?.specialAreas as SpecialArea[]) || []
+  );
+  const [localFloorPlanSettings, setLocalFloorPlanSettings] = useState<FloorPlanSettings | undefined>(
+    (chart?.chart_metadata?.floorPlanSettings as FloorPlanSettings) || undefined
+  );
+
+  // Sync local venue state when chart data changes (e.g., after save or initial load)
+  useEffect(() => {
+    if (chart) {
+      setLocalFloorPlanUrl(chart.background_image_url || undefined);
+      setLocalSpecialAreas((chart.chart_metadata?.specialAreas as SpecialArea[]) || []);
+      setLocalFloorPlanSettings((chart.chart_metadata?.floorPlanSettings as FloorPlanSettings) || undefined);
+    }
+  }, [chart]);
 
   // Filter guests for sidebar - include attending and pending
   // GuestSidebar and UnseatedGuestsIndicator will further filter to attending only
@@ -341,13 +363,6 @@ export function SeatingEditorLayout({
               tables={tables}
               onTableSelect={onSelectTable}
               onTableMove={(tableId, x, y) => {
-                console.log("🎯 [EDITOR LAYOUT] onTableMove called:", {
-                  tableId,
-                  x,
-                  y,
-                  xType: typeof x,
-                  yType: typeof y,
-                });
                 onUpdateTable(tableId, {
                   x_position: Number(x),
                   y_position: Number(y),
@@ -359,15 +374,11 @@ export function SeatingEditorLayout({
               onTableResize={(tableId, width, height) => {
                 onUpdateTable(tableId, { width, height });
               }}
-              floorPlanUrl={chart.background_image_url || undefined}
-              specialAreas={
-                (chart.chart_metadata?.specialAreas as SpecialArea[]) || []
-              }
-              theme={
-                document.documentElement.classList.contains("dark")
-                  ? "dark"
-                  : "light"
-              }
+              // Phase 6.3.7: Use local venue state for real-time canvas updates
+              floorPlanUrl={localFloorPlanUrl}
+              floorPlanSettings={localFloorPlanSettings}
+              specialAreas={localSpecialAreas}
+              theme={resolvedTheme}
               zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
               onZoomChange={(newZoom) => setZoomLevel(newZoom.scale)}
               // Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware
@@ -594,11 +605,13 @@ export function SeatingEditorLayout({
                     seatingChartId={chart?.id || ""}
                     floorPlanUrl={chart?.background_image_url || undefined}
                     chartMetadata={chart?.chart_metadata || {}}
-                    theme={
-                      document.documentElement.classList.contains("dark")
-                        ? "dark"
-                        : "light"
-                    }
+                    theme={resolvedTheme}
+                    // Phase 6.3.7: Real-time canvas updates as venue layout changes
+                    onChange={(floorPlanUrl: string | null, metadata: VenueMetadata) => {
+                      setLocalFloorPlanUrl(floorPlanUrl || undefined);
+                      setLocalSpecialAreas(metadata.specialAreas || []);
+                      setLocalFloorPlanSettings(metadata.floorPlanSettings);
+                    }}
                     onSave={async (floorPlanUrl, metadata) => {
                       // Update venue metadata
                       await onUpdateChart({

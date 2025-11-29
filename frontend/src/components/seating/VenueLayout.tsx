@@ -34,6 +34,8 @@ interface VenueLayoutProps {
   floorPlanUrl?: string;
   chartMetadata?: Record<string, unknown>;
   theme: "light" | "dark";
+  // Phase 6.3.7: Optional callback for real-time canvas updates (before save)
+  onChange?: (floorPlanUrl: string | null, metadata: VenueMetadata) => void;
   onSave: (
     floorPlanUrl: string | null,
     metadata: VenueMetadata
@@ -47,6 +49,7 @@ export function VenueLayout({
   floorPlanUrl: initialFloorPlanUrl,
   chartMetadata,
   theme,
+  onChange,
   onSave,
   disabled = false,
 }: VenueLayoutProps) {
@@ -87,6 +90,16 @@ export function VenueLayout({
     initialFloorPlanUrl,
     initialData,
   ]);
+
+  // Phase 6.3.7: Notify parent of changes for real-time canvas updates
+  useEffect(() => {
+    if (onChange) {
+      onChange(floorPlanUrl || null, {
+        specialAreas,
+        floorPlanSettings: floorPlanUrl ? floorPlanSettings : undefined,
+      });
+    }
+  }, [floorPlanUrl, specialAreas, floorPlanSettings, onChange]);
 
   // Handle floor plan upload
   const handleFloorPlanUpload = useCallback(
