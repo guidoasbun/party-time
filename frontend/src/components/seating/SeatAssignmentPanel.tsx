@@ -44,6 +44,8 @@ interface SeatAssignmentPanelProps {
   table: TableLayoutWithSeats | null
   guests: Guest[]
   isOpen?: boolean
+  /** When true, renders as inline block element instead of fixed bottom panel */
+  inline?: boolean
   onClose?: () => void
   onAssignSeat?: (seatNumber: number, guestId: UUID | null) => Promise<void>
   onClearAllSeats?: () => Promise<void>
@@ -111,6 +113,7 @@ export function SeatAssignmentPanel({
   table,
   guests,
   isOpen = false,
+  inline = false,
   onClose,
   onAssignSeat,
   onClearAllSeats,
@@ -200,12 +203,17 @@ export function SeatAssignmentPanel({
   return (
     <div
       className={cn(
-        'fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg',
-        'transform transition-transform duration-300 ease-in-out z-20',
-        isOpen ? 'translate-y-0' : 'translate-y-full',
+        'bg-card border-t border-border shadow-lg',
+        inline
+          ? 'relative w-full'
+          : [
+              'fixed bottom-0 left-0 right-0 z-20',
+              'transform transition-transform duration-300 ease-in-out',
+              isOpen ? 'translate-y-0' : 'translate-y-full',
+            ],
         className
       )}
-      style={{ maxHeight: '40vh' }}
+      style={inline ? undefined : { maxHeight: '40vh' }}
     >
       <div className="flex flex-col h-full">
         {/* Header */}
@@ -285,12 +293,20 @@ export function SeatAssignmentPanel({
               const StatusIcon = statusConfig?.icon
 
               return (
-                <button
+                <div
                   key={slot.seatNumber}
+                  role="button"
+                  tabIndex={isLoading ? -1 : 0}
                   onClick={() => handleSeatClick(slot.seatNumber, slot.guest)}
-                  disabled={isLoading}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      handleSeatClick(slot.seatNumber, slot.guest)
+                    }
+                  }}
+                  aria-disabled={isLoading}
                   className={cn(
-                    'relative p-3 rounded-lg border-2 transition-all',
+                    'relative p-3 rounded-lg border-2 transition-all cursor-pointer',
                     'hover:shadow-md active:scale-95',
                     slot.isEmpty
                       ? 'border-dashed border-border bg-muted/30 hover:bg-muted/50'
@@ -359,7 +375,7 @@ export function SeatAssignmentPanel({
                       </button>
                     </div>
                   )}
-                </button>
+                </div>
               )
             })}
           </div>

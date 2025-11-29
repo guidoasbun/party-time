@@ -42,7 +42,11 @@ import { RsvpStatus as RsvpStatusEnum } from "@/types";
 interface GuestSidebarProps {
   guests: Guest[];
   seatingChart?: SeatingChartWithTables | null;
+  /** Optional direct seat assignments - if provided, used instead of chart.tables.seat_assignments */
+  seatAssignments?: Array<{ guest_id?: string }>;
   isOpen?: boolean;
+  /** When true, renders as inline block element instead of fixed sidebar */
+  inline?: boolean;
   onToggle?: () => void;
   onGuestDragStart?: (guest: Guest) => void;
   onGuestDragEnd?: () => void;
@@ -95,11 +99,21 @@ const getRsvpStatusConfig = (status: RsvpStatus) => {
 
 /**
  * Check if a guest is already seated in the chart
+ * @param guestId - The guest ID to check
+ * @param chart - The seating chart (optional, used if seatAssignments not provided)
+ * @param seatAssignments - Direct seat assignments array (takes precedence over chart)
  */
 const isGuestSeated = (
   guestId: UUID,
-  chart?: SeatingChartWithTables | null
+  chart?: SeatingChartWithTables | null,
+  seatAssignments?: Array<{ guest_id?: string }>
 ): boolean => {
+  // If seatAssignments array is provided directly, use it (more up-to-date)
+  if (seatAssignments) {
+    return seatAssignments.some((sa) => sa.guest_id === guestId);
+  }
+
+  // Fallback to checking chart.tables.seat_assignments
   if (!chart || !chart.tables) return false;
 
   // Check if any table has a seat assignment for this guest
@@ -128,7 +142,9 @@ const getGuestInitials = (guest: Guest): string => {
 export function GuestSidebar({
   guests,
   seatingChart,
+  seatAssignments,
   isOpen = true,
+  inline = false,
   onToggle,
   onGuestDragStart,
   onGuestDragEnd,
@@ -158,10 +174,11 @@ export function GuestSidebar({
       // Only show attending guests (primary filter)
       if (guest.rsvp_status !== RsvpStatusEnum.ATTENDING) return false;
 
-      // Check if guest is not seated
-      return !isGuestSeated(guest.id, seatingChart);
+      // Check if guest is not seated - use seatAssignments if provided (more up-to-date)
+      const isSeated = isGuestSeated(guest.id, seatingChart, seatAssignments);
+      return !isSeated;
     });
-  }, [guests, seatingChart]);
+  }, [guests, seatingChart, seatAssignments]);
 
   // Apply search and RSVP filters
   const filteredGuests = useMemo(() => {
@@ -260,8 +277,8 @@ export function GuestSidebar({
      * Phase 6.2.4: Mobile & Tablet Views
      */
     <>
-      {/* Phase 6.2.4: Mobile backdrop overlay */}
-      {isOpen && (
+      {/* Phase 6.2.4: Mobile backdrop overlay - only show when not inline */}
+      {!inline && isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-20 md:hidden"
           onClick={onToggle}
@@ -271,36 +288,43 @@ export function GuestSidebar({
 
       <div
         className={cn(
-          // Phase 6.2.4: Responsive positioning
-          "fixed right-0 top-0 h-full bg-card border-l border-border shadow-lg",
-          "transform transition-all duration-300 ease-in-out",
+          "bg-card border-l border-border shadow-lg",
           "flex flex-col",
-          // Mobile: Full overlay drawer with higher z-index
-          "md:relative md:z-10 z-30",
-          // Width: Full width on mobile, fixed on desktop
-          isOpen ? "translate-x-0" : "translate-x-full",
-          isOpen ? "w-full sm:w-96 md:w-80" : "w-0",
+          inline
+            ? "relative w-full h-full"
+            : [
+                // Phase 6.2.4: Responsive positioning
+                "fixed right-0 top-0 h-full",
+                "transform transition-all duration-300 ease-in-out",
+                // Mobile: Full overlay drawer with higher z-index
+                "md:relative md:z-10 z-30",
+                // Width: Full width on mobile, fixed on desktop
+                isOpen ? "translate-x-0" : "translate-x-full",
+                isOpen ? "w-full sm:w-96 md:w-80" : "w-0",
+              ],
           className
         )}
       >
-        {/* Toggle Button */}
-        <button
-          onClick={onToggle}
-          className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full",
-            "w-8 h-16 bg-card border border-r-0 border-border rounded-l-lg",
-            "flex items-center justify-center",
-            "hover:bg-accent transition-colors",
-            "shadow-md"
-          )}
-          aria-label={isOpen ? "Close guest sidebar" : "Open guest sidebar"}
-        >
-          {isOpen ? (
-            <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          ) : (
-            <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-          )}
-        </button>
+        {/* Toggle Button - only show when not inline */}
+        {!inline && (
+          <button
+            onClick={onToggle}
+            className={cn(
+              "absolute left-0 top-1/2 -translate-y-1/2 -translate-x-full",
+              "w-8 h-16 bg-card border border-r-0 border-border rounded-l-lg",
+              "flex items-center justify-center",
+              "hover:bg-accent transition-colors",
+              "shadow-md"
+            )}
+            aria-label={isOpen ? "Close guest sidebar" : "Open guest sidebar"}
+          >
+            {isOpen ? (
+              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+            ) : (
+              <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+            )}
+          </button>
+        )}
 
         {/* Sidebar Content */}
         {isOpen && (
@@ -399,8 +423,8 @@ export function GuestSidebar({
               )}
             </div>
 
-            {/* Guest List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2">
+            {/* Guest List - max height for ~8-10 guests visible with scrolling */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[600px]">
               {filteredGuests.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="w-12 h-12 mx-auto text-muted-foreground mb-3" />

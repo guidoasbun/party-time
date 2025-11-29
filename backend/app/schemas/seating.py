@@ -209,8 +209,8 @@ class TableLayoutWithSeats(TableLayoutResponse):
 
 
 class SeatingChartWithTables(SeatingChartResponse):
-    """Seating chart with table layouts populated."""
-    tables: List[TableLayoutResponse] = []
+    """Seating chart with table layouts populated (includes seat_assignments)."""
+    tables: List[TableLayoutWithSeats] = []
     total_tables: int = 0
     total_capacity: int = 0
     total_assigned: int = 0

@@ -343,3 +343,45 @@ export function parseVenueMetadata(
 
   return { specialAreas, floorPlanSettings };
 }
+
+/**
+ * Validation result for guest drop operation
+ * Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware
+ */
+export interface GuestDropValidation {
+  valid: boolean;
+  reason?: string;
+}
+
+/**
+ * Validate if a guest can be dropped/assigned to a table
+ * Checks for obstacle collisions and capacity constraints
+ * Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware
+ */
+export function validateGuestDrop(
+  table: TableLayout,
+  obstacles: SpecialArea[],
+  currentAssignments: number,
+  guestHasPlusOne: boolean
+): GuestDropValidation {
+  // Check if table overlaps with any obstacles
+  if (checkTableObstacleCollision(table, obstacles)) {
+    return { valid: false, reason: "Table overlaps with obstacle" };
+  }
+
+  // Check capacity (including plus-one if applicable)
+  const seatsNeeded = guestHasPlusOne ? 2 : 1;
+  const availableSeats = table.capacity - currentAssignments;
+
+  if (seatsNeeded > availableSeats) {
+    if (availableSeats === 0) {
+      return { valid: false, reason: "Table is full" };
+    }
+    return {
+      valid: false,
+      reason: `Only ${availableSeats} seat(s) available, need ${seatsNeeded}`,
+    };
+  }
+
+  return { valid: true };
+}

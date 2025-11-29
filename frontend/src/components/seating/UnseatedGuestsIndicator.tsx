@@ -24,14 +24,29 @@ import { RsvpStatus as RsvpStatusEnum } from '@/types'
 interface UnseatedGuestsIndicatorProps {
   guests: Guest[]
   seatingChart?: SeatingChartWithTables | null
+  /** Optional direct seat assignments - if provided, used instead of chart.tables.seat_assignments */
+  seatAssignments?: Array<{ guest_id?: string }>
   onClick?: () => void
   className?: string
 }
 
 /**
  * Check if a guest is already seated in the chart
+ * @param guestId - The guest ID to check
+ * @param chart - The seating chart (optional, used if seatAssignments not provided)
+ * @param seatAssignments - Direct seat assignments array (takes precedence over chart)
  */
-const isGuestSeated = (guestId: UUID, chart?: SeatingChartWithTables | null): boolean => {
+const isGuestSeated = (
+  guestId: UUID,
+  chart?: SeatingChartWithTables | null,
+  seatAssignments?: Array<{ guest_id?: string }>
+): boolean => {
+  // If seatAssignments array is provided directly, use it (more up-to-date)
+  if (seatAssignments) {
+    return seatAssignments.some((sa) => sa.guest_id === guestId)
+  }
+
+  // Fallback to checking chart.tables.seat_assignments
   if (!chart || !chart.tables) return false
 
   // Check if any table has a seat assignment for this guest
@@ -85,6 +100,7 @@ const getIcon = (variant: 'success' | 'default' | 'destructive') => {
 export function UnseatedGuestsIndicator({
   guests,
   seatingChart,
+  seatAssignments,
   onClick,
   className
 }: UnseatedGuestsIndicatorProps) {
@@ -94,7 +110,8 @@ export function UnseatedGuestsIndicator({
   // Calculate unseated guests (attending guests without seat assignments)
   const { unseatedCount, totalAttending, percentageSeated, plusOneCount, totalHeadcount } = useMemo(() => {
     const attendingGuests = guests.filter(g => g.rsvp_status === RsvpStatusEnum.ATTENDING)
-    const unseatedGuests = attendingGuests.filter(g => !isGuestSeated(g.id, seatingChart))
+    // Use seatAssignments if provided (more up-to-date than chart)
+    const unseatedGuests = attendingGuests.filter(g => !isGuestSeated(g.id, seatingChart, seatAssignments))
 
     const totalAttending = attendingGuests.length
     const unseatedCount = unseatedGuests.length
@@ -113,7 +130,7 @@ export function UnseatedGuestsIndicator({
       plusOneCount,
       totalHeadcount
     }
-  }, [guests, seatingChart])
+  }, [guests, seatingChart, seatAssignments])
 
   // Trigger pulse animation when count changes
   useEffect(() => {
