@@ -1,11 +1,13 @@
 /**
  * FR-8: The system shall provide a venue search interface.
  * Phase 7.1.1: Google Places API Integration
- * VenueTab Component (Phase 7.1.1: Google Places API Integration)
+ * Phase 7.1.2: Venue Search UI Enhancement
+ * VenueTab Component
  *
  * Tab content for venue management within event details:
  * - List of saved venues for the event
- * - Search for new venues via Google Places
+ * - Search for new venues via Google Places (with map split-view)
+ * - Saved/shortlisted venues before adding to event
  * - Add manual venues
  * - Venue details modal
  * - Drag-to-reorder venues
@@ -16,28 +18,33 @@ import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { VenueSearch } from "./VenueSearch";
+import { VenueSearchWithMap } from "./VenueSearchWithMap";
 import { VenueDetails } from "./VenueDetails";
-import { VenueCard } from "./VenueCard";
 import { VenueMap } from "./VenueMap";
 import { ManualVenueForm } from "./ManualVenueForm";
+import { SavedVenuesList } from "./SavedVenuesList";
 import {
   useEventVenues,
   useAddEventVenue,
   useDeleteEventVenue,
 } from "@/hooks/useEventVenues";
+import { useVenueDetails } from "@/hooks/useVenueSearch";
+import { useUpdateEvent, eventKeys } from "@/hooks/api/useEvents";
+import { useToast } from "@/hooks/useToast";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSavedVenues } from "@/hooks/useSavedVenues";
 import {
   VenueSearchResult,
   VenueDetails as VenueDetailsType,
   EventVenue,
   EventVenueCreateRequest,
+  SavedVenue,
 } from "@/types/venue.types";
 import {
   MapPin,
-  Plus,
   Search,
   Building2,
   Loader2,
@@ -48,17 +55,28 @@ import {
   Globe,
   Star,
   FileText,
+  Bookmark,
 } from "lucide-react";
+
+// Primary venue from event creation (stored on event record)
+interface PrimaryVenue {
+  venue_name?: string;
+  venue_address?: string;
+  venue_google_place_id?: string;
+}
 
 interface VenueTabProps {
   eventId: string;
+  primaryVenue?: PrimaryVenue;
   className?: string;
 }
 
 type ViewMode = "list" | "search" | "manual";
+type SearchSubTab = "search" | "saved";
 
-export function VenueTab({ eventId, className }: VenueTabProps) {
+export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [searchSubTab, setSearchSubTab] = useState<SearchSubTab>("search");
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [detailsPlaceId, setDetailsPlaceId] = useState<string | null>(null);
   const [venueToDelete, setVenueToDelete] = useState<EventVenue | null>(null);
@@ -66,9 +84,28 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
   // Fetch event venues
   const { data: venues = [], isLoading, error } = useEventVenues(eventId);
 
+  // Fetch primary venue details (for map coordinates) if we have a Google Place ID
+  const { data: primaryVenueDetails } = useVenueDetails(
+    primaryVenue?.venue_google_place_id || null,
+    { enabled: !!primaryVenue?.venue_google_place_id }
+  );
+
+  // Saved venues (localStorage shortlist)
+  const {
+    savedVenues,
+    saveVenue,
+    unsaveVenue,
+    isSaved,
+    clearAll: clearSavedVenues,
+    isLoading: isSavedLoading,
+  } = useSavedVenues(eventId);
+
   // Mutations
   const addVenueMutation = useAddEventVenue(eventId);
   const deleteVenueMutation = useDeleteEventVenue(eventId);
+  const updateEventMutation = useUpdateEvent();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Handle selecting a venue from search results
   const handleVenueSelect = useCallback(
@@ -82,11 +119,6 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
     },
     [addVenueMutation]
   );
-
-  // Handle selecting a search result to view details
-  const handleSearchResultSelect = useCallback((venue: VenueSearchResult) => {
-    setDetailsPlaceId(venue.place_id);
-  }, []);
 
   // Handle manual venue submission
   const handleManualVenueSubmit = useCallback(
@@ -104,15 +136,88 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
     setVenueToDelete(null);
   }, [venueToDelete, deleteVenueMutation]);
 
-  // Map markers for all venues
-  const mapVenues = venues.map((venue) => ({
-    id: venue.id,
-    name: venue.name,
-    latitude: venue.latitude,
-    longitude: venue.longitude,
-    address: venue.address,
-    rating: venue.rating || undefined,
-  }));
+  // Handle adding saved venue to event
+  const handleAddSavedVenueToEvent = useCallback(
+    async (venue: SavedVenue) => {
+      const venueData: EventVenueCreateRequest = {
+        place_id: venue.placeId,
+      };
+      await addVenueMutation.mutateAsync(venueData);
+      unsaveVenue(venue.placeId);
+      setViewMode("list");
+    },
+    [addVenueMutation, unsaveVenue]
+  );
+
+  // Handle toggling save on a search result
+  const handleToggleSaveVenue = useCallback(
+    (venue: VenueSearchResult) => {
+      if (isSaved(venue.place_id)) {
+        unsaveVenue(venue.place_id);
+      } else {
+        saveVenue(venue);
+      }
+    },
+    [isSaved, unsaveVenue, saveVenue]
+  );
+
+  // Handle setting an EventVenue as the primary event venue
+  const handleSetAsEventVenue = useCallback(
+    async (venue: EventVenue) => {
+      try {
+        await updateEventMutation.mutateAsync({
+          id: eventId,
+          data: {
+            venue_name: venue.name,
+            venue_address: venue.address,
+            venue_google_place_id: venue.google_place_id || undefined,
+          },
+        });
+        // Invalidate event detail queries to trigger instant UI update
+        queryClient.invalidateQueries({ queryKey: eventKeys.details() });
+        toast({
+          title: "Event Venue Updated",
+          description: `${venue.name} is now set as the event venue.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Failed to Update Venue",
+          description: "Could not set this venue as the event venue.",
+          variant: "destructive",
+        });
+      }
+    },
+    [updateEventMutation, eventId, queryClient, toast]
+  );
+
+  // Check if primary venue exists
+  const hasPrimaryVenue = primaryVenue?.venue_name && primaryVenue?.venue_address;
+
+  // Map markers for all venues (including primary venue if we have coordinates)
+  const mapVenues = [
+    // Add primary venue marker if we have details with coordinates
+    ...(primaryVenueDetails?.location?.latitude && primaryVenueDetails?.location?.longitude
+      ? [
+          {
+            id: "primary-venue",
+            name: primaryVenue?.venue_name || primaryVenueDetails.name,
+            latitude: primaryVenueDetails.location.latitude,
+            longitude: primaryVenueDetails.location.longitude,
+            address: primaryVenue?.venue_address || primaryVenueDetails.address,
+            rating: primaryVenueDetails.rating,
+          },
+        ]
+      : []),
+    // Add event venues
+    ...venues.map((venue) => ({
+      id: venue.id,
+      name: venue.name,
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      address: venue.address,
+      rating: venue.rating || undefined,
+    })),
+  ];
 
   // Loading state
   if (isLoading) {
@@ -161,8 +266,12 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
             Event Venues
           </h3>
           <p className="text-sm text-muted-foreground">
-            {venues.length === 0
+            {hasPrimaryVenue && venues.length === 0
+              ? "1 venue (from event setup)"
+              : venues.length === 0
               ? "No venues added yet"
+              : hasPrimaryVenue
+              ? `${venues.length + 1} venues (including event venue)`
               : `${venues.length} venue${venues.length === 1 ? "" : "s"} added`}
           </p>
         </div>
@@ -202,7 +311,66 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
       {/* Search Mode */}
       {viewMode === "search" && (
         <div className="space-y-4">
-          <VenueSearch onVenueSelect={handleSearchResultSelect} />
+          {/* Search / Saved Sub-tabs */}
+          <div className="flex items-center gap-4 border-b">
+            <button
+              onClick={() => setSearchSubTab("search")}
+              className={cn(
+                "relative pb-3 text-sm font-medium transition-colors",
+                searchSubTab === "search"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Search className="mr-2 inline-block h-4 w-4" />
+              Search
+              {searchSubTab === "search" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+            <button
+              onClick={() => setSearchSubTab("saved")}
+              className={cn(
+                "relative pb-3 text-sm font-medium transition-colors",
+                searchSubTab === "saved"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Bookmark className="mr-2 inline-block h-4 w-4" />
+              Saved
+              {savedVenues.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {savedVenues.length}
+                </Badge>
+              )}
+              {searchSubTab === "saved" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+          </div>
+
+          {/* Search Sub-tab Content */}
+          {searchSubTab === "search" && (
+            <VenueSearchWithMap
+              onVenueSelect={handleVenueSelect}
+              eventId={eventId}
+              isSaved={isSaved}
+              onToggleSave={handleToggleSaveVenue}
+            />
+          )}
+
+          {/* Saved Sub-tab Content */}
+          {searchSubTab === "saved" && (
+            <SavedVenuesList
+              savedVenues={savedVenues}
+              onAddToEvent={handleAddSavedVenueToEvent}
+              onRemove={unsaveVenue}
+              onViewDetails={setDetailsPlaceId}
+              onClearAll={clearSavedVenues}
+              isLoading={isSavedLoading}
+            />
+          )}
 
           {/* Venue Details Modal */}
           {detailsPlaceId && (
@@ -228,8 +396,45 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
       {/* List Mode - Show saved venues */}
       {viewMode === "list" && (
         <>
-          {/* Map showing all venues */}
-          {venues.length > 0 && (
+          {/* Primary Venue from Event Creation */}
+          {hasPrimaryVenue && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-primary/10 flex items-center justify-center">
+                    <MapPin className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="default" className="text-xs">
+                        Event Venue
+                      </Badge>
+                    </div>
+                    <h4 className="font-semibold text-foreground">
+                      {primaryVenue?.venue_name}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {primaryVenue?.venue_address}
+                    </p>
+                    {primaryVenue?.venue_google_place_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => setDetailsPlaceId(primaryVenue.venue_google_place_id!)}
+                      >
+                        <ExternalLink className="mr-1 h-3 w-3" />
+                        View Details
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Map showing all venues (including primary venue) */}
+          {mapVenues.length > 0 && (
             <Card>
               <CardContent className="p-0">
                 <VenueMap
@@ -244,7 +449,7 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
           )}
 
           {/* Venue list */}
-          {venues.length === 0 ? (
+          {venues.length === 0 && !hasPrimaryVenue ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <MapPin className="h-12 w-12 text-muted-foreground/50" />
@@ -274,7 +479,7 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : venues.length > 0 ? (
             <div className="space-y-4">
               {venues.map((venue, index) => (
                 <EventVenueCard
@@ -289,10 +494,16 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
                       ? () => setDetailsPlaceId(venue.google_place_id!)
                       : undefined
                   }
+                  onSetAsEventVenue={() => handleSetAsEventVenue(venue)}
+                  isPrimaryVenue={
+                    !!primaryVenue?.venue_google_place_id &&
+                    primaryVenue.venue_google_place_id === venue.google_place_id
+                  }
+                  isSettingPrimary={updateEventMutation.isPending}
                 />
               ))}
             </div>
-          )}
+          ) : null}
         </>
       )}
 
@@ -361,6 +572,9 @@ interface EventVenueCardProps {
   onSelect: () => void;
   onDelete: () => void;
   onViewDetails?: () => void;
+  onSetAsEventVenue?: () => void;
+  isPrimaryVenue?: boolean;
+  isSettingPrimary?: boolean;
 }
 
 function EventVenueCard({
@@ -370,6 +584,9 @@ function EventVenueCard({
   onSelect,
   onDelete,
   onViewDetails,
+  onSetAsEventVenue,
+  isPrimaryVenue,
+  isSettingPrimary,
 }: EventVenueCardProps) {
   return (
     <Card
@@ -404,6 +621,11 @@ function EventVenueCard({
                   <h4 className="font-semibold text-foreground truncate">
                     {venue.name}
                   </h4>
+                  {isPrimaryVenue && (
+                    <Badge variant="default" className="text-xs">
+                      Event Venue
+                    </Badge>
+                  )}
                   {venue.is_manual && (
                     <Badge variant="secondary" className="text-xs">
                       Manual
@@ -468,7 +690,30 @@ function EventVenueCard({
             )}
 
             {/* Actions */}
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {onSetAsEventVenue && !isPrimaryVenue && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetAsEventVenue();
+                  }}
+                  disabled={isSettingPrimary}
+                >
+                  {isSettingPrimary ? (
+                    <>
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      Setting...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-1 h-3 w-3" />
+                      Set as Event Venue
+                    </>
+                  )}
+                </Button>
+              )}
               {onViewDetails && (
                 <Button
                   variant="outline"

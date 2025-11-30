@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
     // During production builds, ignore ESLint warnings
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'maps.googleapis.com',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 export default nextConfig;

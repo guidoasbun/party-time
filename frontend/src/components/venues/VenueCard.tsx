@@ -17,7 +17,7 @@ import {
   PRICE_LEVEL_LABELS,
   getVenueTypeLabel,
 } from "@/types/venue.types";
-import { Star, MapPin, Clock, ExternalLink } from "lucide-react";
+import { Star, MapPin, Clock, ExternalLink, Bookmark } from "lucide-react";
 import Image from "next/image";
 
 interface VenueCardProps {
@@ -25,6 +25,8 @@ interface VenueCardProps {
   onClick?: (venue: VenueSearchResult) => void;
   onSelect?: (venue: VenueSearchResult) => void;
   selected?: boolean;
+  isSaved?: boolean;
+  onToggleSave?: (venue: VenueSearchResult) => void;
   className?: string;
 }
 
@@ -33,6 +35,8 @@ export function VenueCard({
   onClick,
   onSelect,
   selected = false,
+  isSaved = false,
+  onToggleSave,
   className,
 }: VenueCardProps) {
   const handleClick = () => {
@@ -45,6 +49,13 @@ export function VenueCard({
     e.stopPropagation();
     if (onSelect) {
       onSelect(venue);
+    }
+  };
+
+  const handleToggleSave = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleSave) {
+      onToggleSave(venue);
     }
   };
 
@@ -77,6 +88,23 @@ export function VenueCard({
               <div className="flex h-full w-full items-center justify-center bg-muted">
                 <MapPin className="h-8 w-8 text-muted-foreground" />
               </div>
+            )}
+            {/* Save/Bookmark Button */}
+            {onToggleSave && (
+              <button
+                onClick={handleToggleSave}
+                className={cn(
+                  "absolute right-2 top-2 rounded-full p-1.5 transition-colors",
+                  isSaved
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-background/80 text-muted-foreground hover:bg-background hover:text-primary"
+                )}
+                title={isSaved ? "Remove from saved" : "Save venue"}
+              >
+                <Bookmark
+                  className={cn("h-4 w-4", isSaved && "fill-current")}
+                />
+              </button>
             )}
           </div>
 

@@ -2,11 +2,13 @@
 
 import * as React from 'react'
 import { useFormContext } from 'react-hook-form'
-import { MapPin, Search, Home, Building2 } from 'lucide-react'
+import { MapPin, Search, Home, Building2, X, Star, ExternalLink } from 'lucide-react'
 import { EventCreateFormData } from '@/lib/validations/event'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
-// Import removed cn as it's not used
+import { VenueSearchModal } from '@/components/venues/VenueSearchModal'
+import { VenueSearchResult, VenueDetails } from '@/types/venue.types'
+import { cn } from '@/lib/utils'
 
 // Location type presets
 const locationPresets = [
@@ -41,19 +43,62 @@ export function LocationStep() {
   const location = watch('location')
   const venueName = watch('venue_name')
   const venueAddress = watch('venue_address')
+  const venueGooglePlaceId = watch('venue_google_place_id')
 
-  const [isSearchingVenues, setIsSearchingVenues] = React.useState(false)
+  const [isVenueSearchOpen, setIsVenueSearchOpen] = React.useState(false)
+  const [selectedVenue, setSelectedVenue] = React.useState<{
+    name: string;
+    address: string;
+    place_id: string;
+    rating?: number;
+    photo_url?: string;
+    website?: string;
+  } | null>(null)
+
+  // Sync selected venue with form values on mount
+  React.useEffect(() => {
+    if (venueName && venueAddress && venueGooglePlaceId && !selectedVenue) {
+      setSelectedVenue({
+        name: venueName,
+        address: venueAddress,
+        place_id: venueGooglePlaceId,
+      })
+    }
+  }, [venueName, venueAddress, venueGooglePlaceId, selectedVenue])
 
   const handleLocationPreset = (preset: typeof locationPresets[0]) => {
     setValue('location', preset.value, { shouldValidate: true })
   }
 
-  const handleVenueSearch = () => {
-    setIsSearchingVenues(true)
-    // TODO: Implement venue search with Google Places API
-    // This will be implemented in Phase 7
-    console.log('Venue search will be implemented in Phase 7')
-    setIsSearchingVenues(false)
+  const handleVenueSelect = (venue: VenueSearchResult | VenueDetails) => {
+    // Update form values
+    setValue('venue_name', venue.name, { shouldValidate: true })
+    setValue('venue_address', venue.address, { shouldValidate: true })
+    setValue('venue_google_place_id', venue.place_id, { shouldValidate: true })
+
+    // Also update the general location if empty
+    if (!location) {
+      setValue('location', venue.address, { shouldValidate: true })
+    }
+
+    // Store selected venue for display
+    setSelectedVenue({
+      name: venue.name,
+      address: venue.address,
+      place_id: venue.place_id,
+      rating: venue.rating,
+      photo_url: 'photo_url' in venue ? venue.photo_url : undefined,
+      website: 'website' in venue ? venue.website : undefined,
+    })
+
+    setIsVenueSearchOpen(false)
+  }
+
+  const handleClearVenue = () => {
+    setValue('venue_name', '', { shouldValidate: true })
+    setValue('venue_address', '', { shouldValidate: true })
+    setValue('venue_google_place_id', '', { shouldValidate: true })
+    setSelectedVenue(null)
   }
 
   const hasLocationInfo = location || venueName || venueAddress
@@ -104,42 +149,91 @@ export function LocationStep() {
             type="button"
             variant="outline"
             size="sm"
-            onClick={handleVenueSearch}
-            disabled={isSearchingVenues}
+            onClick={() => setIsVenueSearchOpen(true)}
           >
             <Search className="h-4 w-4 mr-2" />
-            {isSearchingVenues ? 'Searching...' : 'Search Venues'}
+            Search Venues
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Add specific venue information if you have a dedicated location.
+          Search for a venue or manually enter the details below.
         </p>
 
-        {/* Venue Name */}
-        <Input
-          {...register('venue_name')}
-          label="Venue Name"
-          placeholder="e.g., The Grand Ballroom, Sunset Community Center"
-          error={errors.venue_name?.message}
-          leftIcon={<Building2 className="h-4 w-4" />}
-        />
+        {/* Selected Venue Card */}
+        {selectedVenue && (
+          <div className="relative rounded-lg border border-primary/50 bg-primary/5 p-4">
+            <button
+              type="button"
+              onClick={handleClearVenue}
+              className="absolute right-2 top-2 p-1 rounded-full hover:bg-muted transition-colors"
+              title="Clear venue"
+            >
+              <X className="h-4 w-4 text-muted-foreground" />
+            </button>
+            <div className="pr-8">
+              <h5 className="font-semibold text-foreground">{selectedVenue.name}</h5>
+              <p className="text-sm text-muted-foreground mt-1">{selectedVenue.address}</p>
+              <div className="flex items-center gap-3 mt-2">
+                {selectedVenue.rating && (
+                  <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    {selectedVenue.rating.toFixed(1)}
+                  </span>
+                )}
+                {selectedVenue.website && (
+                  <a
+                    href={selectedVenue.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-sm text-primary hover:underline"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Website
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
-        {/* Venue Address */}
-        <Input
-          {...register('venue_address')}
-          label="Venue Address"
-          placeholder="e.g., 123 Main Street, Seattle, WA 98101"
-          error={errors.venue_address?.message}
-          leftIcon={<MapPin className="h-4 w-4" />}
-        />
+        {/* Manual Entry Fields (show when no venue selected or for editing) */}
+        <div className={cn(
+          "space-y-4",
+          selectedVenue && "opacity-60"
+        )}>
+          {/* Venue Name */}
+          <Input
+            {...register('venue_name')}
+            label="Venue Name"
+            placeholder="e.g., The Grand Ballroom, Sunset Community Center"
+            error={errors.venue_name?.message}
+            leftIcon={<Building2 className="h-4 w-4" />}
+          />
 
-        {/* Google Places ID (hidden field for future use) */}
+          {/* Venue Address */}
+          <Input
+            {...register('venue_address')}
+            label="Venue Address"
+            placeholder="e.g., 123 Main Street, Seattle, WA 98101"
+            error={errors.venue_address?.message}
+            leftIcon={<MapPin className="h-4 w-4" />}
+          />
+        </div>
+
+        {/* Google Places ID (hidden field) */}
         <input
           type="hidden"
           {...register('venue_google_place_id')}
         />
       </div>
+
+      {/* Venue Search Modal */}
+      <VenueSearchModal
+        isOpen={isVenueSearchOpen}
+        onClose={() => setIsVenueSearchOpen(false)}
+        onSelectVenue={handleVenueSelect}
+      />
 
       {/* Location Summary */}
       {hasLocationInfo && (
@@ -172,14 +266,6 @@ export function LocationStep() {
         </ul>
       </div>
 
-      {/* Future Feature Preview */}
-      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <h4 className="font-medium mb-2 text-blue-900 dark:text-blue-100">🚀 Coming Soon:</h4>
-        <p className="text-sm text-blue-700 dark:text-blue-200">
-          Venue search powered by Google Places will help you discover and book local venues.
-          For now, you can manually enter your venue details above.
-        </p>
-      </div>
     </div>
   )
 }
