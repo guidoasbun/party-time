@@ -477,3 +477,51 @@ export function getVenueTypeLabel(type: string): string {
     type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
   );
 }
+
+// ============================================================
+// Phase 7.1.2: Venue Search UI Enhancement Types
+// ============================================================
+
+/**
+ * Saved venue for per-event shortlist (localStorage)
+ */
+export interface SavedVenue {
+  placeId: string;
+  name: string;
+  address: string;
+  photoUrl?: string;
+  rating?: number;
+  priceLevel?: number;
+  savedAt: string; // ISO date
+}
+
+/**
+ * Sort options for venue search results
+ */
+export type VenueSortOption =
+  | "relevance"
+  | "rating_desc"
+  | "price_asc"
+  | "price_desc";
+
+/**
+ * Price level filter options
+ */
+export const PRICE_LEVEL_FILTER_OPTIONS = [
+  { value: "", label: "Any Price" },
+  { value: "0", label: "Free" },
+  { value: "1", label: "$" },
+  { value: "2", label: "$$" },
+  { value: "3", label: "$$$" },
+  { value: "4", label: "$$$$" },
+] as const;
+
+/**
+ * Sort options for venue search
+ */
+export const VENUE_SORT_OPTIONS = [
+  { value: "relevance", label: "Relevance" },
+  { value: "rating_desc", label: "Rating (High to Low)" },
+  { value: "price_asc", label: "Price (Low to High)" },
+  { value: "price_desc", label: "Price (High to Low)" },
+] as const;

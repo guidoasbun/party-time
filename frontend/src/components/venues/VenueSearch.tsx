@@ -1,20 +1,23 @@
 /**
  * FR-8: The system shall provide a venue search interface.
  * Phase 7.1.1: Google Places API Integration
- * VenueSearch Component (Phase 7.1.1: Google Places API Integration)
+ * Phase 7.1.2: Venue Search UI Enhancement
+ * VenueSearch Component
  *
  * Search interface for finding venues via Google Places API.
  * Features:
  * - Search input with debounce
  * - Location input (address or "use my location")
- * - Filter dropdowns: venue type, rating
+ * - Filter dropdowns: venue type, rating, price level
+ * - Open Now toggle filter
+ * - Sort dropdown (relevance, rating, price)
  * - Loading, empty, error states
  * - Theme-aware styling
  */
 "use client";
 
 import * as React from "react";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -25,6 +28,9 @@ import {
   VenueSearchParams,
   VenueSearchResult,
   VenueSearchResponse,
+  VenueSortOption,
+  PRICE_LEVEL_FILTER_OPTIONS,
+  VENUE_SORT_OPTIONS,
 } from "@/types/venue.types";
 import { venueService } from "@/lib/api/services/venue.service";
 import {
@@ -34,12 +40,16 @@ import {
   Loader2,
   AlertCircle,
   Building2,
+  Clock,
 } from "lucide-react";
 
 interface VenueSearchProps {
   onVenueSelect?: (venue: VenueSearchResult) => void;
   onVenueClick?: (venue: VenueSearchResult) => void;
+  onResultsChange?: (results: VenueSearchResult[]) => void;
   selectedVenueId?: string;
+  isSaved?: (placeId: string) => boolean;
+  onToggleSave?: (venue: VenueSearchResult) => void;
   className?: string;
   defaultQuery?: string;
 }
@@ -78,7 +88,10 @@ const RADIUS_OPTIONS = [
 export function VenueSearch({
   onVenueSelect,
   onVenueClick,
+  onResultsChange,
   selectedVenueId,
+  isSaved,
+  onToggleSave,
   className,
   defaultQuery = "",
 }: VenueSearchProps) {
@@ -88,6 +101,10 @@ export function VenueSearch({
   const [venueType, setVenueType] = useState("");
   const [minRating, setMinRating] = useState("");
   const [radius, setRadius] = useState("25000");
+  // Phase 7.1.2: New filter states
+  const [priceLevel, setPriceLevel] = useState("");
+  const [openNow, setOpenNow] = useState(false);
+  const [sortBy, setSortBy] = useState<VenueSortOption>("relevance");
 
   // Results state
   const [results, setResults] = useState<VenueSearchResult[]>([]);
@@ -180,6 +197,48 @@ export function VenueSearch({
     }
   }, [venueType, minRating, radius, userLocation]);
 
+  // Notify parent when results change
+  useEffect(() => {
+    onResultsChange?.(results);
+  }, [results, onResultsChange]);
+
+  // Phase 7.1.2: Client-side filtering and sorting
+  const filteredAndSortedResults = useMemo(() => {
+    let filtered = [...results];
+
+    // Filter by price level
+    if (priceLevel) {
+      const targetPrice = parseInt(priceLevel);
+      filtered = filtered.filter(
+        (v) => v.price_level !== undefined && v.price_level === targetPrice
+      );
+    }
+
+    // Filter by open now
+    if (openNow) {
+      filtered = filtered.filter((v) => v.open_now === true);
+    }
+
+    // Sort results
+    switch (sortBy) {
+      case "rating_desc":
+        filtered.sort((a, b) => (b.rating ?? 0) - (a.rating ?? 0));
+        break;
+      case "price_asc":
+        filtered.sort((a, b) => (a.price_level ?? 5) - (b.price_level ?? 5));
+        break;
+      case "price_desc":
+        filtered.sort((a, b) => (b.price_level ?? 0) - (a.price_level ?? 0));
+        break;
+      case "relevance":
+      default:
+        // Keep original order (API returns relevance-sorted)
+        break;
+    }
+
+    return filtered;
+  }, [results, priceLevel, openNow, sortBy]);
+
   // Get user's current location
   const getUserLocation = useCallback(() => {
     if (!navigator.geolocation) {
@@ -271,8 +330,8 @@ export function VenueSearch({
         </div>
       </div>
 
-      {/* Filters Row */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {/* Filters Row 1 */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {/* Venue Type Filter */}
         <div className="space-y-1">
           <Label className="text-xs">Venue Type</Label>
@@ -295,6 +354,20 @@ export function VenueSearch({
           />
         </div>
 
+        {/* Price Level Filter - Phase 7.1.2 */}
+        <div className="space-y-1">
+          <Label className="text-xs">Price Level</Label>
+          <Select
+            options={PRICE_LEVEL_FILTER_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            value={priceLevel}
+            onValueChange={(value) => setPriceLevel(value as string)}
+            placeholder="Any Price"
+          />
+        </div>
+
         {/* Radius Filter */}
         <div className="space-y-1">
           <Label className="text-xs">Search Radius</Label>
@@ -303,6 +376,38 @@ export function VenueSearch({
             value={radius}
             onValueChange={(value) => setRadius(value as string)}
             placeholder="25 km"
+          />
+        </div>
+      </div>
+
+      {/* Filters Row 2 - Phase 7.1.2 */}
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Open Now Toggle */}
+        <button
+          type="button"
+          onClick={() => setOpenNow(!openNow)}
+          className={cn(
+            "flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors",
+            openNow
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-background text-muted-foreground hover:bg-accent"
+          )}
+        >
+          <Clock className="h-4 w-4" />
+          <span>Open Now</span>
+        </button>
+
+        {/* Sort Dropdown */}
+        <div className="flex items-center gap-2">
+          <Label className="text-xs text-muted-foreground">Sort by:</Label>
+          <Select
+            options={VENUE_SORT_OPTIONS.map((opt) => ({
+              value: opt.value,
+              label: opt.label,
+            }))}
+            value={sortBy}
+            onValueChange={(value) => setSortBy(value as VenueSortOption)}
+            placeholder="Relevance"
           />
         </div>
       </div>
@@ -327,26 +432,30 @@ export function VenueSearch({
         )}
 
         {/* Results List */}
-        {!isLoading && results.length > 0 && (
+        {!isLoading && filteredAndSortedResults.length > 0 && (
           <>
             <p className="text-sm text-muted-foreground">
-              {results.length} venue{results.length !== 1 ? "s" : ""} found
+              {filteredAndSortedResults.length === results.length
+                ? `${results.length} venue${results.length !== 1 ? "s" : ""} found`
+                : `${filteredAndSortedResults.length} of ${results.length} venue${results.length !== 1 ? "s" : ""} shown`}
             </p>
             <div className="space-y-3">
-              {results.map((venue) => (
+              {filteredAndSortedResults.map((venue) => (
                 <VenueCard
                   key={venue.place_id}
                   venue={venue}
                   onClick={onVenueClick}
                   onSelect={onVenueSelect}
                   selected={selectedVenueId === venue.place_id}
+                  isSaved={isSaved?.(venue.place_id)}
+                  onToggleSave={onToggleSave}
                 />
               ))}
             </div>
           </>
         )}
 
-        {/* Empty State */}
+        {/* Empty State - No results from search */}
         {!isLoading && hasSearched && results.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
             <Building2 className="h-12 w-12 text-muted-foreground/50" />
@@ -354,7 +463,20 @@ export function VenueSearch({
               No venues found
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Try adjusting your search or filters
+              Try adjusting your search query
+            </p>
+          </div>
+        )}
+
+        {/* Empty State - Filters removed all results */}
+        {!isLoading && hasSearched && results.length > 0 && filteredAndSortedResults.length === 0 && (
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+            <Building2 className="h-12 w-12 text-muted-foreground/50" />
+            <h3 className="mt-4 font-semibold text-foreground">
+              No matching venues
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {results.length} venue{results.length !== 1 ? "s" : ""} found, but none match your filters
             </p>
           </div>
         )}

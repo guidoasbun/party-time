@@ -1,11 +1,13 @@
 /**
  * FR-8: The system shall provide a venue search interface.
  * Phase 7.1.1: Google Places API Integration
- * VenueTab Component (Phase 7.1.1: Google Places API Integration)
+ * Phase 7.1.2: Venue Search UI Enhancement
+ * VenueTab Component
  *
  * Tab content for venue management within event details:
  * - List of saved venues for the event
- * - Search for new venues via Google Places
+ * - Search for new venues via Google Places (with map split-view)
+ * - Saved/shortlisted venues before adding to event
  * - Add manual venues
  * - Venue details modal
  * - Drag-to-reorder venues
@@ -16,28 +18,29 @@ import * as React from "react";
 import { useState, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
-import { VenueSearch } from "./VenueSearch";
+import { VenueSearchWithMap } from "./VenueSearchWithMap";
 import { VenueDetails } from "./VenueDetails";
-import { VenueCard } from "./VenueCard";
 import { VenueMap } from "./VenueMap";
 import { ManualVenueForm } from "./ManualVenueForm";
+import { SavedVenuesList } from "./SavedVenuesList";
 import {
   useEventVenues,
   useAddEventVenue,
   useDeleteEventVenue,
 } from "@/hooks/useEventVenues";
+import { useSavedVenues } from "@/hooks/useSavedVenues";
 import {
   VenueSearchResult,
   VenueDetails as VenueDetailsType,
   EventVenue,
   EventVenueCreateRequest,
+  SavedVenue,
 } from "@/types/venue.types";
 import {
   MapPin,
-  Plus,
   Search,
   Building2,
   Loader2,
@@ -48,6 +51,7 @@ import {
   Globe,
   Star,
   FileText,
+  Bookmark,
 } from "lucide-react";
 
 interface VenueTabProps {
@@ -56,15 +60,27 @@ interface VenueTabProps {
 }
 
 type ViewMode = "list" | "search" | "manual";
+type SearchSubTab = "search" | "saved";
 
 export function VenueTab({ eventId, className }: VenueTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [searchSubTab, setSearchSubTab] = useState<SearchSubTab>("search");
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [detailsPlaceId, setDetailsPlaceId] = useState<string | null>(null);
   const [venueToDelete, setVenueToDelete] = useState<EventVenue | null>(null);
 
   // Fetch event venues
   const { data: venues = [], isLoading, error } = useEventVenues(eventId);
+
+  // Saved venues (localStorage shortlist)
+  const {
+    savedVenues,
+    saveVenue,
+    unsaveVenue,
+    isSaved,
+    clearAll: clearSavedVenues,
+    isLoading: isSavedLoading,
+  } = useSavedVenues(eventId);
 
   // Mutations
   const addVenueMutation = useAddEventVenue(eventId);
@@ -83,11 +99,6 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
     [addVenueMutation]
   );
 
-  // Handle selecting a search result to view details
-  const handleSearchResultSelect = useCallback((venue: VenueSearchResult) => {
-    setDetailsPlaceId(venue.place_id);
-  }, []);
-
   // Handle manual venue submission
   const handleManualVenueSubmit = useCallback(
     async (data: EventVenueCreateRequest) => {
@@ -103,6 +114,31 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
     await deleteVenueMutation.mutateAsync(venueToDelete.id);
     setVenueToDelete(null);
   }, [venueToDelete, deleteVenueMutation]);
+
+  // Handle adding saved venue to event
+  const handleAddSavedVenueToEvent = useCallback(
+    async (venue: SavedVenue) => {
+      const venueData: EventVenueCreateRequest = {
+        place_id: venue.placeId,
+      };
+      await addVenueMutation.mutateAsync(venueData);
+      unsaveVenue(venue.placeId);
+      setViewMode("list");
+    },
+    [addVenueMutation, unsaveVenue]
+  );
+
+  // Handle toggling save on a search result
+  const handleToggleSaveVenue = useCallback(
+    (venue: VenueSearchResult) => {
+      if (isSaved(venue.place_id)) {
+        unsaveVenue(venue.place_id);
+      } else {
+        saveVenue(venue);
+      }
+    },
+    [isSaved, unsaveVenue, saveVenue]
+  );
 
   // Map markers for all venues
   const mapVenues = venues.map((venue) => ({
@@ -202,7 +238,66 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
       {/* Search Mode */}
       {viewMode === "search" && (
         <div className="space-y-4">
-          <VenueSearch onVenueSelect={handleSearchResultSelect} />
+          {/* Search / Saved Sub-tabs */}
+          <div className="flex items-center gap-4 border-b">
+            <button
+              onClick={() => setSearchSubTab("search")}
+              className={cn(
+                "relative pb-3 text-sm font-medium transition-colors",
+                searchSubTab === "search"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Search className="mr-2 inline-block h-4 w-4" />
+              Search
+              {searchSubTab === "search" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+            <button
+              onClick={() => setSearchSubTab("saved")}
+              className={cn(
+                "relative pb-3 text-sm font-medium transition-colors",
+                searchSubTab === "saved"
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Bookmark className="mr-2 inline-block h-4 w-4" />
+              Saved
+              {savedVenues.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {savedVenues.length}
+                </Badge>
+              )}
+              {searchSubTab === "saved" && (
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              )}
+            </button>
+          </div>
+
+          {/* Search Sub-tab Content */}
+          {searchSubTab === "search" && (
+            <VenueSearchWithMap
+              onVenueSelect={handleVenueSelect}
+              eventId={eventId}
+              isSaved={isSaved}
+              onToggleSave={handleToggleSaveVenue}
+            />
+          )}
+
+          {/* Saved Sub-tab Content */}
+          {searchSubTab === "saved" && (
+            <SavedVenuesList
+              savedVenues={savedVenues}
+              onAddToEvent={handleAddSavedVenueToEvent}
+              onRemove={unsaveVenue}
+              onViewDetails={setDetailsPlaceId}
+              onClearAll={clearSavedVenues}
+              isLoading={isSavedLoading}
+            />
+          )}
 
           {/* Venue Details Modal */}
           {detailsPlaceId && (
