@@ -32,7 +32,7 @@ export function SeatingHelp({ className }: SeatingHelpProps) {
     navigator.platform.toUpperCase().indexOf("MAC") >= 0;
   const modKey = isMac ? "⌘" : "Ctrl";
 
-  // Define keyboard shortcuts
+  // Define keyboard shortcuts (only implemented shortcuts)
   const shortcuts: KeyboardShortcut[] = [
     // Canvas controls
     {
@@ -40,24 +40,6 @@ export function SeatingHelp({ className }: SeatingHelpProps) {
       modifiers: ["ctrl"],
       label: "Zoom",
       description: "Zoom in/out on canvas",
-      category: "canvas",
-    },
-    {
-      key: "+",
-      label: "Zoom In",
-      description: "Increase canvas zoom",
-      category: "canvas",
-    },
-    {
-      key: "-",
-      label: "Zoom Out",
-      description: "Decrease canvas zoom",
-      category: "canvas",
-    },
-    {
-      key: "0",
-      label: "Reset Zoom",
-      description: "Reset zoom to 100%",
       category: "canvas",
     },
     {
@@ -74,39 +56,12 @@ export function SeatingHelp({ className }: SeatingHelpProps) {
       description: "Delete selected table",
       category: "table",
     },
-    {
-      key: `${modKey} + D`,
-      modifiers: ["ctrl"],
-      label: "Duplicate Table",
-      description: "Duplicate selected table",
-      category: "table",
-    },
-    {
-      key: "Arrow Keys",
-      label: "Move Table",
-      description: "Fine-tune table position (1px)",
-      category: "table",
-    },
-    {
-      key: `Shift + Arrow Keys`,
-      modifiers: ["shift"],
-      label: "Move Table (Fast)",
-      description: "Move table faster (10px)",
-      category: "table",
-    },
 
     // Guest operations
     {
       key: "Drag & Drop",
       label: "Assign Guest",
       description: "Drag guest to table to assign seat",
-      category: "guest",
-    },
-    {
-      key: `${modKey} + F`,
-      modifiers: ["ctrl"],
-      label: "Find Guest",
-      description: "Open guest search",
       category: "guest",
     },
 
@@ -123,6 +78,13 @@ export function SeatingHelp({ className }: SeatingHelpProps) {
       modifiers: ["ctrl", "shift"],
       label: "Redo",
       description: "Redo last undone action",
+      category: "navigation",
+    },
+    {
+      key: `${modKey} + Y`,
+      modifiers: ["ctrl"],
+      label: "Redo (Alt)",
+      description: "Alternative redo shortcut",
       category: "navigation",
     },
     {

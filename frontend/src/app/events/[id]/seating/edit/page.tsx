@@ -139,8 +139,13 @@ export default function SeatingEditPage() {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Help dialog
-      if (e.key === "?" && e.shiftKey) {
+      // Help dialog - ? key (Shift+/ on most keyboards)
+      if (e.key === "?") {
+        // Don't trigger if user is typing in an input
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA") {
+          return;
+        }
         e.preventDefault();
         setShowHelp(true);
         return;
