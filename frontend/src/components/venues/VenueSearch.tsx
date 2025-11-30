@@ -118,9 +118,12 @@ export function VenueSearch({
     longitude: number;
   } | null>(null);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isGeocoding, setIsGeocoding] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
-  // Debounce timer
+  // Debounce timers
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const geocodeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Search function
   const performSearch = useCallback(async () => {
@@ -271,7 +274,83 @@ export function VenueSearch({
   const clearLocation = useCallback(() => {
     setUserLocation(null);
     setLocationQuery("");
+    setLocationError(null);
   }, []);
+
+  // Geocode an address/city/zipcode to coordinates
+  const geocodeLocation = useCallback(async (address: string) => {
+    if (!address.trim()) {
+      setUserLocation(null);
+      setLocationError(null);
+      return;
+    }
+
+    setIsGeocoding(true);
+    setLocationError(null);
+
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      if (!apiKey) {
+        setLocationError("Google Maps API key not configured");
+        return;
+      }
+
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${apiKey}`
+      );
+
+      const data = await response.json();
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        setUserLocation({
+          latitude: location.lat,
+          longitude: location.lng,
+        });
+        // Update with formatted address
+        if (data.results[0].formatted_address) {
+          setLocationQuery(data.results[0].formatted_address);
+        }
+        setLocationError(null);
+      } else if (data.status === "ZERO_RESULTS") {
+        setLocationError("Location not found. Try a different city or zipcode.");
+        setUserLocation(null);
+      } else {
+        setLocationError(`Geocoding failed: ${data.status}`);
+        setUserLocation(null);
+      }
+    } catch (err) {
+      console.error("Geocoding error:", err);
+      setLocationError("Failed to find location. Please try again.");
+      setUserLocation(null);
+    } finally {
+      setIsGeocoding(false);
+    }
+  }, []);
+
+  // Handle location input change with debounce
+  const handleLocationChange = useCallback((value: string) => {
+    setLocationQuery(value);
+    setLocationError(null);
+
+    // Clear any pending geocode
+    if (geocodeTimeoutRef.current) {
+      clearTimeout(geocodeTimeoutRef.current);
+    }
+
+    // Clear location immediately if input is cleared
+    if (!value.trim()) {
+      setUserLocation(null);
+      return;
+    }
+
+    // Debounce geocoding (500ms)
+    geocodeTimeoutRef.current = setTimeout(() => {
+      geocodeLocation(value);
+    }, 500);
+  }, [geocodeLocation]);
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -296,18 +375,24 @@ export function VenueSearch({
         <Label htmlFor="venue-location">Location</Label>
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            {isGeocoding ? (
+              <Loader2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-spin" />
+            ) : (
+              <MapPin className={cn(
+                "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                userLocation ? "text-primary" : "text-muted-foreground"
+              )} />
+            )}
             <Input
               id="venue-location"
               type="text"
-              placeholder="Enter location or use current"
+              placeholder="Enter city, zipcode, or address"
               value={locationQuery}
-              onChange={(e) => {
-                setLocationQuery(e.target.value);
-                // In a full implementation, we'd geocode this address
-              }}
-              className="pl-10"
-              disabled={!!userLocation}
+              onChange={(e) => handleLocationChange(e.target.value)}
+              className={cn(
+                "pl-10",
+                userLocation && "border-primary/50"
+              )}
             />
           </div>
           <Button
@@ -315,7 +400,7 @@ export function VenueSearch({
             variant="outline"
             size="sm"
             onClick={userLocation ? clearLocation : getUserLocation}
-            disabled={isGettingLocation}
+            disabled={isGettingLocation || isGeocoding}
             title={userLocation ? "Clear location" : "Use my location"}
             className="px-3"
           >
@@ -328,6 +413,14 @@ export function VenueSearch({
             )}
           </Button>
         </div>
+        {locationError && (
+          <p className="text-xs text-destructive">{locationError}</p>
+        )}
+        {userLocation && !locationError && (
+          <p className="text-xs text-muted-foreground">
+            Searching near: {locationQuery}
+          </p>
+        )}
       </div>
 
       {/* Filters Row 1 */}
