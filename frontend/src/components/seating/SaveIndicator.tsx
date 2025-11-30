@@ -2,13 +2,13 @@
  * SaveIndicator Component
  *
  * FR-21: The system shall provide an interactive seating chart interface.
- * Phase 6.2.5: Seating Chart Polish & Integration
- * Displays autosave status for seating chart
+ * Phase 6.3.12: Polish & Performance
+ * Displays autosave status for seating chart with enhanced animations
  */
 
 "use client";
 
-import React from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Check, AlertCircle, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SaveStatus } from "@/types/seating.types";
@@ -21,7 +21,7 @@ interface SaveIndicatorProps {
 }
 
 /**
- * Visual indicator for autosave status
+ * Visual indicator for autosave status with enhanced animations
  */
 export function SaveIndicator({
   status,
@@ -29,6 +29,23 @@ export function SaveIndicator({
   className,
   showLabel = true,
 }: SaveIndicatorProps) {
+  // Track previous status for animation triggers
+  const prevStatusRef = useRef<SaveStatus>(status);
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
+
+  // Detect transition from "saving" to "saved" and trigger success animation
+  useEffect(() => {
+    if (prevStatusRef.current === "saving" && status === "saved") {
+      setShowSuccessAnimation(true);
+      // Reset animation after it completes
+      const timer = setTimeout(() => {
+        setShowSuccessAnimation(false);
+      }, 600); // Match animation duration
+      return () => clearTimeout(timer);
+    }
+    prevStatusRef.current = status;
+  }, [status]);
+
   // Format last saved time
   const formatLastSaved = (date: Date): string => {
     const now = new Date();
@@ -101,9 +118,12 @@ export function SaveIndicator({
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+        "flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium",
+        "transition-all duration-200 ease-in-out",
         details.bgColor,
         details.color,
+        // Success animation - subtle scale pulse
+        showSuccessAnimation && "animate-pulse",
         className
       )}
       role="status"
@@ -111,10 +131,19 @@ export function SaveIndicator({
       aria-label={details.label}
     >
       <Icon
-        className={cn("h-4 w-4", details.iconClassName)}
+        className={cn(
+          "h-4 w-4 transition-transform duration-200",
+          details.iconClassName,
+          // Success checkmark animation - scale bounce
+          showSuccessAnimation && status === "saved" && "scale-125"
+        )}
         aria-hidden="true"
       />
-      {showLabel && <span className="whitespace-nowrap">{details.label}</span>}
+      {showLabel && (
+        <span className="whitespace-nowrap transition-opacity duration-200">
+          {details.label}
+        </span>
+      )}
     </div>
   );
 }
