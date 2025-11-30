@@ -31,6 +31,9 @@ import {
   useAddEventVenue,
   useDeleteEventVenue,
 } from "@/hooks/useEventVenues";
+import { useVenueDetails } from "@/hooks/useVenueSearch";
+import { useUpdateEvent } from "@/hooks/api/useEvents";
+import { useToast } from "@/hooks/useToast";
 import { useSavedVenues } from "@/hooks/useSavedVenues";
 import {
   VenueSearchResult,
@@ -80,6 +83,12 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   // Fetch event venues
   const { data: venues = [], isLoading, error } = useEventVenues(eventId);
 
+  // Fetch primary venue details (for map coordinates) if we have a Google Place ID
+  const { data: primaryVenueDetails } = useVenueDetails(
+    primaryVenue?.venue_google_place_id || null,
+    { enabled: !!primaryVenue?.venue_google_place_id }
+  );
+
   // Saved venues (localStorage shortlist)
   const {
     savedVenues,
@@ -93,6 +102,8 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   // Mutations
   const addVenueMutation = useAddEventVenue(eventId);
   const deleteVenueMutation = useDeleteEventVenue(eventId);
+  const updateEventMutation = useUpdateEvent();
+  const { toast } = useToast();
 
   // Handle selecting a venue from search results
   const handleVenueSelect = useCallback(
@@ -148,18 +159,61 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
     [isSaved, unsaveVenue, saveVenue]
   );
 
+  // Handle setting an EventVenue as the primary event venue
+  const handleSetAsEventVenue = useCallback(
+    async (venue: EventVenue) => {
+      try {
+        await updateEventMutation.mutateAsync({
+          id: eventId,
+          data: {
+            venue_name: venue.name,
+            venue_address: venue.address,
+            venue_google_place_id: venue.google_place_id || undefined,
+          },
+        });
+        toast({
+          title: "Event Venue Updated",
+          description: `${venue.name} is now set as the event venue.`,
+        });
+      } catch (error) {
+        toast({
+          title: "Failed to Update Venue",
+          description: "Could not set this venue as the event venue.",
+          variant: "destructive",
+        });
+      }
+    },
+    [updateEventMutation, eventId, toast]
+  );
+
   // Check if primary venue exists
   const hasPrimaryVenue = primaryVenue?.venue_name && primaryVenue?.venue_address;
 
-  // Map markers for all venues
-  const mapVenues = venues.map((venue) => ({
-    id: venue.id,
-    name: venue.name,
-    latitude: venue.latitude,
-    longitude: venue.longitude,
-    address: venue.address,
-    rating: venue.rating || undefined,
-  }));
+  // Map markers for all venues (including primary venue if we have coordinates)
+  const mapVenues = [
+    // Add primary venue marker if we have details with coordinates
+    ...(primaryVenueDetails?.location?.latitude && primaryVenueDetails?.location?.longitude
+      ? [
+          {
+            id: "primary-venue",
+            name: primaryVenue?.venue_name || primaryVenueDetails.name,
+            latitude: primaryVenueDetails.location.latitude,
+            longitude: primaryVenueDetails.location.longitude,
+            address: primaryVenue?.venue_address || primaryVenueDetails.address,
+            rating: primaryVenueDetails.rating,
+          },
+        ]
+      : []),
+    // Add event venues
+    ...venues.map((venue) => ({
+      id: venue.id,
+      name: venue.name,
+      latitude: venue.latitude,
+      longitude: venue.longitude,
+      address: venue.address,
+      rating: venue.rating || undefined,
+    })),
+  ];
 
   // Loading state
   if (isLoading) {
@@ -375,8 +429,8 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
             </Card>
           )}
 
-          {/* Map showing all venues */}
-          {venues.length > 0 && (
+          {/* Map showing all venues (including primary venue) */}
+          {mapVenues.length > 0 && (
             <Card>
               <CardContent className="p-0">
                 <VenueMap
@@ -436,6 +490,12 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
                       ? () => setDetailsPlaceId(venue.google_place_id!)
                       : undefined
                   }
+                  onSetAsEventVenue={() => handleSetAsEventVenue(venue)}
+                  isPrimaryVenue={
+                    !!primaryVenue?.venue_google_place_id &&
+                    primaryVenue.venue_google_place_id === venue.google_place_id
+                  }
+                  isSettingPrimary={updateEventMutation.isPending}
                 />
               ))}
             </div>
@@ -508,6 +568,9 @@ interface EventVenueCardProps {
   onSelect: () => void;
   onDelete: () => void;
   onViewDetails?: () => void;
+  onSetAsEventVenue?: () => void;
+  isPrimaryVenue?: boolean;
+  isSettingPrimary?: boolean;
 }
 
 function EventVenueCard({
@@ -517,6 +580,9 @@ function EventVenueCard({
   onSelect,
   onDelete,
   onViewDetails,
+  onSetAsEventVenue,
+  isPrimaryVenue,
+  isSettingPrimary,
 }: EventVenueCardProps) {
   return (
     <Card
@@ -551,6 +617,11 @@ function EventVenueCard({
                   <h4 className="font-semibold text-foreground truncate">
                     {venue.name}
                   </h4>
+                  {isPrimaryVenue && (
+                    <Badge variant="default" className="text-xs">
+                      Event Venue
+                    </Badge>
+                  )}
                   {venue.is_manual && (
                     <Badge variant="secondary" className="text-xs">
                       Manual
@@ -615,7 +686,30 @@ function EventVenueCard({
             )}
 
             {/* Actions */}
-            <div className="mt-3 flex items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              {onSetAsEventVenue && !isPrimaryVenue && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSetAsEventVenue();
+                  }}
+                  disabled={isSettingPrimary}
+                >
+                  {isSettingPrimary ? (
+                    <>
+                      <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                      Setting...
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="mr-1 h-3 w-3" />
+                      Set as Event Venue
+                    </>
+                  )}
+                </Button>
+              )}
               {onViewDetails && (
                 <Button
                   variant="outline"
