@@ -56,6 +56,9 @@ export interface FloorPlanSettings {
   scale: number; // Scaling factor (1.0 = original size)
   offsetX?: number; // X offset for positioning
   offsetY?: number; // Y offset for positioning
+  // Phase 6.3.7: Store applied scale values for size persistence across screen resizes
+  appliedScaleX?: number; // Actual scaleX applied to image
+  appliedScaleY?: number; // Actual scaleY applied to image
 }
 
 export interface AccessibilityPathSettings {

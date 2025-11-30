@@ -45,8 +45,8 @@ export interface SeatingCanvasProps {
   floorPlanUrl?: string;
   floorPlanSettings?: FloorPlanSettings;
   specialAreas?: SpecialArea[];
-  // Phase 6.3.7: Floor plan position persistence
-  onFloorPlanMove?: (x: number, y: number) => void;
+  // Phase 6.3.7: Floor plan position and scale persistence
+  onFloorPlanMove?: (x: number, y: number, scaleX?: number, scaleY?: number) => void;
   onSpecialAreaSelect?: (areaId: string | null) => void;
   onSpecialAreaMove?: (areaId: string, x: number, y: number) => void;
   // Phase 6.3.7: Special area update callback for canvas drag/resize
@@ -251,19 +251,31 @@ export default function SeatingCanvas({
             scale: 1,
           };
 
-          // Scale image to fit canvas while maintaining aspect ratio
+          // Phase 6.3.7: Scale persistence - use stored scale if available, otherwise calculate
           const canvasWidth = canvas.getWidth();
           const canvasHeight = canvas.getHeight();
           const imgWidth = img.width || 1;
           const imgHeight = img.height || 1;
 
-          const scaleX = (canvasWidth * settings.scale) / imgWidth;
-          const scaleY = (canvasHeight * settings.scale) / imgHeight;
-          const scale = Math.min(scaleX, scaleY);
+          let scaleX: number;
+          let scaleY: number;
+
+          if (settings.appliedScaleX !== undefined && settings.appliedScaleY !== undefined) {
+            // Use stored scale values for consistent size across screen changes
+            scaleX = settings.appliedScaleX;
+            scaleY = settings.appliedScaleY;
+          } else {
+            // First time - calculate based on canvas size
+            const calculatedScaleX = (canvasWidth * settings.scale) / imgWidth;
+            const calculatedScaleY = (canvasHeight * settings.scale) / imgHeight;
+            const scale = Math.min(calculatedScaleX, calculatedScaleY);
+            scaleX = scale;
+            scaleY = scale;
+          }
 
           img.set({
-            scaleX: scale,
-            scaleY: scale,
+            scaleX: scaleX,
+            scaleY: scaleY,
             opacity: settings.opacity,
             selectable: !settings.locked && !readOnly,
             evented: !settings.locked && !readOnly,
@@ -273,15 +285,16 @@ export default function SeatingCanvas({
             lockMovementY: settings.locked,
           });
 
-          // Phase 6.3.7: Use stored offset if available, otherwise center
-          // IMPORTANT: offsetX/offsetY store RELATIVE offset from center, not absolute position
-          // This ensures floor plan position is preserved when canvas/screen size changes
-          const centerX = (canvasWidth - img.width! * scale) / 2;
-          const centerY = (canvasHeight - img.height! * scale) / 2;
+          // Phase 6.3.7: Position floor plan
+          // Use absolute positioning - floor plan stays at fixed coordinates
+          // This keeps floor plan, tables, and special areas all using the same coordinate system
+          // Note: Future enhancement (Option A) would use relative positioning for responsive scaling
+          const centerX = (canvasWidth - img.width! * scaleX) / 2;
+          const centerY = (canvasHeight - img.height! * scaleY) / 2;
 
-          // Apply relative offset to current center (or use center if no offset stored)
-          const left = settings.offsetX !== undefined ? centerX + settings.offsetX : centerX;
-          const top = settings.offsetY !== undefined ? centerY + settings.offsetY : centerY;
+          // Use stored absolute position if available, otherwise center
+          const left = settings.offsetX !== undefined ? settings.offsetX : centerX;
+          const top = settings.offsetY !== undefined ? settings.offsetY : centerY;
 
           img.set({ left, top });
 
@@ -722,29 +735,18 @@ export default function SeatingCanvas({
       }
 
       // Phase 6.3.7: Handle floor plan move
+      // Store absolute position and scale - keeps floor plan, tables, and special areas in same coordinate system
+      // Note: Future enhancement (Option A) would use relative positioning for responsive scaling
       const customObj = target as fabric.Object & { isFloorPlan?: boolean };
       if (customObj.isFloorPlan) {
-        const canvas = fabricCanvasRef.current;
-        if (!canvas) return;
-
         const left = target.left ?? 0;
         const top = target.top ?? 0;
+        const currentScaleX = target.scaleX ?? 1;
+        const currentScaleY = target.scaleY ?? 1;
 
-        // Calculate the relative offset from center (not absolute position)
-        // This ensures position is preserved when canvas/screen size changes
-        const canvasWidth = canvas.getWidth();
-        const canvasHeight = canvas.getHeight();
-        const imgWidth = (target.width ?? 0) * (target.scaleX ?? 1);
-        const imgHeight = (target.height ?? 0) * (target.scaleY ?? 1);
-        const centerX = (canvasWidth - imgWidth) / 2;
-        const centerY = (canvasHeight - imgHeight) / 2;
-
-        // Store offset FROM center, not absolute position
-        const relativeOffsetX = left - centerX;
-        const relativeOffsetY = top - centerY;
-
+        // Store absolute position and scale values for persistence
         if (onFloorPlanMoveRef.current) {
-          onFloorPlanMoveRef.current(relativeOffsetX, relativeOffsetY);
+          onFloorPlanMoveRef.current(left, top, currentScaleX, currentScaleY);
         }
         return;
       }

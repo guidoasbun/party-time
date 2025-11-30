@@ -396,12 +396,14 @@ export function SeatingEditorLayout({
                   )
                 );
               }}
-              // Phase 6.3.7: Handle floor plan position updates for persistence
-              onFloorPlanMove={(x, y) => {
+              // Phase 6.3.7: Handle floor plan position and scale updates for persistence
+              onFloorPlanMove={(x, y, scaleX, scaleY) => {
                 setLocalFloorPlanSettings((prev) => ({
                   ...(prev || { opacity: 0.5, locked: false, scale: 1 }),
                   offsetX: x,
                   offsetY: y,
+                  appliedScaleX: scaleX,
+                  appliedScaleY: scaleY,
                 }));
               }}
               zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
