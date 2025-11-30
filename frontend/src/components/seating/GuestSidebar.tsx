@@ -35,6 +35,7 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import type { Guest, RsvpStatus, UUID, SeatingChartWithTables } from "@/types";
 import { RsvpStatus as RsvpStatusEnum } from "@/types";
@@ -47,6 +48,8 @@ interface GuestSidebarProps {
   isOpen?: boolean;
   /** When true, renders as inline block element instead of fixed sidebar */
   inline?: boolean;
+  /** When true, shows loading skeleton instead of guest list */
+  isLoading?: boolean;
   onToggle?: () => void;
   onGuestDragStart?: (guest: Guest) => void;
   onGuestDragEnd?: () => void;
@@ -139,12 +142,29 @@ const getGuestInitials = (guest: Guest): string => {
   return `${firstInitial}${lastInitial}` || "G";
 };
 
+/**
+ * Skeleton loading item for guest list
+ */
+function GuestSkeletonItem() {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card">
+      <Skeleton variant="circular" className="h-10 w-10 flex-shrink-0" />
+      <div className="flex-1 min-w-0 space-y-2">
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-3 w-1/2" />
+      </div>
+      <Skeleton variant="circular" className="h-6 w-6 flex-shrink-0" />
+    </div>
+  );
+}
+
 export function GuestSidebar({
   guests,
   seatingChart,
   seatAssignments,
   isOpen = true,
   inline = false,
+  isLoading = false,
   onToggle,
   onGuestDragStart,
   onGuestDragEnd,
@@ -425,7 +445,14 @@ export function GuestSidebar({
 
             {/* Guest List - max height for ~8-10 guests visible with scrolling */}
             <div className="flex-1 overflow-y-auto p-4 space-y-2 max-h-[600px]">
-              {filteredGuests.length === 0 ? (
+              {isLoading ? (
+                // Loading skeleton state
+                <div className="space-y-2">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <GuestSkeletonItem key={i} />
+                  ))}
+                </div>
+              ) : filteredGuests.length === 0 ? (
                 <div className="text-center py-8">
                   <User className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                   <p className="text-sm text-muted-foreground">

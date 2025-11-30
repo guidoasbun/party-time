@@ -1,13 +1,13 @@
 /**
  * FR-21: The system shall provide an interactive seating chart interface.
- * Phase 6.2.5: Seating Chart Polish & Integration
+ * Phase 6.3.12: Polish & Performance
  */
 
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, HelpCircle, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, HelpCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 
 import { useSeatingChart } from "@/hooks/useSeatingChart";
@@ -17,8 +17,11 @@ import { SeatingEditorLayout } from "@/components/seating/SeatingEditorLayout";
 import MobileSeatingView from "@/components/seating/MobileSeatingView";
 import { SaveIndicator } from "@/components/seating/SaveIndicator";
 import { SeatingHelp } from "@/components/seating/SeatingHelp";
+import { FeatureTooltips } from "@/components/seating/FeatureTooltips";
+import { SeatingEditorSkeleton } from "@/components/seating/SeatingEditorSkeleton";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
+import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { useToast } from "@/hooks/useToast";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -197,14 +200,9 @@ export default function SeatingEditPage() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [hasUnsavedChanges, selectedTableId, deleteTable]);
 
-  // Loading state
+  // Loading state - show skeleton instead of spinner
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-        <p className="text-muted-foreground">Loading seating chart...</p>
-      </div>
-    );
+    return <SeatingEditorSkeleton />;
   }
 
   // Error state
@@ -308,53 +306,66 @@ export default function SeatingEditPage() {
           </div>
         </div>
 
+        {/* Feature Tooltips - Only show on desktop for first-time users */}
+        {!isMobile && (
+          <div className="container mx-auto px-4 py-2">
+            <FeatureTooltips />
+          </div>
+        )}
+
         {/* Main Editor - Responsive: Mobile vs Desktop */}
         <div className="flex-1 overflow-hidden">
-          {isMobile && chart ? (
-            // Mobile: Read-only view with Find My Seat
-            <MobileSeatingView
-              seatingChart={{
-                ...chart,
-                tables: tables || [],
-                total_tables: tables?.length || 0,
-                total_capacity:
-                  tables?.reduce((sum, t) => sum + t.capacity, 0) || 0,
-                total_assigned: seatAssignments?.length || 0,
-              }}
-              tables={tables || []}
-              guests={guests || []}
-              readOnly={true}
-              showFindMySeat={true}
-              theme={resolvedTheme}
-            />
-          ) : (
-            // Desktop: Full editor
-            <SeatingEditorLayout
-              event={event}
-              chart={chart}
-              tables={tables || []}
-              seatAssignments={seatAssignments || []}
-              guests={guests || []}
-              statistics={statistics}
-              selectedTableId={selectedTableId}
-              canUndo={canUndo}
-              canRedo={canRedo}
-              onSelectTable={selectTable}
-              onUpdateTable={updateTable}
-              onDeleteTable={deleteTable}
-              onAssignGuest={(tableId, guestId, seatNumber) =>
-                assignGuest(tableId, guestId, seatNumber || 0)
-              }
-              onUnassignSeat={unassignSeat}
-              onSave={handleSave}
-              onUndo={undo}
-              onRedo={redo}
-              onCreateTable={createTable}
-              onBulkCreateTables={bulkCreateTables}
-              onUpdateChart={updateChart}
-              onRefresh={refetchChart}
-            />
-          )}
+          <ErrorBoundary
+            onError={(error, errorInfo) => {
+              console.error("Seating editor error:", error, errorInfo);
+            }}
+          >
+            {isMobile && chart ? (
+              // Mobile: Read-only view with Find My Seat
+              <MobileSeatingView
+                seatingChart={{
+                  ...chart,
+                  tables: tables || [],
+                  total_tables: tables?.length || 0,
+                  total_capacity:
+                    tables?.reduce((sum, t) => sum + t.capacity, 0) || 0,
+                  total_assigned: seatAssignments?.length || 0,
+                }}
+                tables={tables || []}
+                guests={guests || []}
+                readOnly={true}
+                showFindMySeat={true}
+                theme={resolvedTheme}
+              />
+            ) : (
+              // Desktop: Full editor
+              <SeatingEditorLayout
+                event={event}
+                chart={chart}
+                tables={tables || []}
+                seatAssignments={seatAssignments || []}
+                guests={guests || []}
+                statistics={statistics}
+                selectedTableId={selectedTableId}
+                canUndo={canUndo}
+                canRedo={canRedo}
+                onSelectTable={selectTable}
+                onUpdateTable={updateTable}
+                onDeleteTable={deleteTable}
+                onAssignGuest={(tableId, guestId, seatNumber) =>
+                  assignGuest(tableId, guestId, seatNumber || 0)
+                }
+                onUnassignSeat={unassignSeat}
+                onSave={handleSave}
+                onUndo={undo}
+                onRedo={redo}
+                onCreateTable={createTable}
+                onBulkCreateTables={bulkCreateTables}
+                onUpdateChart={updateChart}
+                onRefresh={refetchChart}
+              />
+            )}
+          </ErrorBoundary>
         </div>
       </div>
 
