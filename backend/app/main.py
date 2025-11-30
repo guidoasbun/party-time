@@ -12,6 +12,7 @@ from app.api.v1.budget import router as budget_router
 from app.api.v1.rsvp import router as rsvp_router
 from app.api.v1.emails import router as emails_router
 from app.api.v1.seating import router as seating_router
+from app.api.v1.venues import router as venues_router
 
 settings = get_settings()
 
@@ -57,7 +58,8 @@ async def handle_cors_and_security(request: Request, call_next):
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
     # Content Security Policy (basic)
-    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:;"
+    # Note: cdn.jsdelivr.net is required for Swagger UI to load
+    response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: https:; font-src 'self' data:;"
 
     return response
 
@@ -69,6 +71,7 @@ app.include_router(budget_router, prefix=f"{settings.API_V1_STR}/events", tags=[
 app.include_router(rsvp_router, prefix=settings.API_V1_STR, tags=["rsvp"])
 app.include_router(emails_router, prefix=f"{settings.API_V1_STR}/emails", tags=["emails"])
 app.include_router(seating_router, prefix=f"{settings.API_V1_STR}/events", tags=["seating"])
+app.include_router(venues_router, prefix=f"{settings.API_V1_STR}/venues", tags=["venues"])
 
 
 @app.get("/")

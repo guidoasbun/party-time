@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_ID: Optional[str] = None
     GOOGLE_CLIENT_SECRET: Optional[str] = None
 
+    # Google Places API (Phase 7.1.1)
+    GOOGLE_PLACES_API_KEY: Optional[str] = None
+
     """
     
     FR-7: The system shall send email invitations

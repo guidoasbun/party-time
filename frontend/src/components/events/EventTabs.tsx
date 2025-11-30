@@ -18,6 +18,7 @@ import {
   FileText,
   Mail,
   LayoutGrid,
+  MapPin,
 } from "lucide-react";
 import type { Event, Guest, PaginatedResponse } from "@/types";
 import { RSVPDashboard } from "./RSVPDashboard";
@@ -26,6 +27,7 @@ import { SendInvitationsModal } from "./SendInvitationsModal";
 import { Button } from "@/components/ui/Button";
 import { guestsService } from "@/lib/api/services";
 import { SeatingChartTab } from "@/components/seating/SeatingChartTab";
+import { VenueTab } from "@/components/venues/VenueTab";
 
 interface EventTabsProps {
   event: Event;
@@ -34,6 +36,7 @@ interface EventTabsProps {
 type TabId =
   | "overview"
   | "guests"
+  | "venues"
   | "seating"
   | "budget"
   | "timeline"
@@ -62,6 +65,7 @@ export function EventTabs({ event }: EventTabsProps) {
       [
         "overview",
         "guests",
+        "venues",
         "seating",
         "budget",
         "timeline",
@@ -92,6 +96,7 @@ export function EventTabs({ event }: EventTabsProps) {
     const tabs: TabId[] = [
       "overview",
       "guests",
+      "venues",
       "seating",
       "budget",
       "timeline",
@@ -125,6 +130,12 @@ export function EventTabs({ event }: EventTabsProps) {
       icon: Users,
       badge: event.guest_count || 0,
       content: <GuestsTabPlaceholder event={event} />,
+    },
+    {
+      id: "venues",
+      label: "Venues",
+      icon: MapPin,
+      content: <VenueTab eventId={event.id} />,
     },
     {
       id: "seating",

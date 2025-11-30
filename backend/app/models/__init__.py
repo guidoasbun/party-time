@@ -6,6 +6,7 @@ from app.models.budget import BudgetCategory, Expense
 from app.models.vendor import Vendor, EventVendor
 from app.models.email_log import EmailLog, EmailType, EmailStatus
 from app.models.seating_chart import SeatingChart, TableLayout, SeatAssignment, TableType, VenueUnit
+from app.models.venue import EventVenue
 
 # Export all models and enums
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "SeatingChart",
     "TableLayout",
     "SeatAssignment",
+    "EventVenue",
     # Enums
     "UserRole",
     "EventType",

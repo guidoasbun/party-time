@@ -87,6 +87,7 @@ class Event(Base):
     guests = relationship("Guest", back_populates="event", cascade="all, delete-orphan")
     budget_categories = relationship("BudgetCategory", back_populates="event", cascade="all, delete-orphan")
     expenses = relationship("Expense", back_populates="event", cascade="all, delete-orphan")
+    venues = relationship("EventVenue", back_populates="event", cascade="all, delete-orphan", order_by="EventVenue.display_order")
 
     # Computed properties
     @hybrid_property
