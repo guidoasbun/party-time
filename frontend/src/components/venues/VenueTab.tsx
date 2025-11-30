@@ -54,15 +54,23 @@ import {
   Bookmark,
 } from "lucide-react";
 
+// Primary venue from event creation (stored on event record)
+interface PrimaryVenue {
+  venue_name?: string;
+  venue_address?: string;
+  venue_google_place_id?: string;
+}
+
 interface VenueTabProps {
   eventId: string;
+  primaryVenue?: PrimaryVenue;
   className?: string;
 }
 
 type ViewMode = "list" | "search" | "manual";
 type SearchSubTab = "search" | "saved";
 
-export function VenueTab({ eventId, className }: VenueTabProps) {
+export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchSubTab, setSearchSubTab] = useState<SearchSubTab>("search");
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
@@ -140,6 +148,9 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
     [isSaved, unsaveVenue, saveVenue]
   );
 
+  // Check if primary venue exists
+  const hasPrimaryVenue = primaryVenue?.venue_name && primaryVenue?.venue_address;
+
   // Map markers for all venues
   const mapVenues = venues.map((venue) => ({
     id: venue.id,
@@ -197,8 +208,12 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
             Event Venues
           </h3>
           <p className="text-sm text-muted-foreground">
-            {venues.length === 0
+            {hasPrimaryVenue && venues.length === 0
+              ? "1 venue (from event setup)"
+              : venues.length === 0
               ? "No venues added yet"
+              : hasPrimaryVenue
+              ? `${venues.length + 1} venues (including event venue)`
               : `${venues.length} venue${venues.length === 1 ? "" : "s"} added`}
           </p>
         </div>
@@ -323,6 +338,43 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
       {/* List Mode - Show saved venues */}
       {viewMode === "list" && (
         <>
+          {/* Primary Venue from Event Creation */}
+          {hasPrimaryVenue && (
+            <Card className="border-primary/50 bg-primary/5">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-4">
+                  <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-primary/10 flex items-center justify-center">
+                    <MapPin className="h-8 w-8 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge variant="default" className="text-xs">
+                        Event Venue
+                      </Badge>
+                    </div>
+                    <h4 className="font-semibold text-foreground">
+                      {primaryVenue?.venue_name}
+                    </h4>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {primaryVenue?.venue_address}
+                    </p>
+                    {primaryVenue?.venue_google_place_id && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => setDetailsPlaceId(primaryVenue.venue_google_place_id!)}
+                      >
+                        <ExternalLink className="mr-1 h-3 w-3" />
+                        View Details
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Map showing all venues */}
           {venues.length > 0 && (
             <Card>
@@ -339,7 +391,7 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
           )}
 
           {/* Venue list */}
-          {venues.length === 0 ? (
+          {venues.length === 0 && !hasPrimaryVenue ? (
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <MapPin className="h-12 w-12 text-muted-foreground/50" />
@@ -369,7 +421,7 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
                 </div>
               </CardContent>
             </Card>
-          ) : (
+          ) : venues.length > 0 ? (
             <div className="space-y-4">
               {venues.map((venue, index) => (
                 <EventVenueCard
@@ -387,7 +439,7 @@ export function VenueTab({ eventId, className }: VenueTabProps) {
                 />
               ))}
             </div>
-          )}
+          ) : null}
         </>
       )}
 

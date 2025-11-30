@@ -135,7 +135,16 @@ export function EventTabs({ event }: EventTabsProps) {
       id: "venues",
       label: "Venues",
       icon: MapPin,
-      content: <VenueTab eventId={event.id} />,
+      content: (
+        <VenueTab
+          eventId={event.id}
+          primaryVenue={{
+            venue_name: event.venue_name,
+            venue_address: event.venue_address,
+            venue_google_place_id: event.venue_google_place_id,
+          }}
+        />
+      ),
     },
     {
       id: "seating",
