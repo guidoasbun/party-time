@@ -106,6 +106,7 @@ export interface GuestSeatingEntry {
   seat_number: number;
   email?: string;
   dietary_restrictions?: string;
+  meal_preference?: string;
   rsvp_status: string;
 }
 

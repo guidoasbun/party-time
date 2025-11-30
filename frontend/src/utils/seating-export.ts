@@ -11,6 +11,7 @@
  */
 
 import jsPDF from "jspdf";
+import * as fabric from "fabric";
 import type { Canvas as FabricCanvas } from "fabric";
 import {
   ExportOptions,
@@ -27,6 +28,55 @@ import type {
 } from "@/types/seating.types";
 import type { Guest } from "@/types/guest.types";
 import { UUID } from "@/types/common.types";
+
+// ============================================================================
+// Canvas Preparation for Export
+// FR-21: The system shall provide an interactive seating chart interface.
+// Phase 6.2.3: Export and Sharing Features
+// ============================================================================
+
+/**
+ * Prepare canvas for export by hiding floor plan and special areas based on options
+ *
+ * @param canvas - Fabric.js canvas instance
+ * @param options - Export options with includeFloorPlan and includeSpecialAreas flags
+ * @returns Restore function to call after export to restore hidden objects
+ */
+function prepareCanvasForExport(
+  canvas: FabricCanvas,
+  options: { includeFloorPlan: boolean; includeSpecialAreas: boolean }
+): () => void {
+  const hiddenObjects: fabric.Object[] = [];
+
+  canvas.getObjects().forEach((obj) => {
+    const customObj = obj as fabric.Object & {
+      isFloorPlan?: boolean;
+      data?: { areaType?: string };
+    };
+
+    // Floor plan has isFloorPlan: true marker (set in SeatingCanvas.tsx line 305)
+    if (!options.includeFloorPlan && customObj.isFloorPlan) {
+      obj.set("visible", false);
+      hiddenObjects.push(obj);
+    }
+    // Special areas have data.areaType === "special"
+    if (
+      !options.includeSpecialAreas &&
+      customObj.data?.areaType === "special"
+    ) {
+      obj.set("visible", false);
+      hiddenObjects.push(obj);
+    }
+  });
+
+  canvas.renderAll();
+
+  // Return restore function
+  return () => {
+    hiddenObjects.forEach((obj) => obj.set("visible", true));
+    canvas.renderAll();
+  };
+}
 
 // ============================================================================
 // Image Export Functions
@@ -58,27 +108,38 @@ export async function exportSeatingChartToImage(
     const dpi = RESOLUTION_DPI[fullOptions.resolution];
     const multiplier = dpi / 72; // Fabric.js uses 72 DPI as base
 
-    // Export canvas to data URL
-    const dataURL = fabricCanvas.toDataURL({
-      format: format === "jpeg" ? "jpeg" : "png",
-      quality: 1,
-      multiplier,
+    // FR-21: Phase 6.3.9 - Prepare canvas by hiding floor plan/special areas based on options
+    const restoreCanvas = prepareCanvasForExport(fabricCanvas, {
+      includeFloorPlan: fullOptions.includeFloorPlan,
+      includeSpecialAreas: fullOptions.includeSpecialAreas,
     });
 
-    // Convert data URL to blob
-    const response = await fetch(dataURL);
-    const blob = await response.blob();
+    try {
+      // Export canvas to data URL
+      const dataURL = fabricCanvas.toDataURL({
+        format: format === "jpeg" ? "jpeg" : "png",
+        quality: 1,
+        multiplier,
+      });
 
-    // Create download URL
-    const url = URL.createObjectURL(blob);
-    const filename = `${sanitizeFilename(eventName)}-seating-chart.${format}`;
+      // Convert data URL to blob
+      const response = await fetch(dataURL);
+      const blob = await response.blob();
 
-    return {
-      success: true,
-      filename,
-      blob,
-      url,
-    };
+      // Create download URL
+      const url = URL.createObjectURL(blob);
+      const filename = `${sanitizeFilename(eventName)}-seating-chart.${format}`;
+
+      return {
+        success: true,
+        filename,
+        blob,
+        url,
+      };
+    } finally {
+      // Always restore canvas visibility
+      restoreCanvas();
+    }
   } catch (error) {
     console.error("Error exporting image:", error);
     return {
@@ -93,11 +154,13 @@ export async function exportSeatingChartToImage(
  *
  * @param fabricCanvas - Fabric.js canvas instance
  * @param eventName - Event name for filename
+ * @param options - Export options for floor plan/special areas inclusion
  * @returns Export result with SVG content
  */
 export async function exportSeatingChartToSVG(
   fabricCanvas: FabricCanvas | null,
-  eventName: string = "Seating Chart"
+  eventName: string = "Seating Chart",
+  options: Partial<ExportOptions> = {}
 ): Promise<ExportResult> {
   try {
     if (!fabricCanvas) {
@@ -107,18 +170,33 @@ export async function exportSeatingChartToSVG(
       };
     }
 
-    // Export canvas to SVG
-    const svgString = fabricCanvas.toSVG();
-    const blob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const filename = `${sanitizeFilename(eventName)}-seating-chart.svg`;
+    const fullOptions = { ...DEFAULT_EXPORT_OPTIONS, ...options };
 
-    return {
-      success: true,
-      filename,
-      blob,
-      url,
-    };
+    // FR-21: Phase 6.3.9 - Prepare canvas by hiding floor plan/special areas based on options
+    const restoreCanvas = prepareCanvasForExport(fabricCanvas, {
+      includeFloorPlan: fullOptions.includeFloorPlan,
+      includeSpecialAreas: fullOptions.includeSpecialAreas,
+    });
+
+    try {
+      // Export canvas to SVG
+      const svgString = fabricCanvas.toSVG();
+      const blob = new Blob([svgString], {
+        type: "image/svg+xml;charset=utf-8",
+      });
+      const url = URL.createObjectURL(blob);
+      const filename = `${sanitizeFilename(eventName)}-seating-chart.svg`;
+
+      return {
+        success: true,
+        filename,
+        blob,
+        url,
+      };
+    } finally {
+      // Always restore canvas visibility
+      restoreCanvas();
+    }
   } catch (error) {
     console.error("Error exporting SVG:", error);
     return {
@@ -164,62 +242,73 @@ export async function exportSeatingChartToPDF(
     const orientation = fullOptions.orientation || "landscape";
     const dimensions = PAPER_DIMENSIONS[paperSize];
 
-    // Create PDF
-    const pdf = new jsPDF({
-      orientation,
-      unit: "in",
-      format: [dimensions.width, dimensions.height],
+    // FR-21: Phase 6.3.9 - Prepare canvas by hiding floor plan/special areas based on options
+    const restoreCanvas = prepareCanvasForExport(fabricCanvas, {
+      includeFloorPlan: fullOptions.includeFloorPlan,
+      includeSpecialAreas: fullOptions.includeSpecialAreas,
     });
 
-    // Add header
-    addPDFHeader(pdf, eventName, dimensions, eventDate, venueName);
+    try {
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation,
+        unit: "in",
+        format: [dimensions.width, dimensions.height],
+      });
 
-    // Export canvas to high-res image
-    const multiplier = 2; // 144 DPI for PDF
-    const imageData = fabricCanvas.toDataURL({
-      format: "png",
-      quality: 1,
-      multiplier,
-    });
+      // Add header
+      addPDFHeader(pdf, eventName, dimensions, eventDate, venueName);
 
-    // Calculate image dimensions to fit on page with margins
-    const margin = 0.5; // 0.5 inch margins
-    const maxWidth = dimensions.width - 2 * margin;
-    const maxHeight = dimensions.height - 2.5 * margin; // Extra space for header
+      // Export canvas to high-res image
+      const multiplier = 2; // 144 DPI for PDF
+      const imageData = fabricCanvas.toDataURL({
+        format: "png",
+        quality: 1,
+        multiplier,
+      });
 
-    const canvasWidth = fabricCanvas.getWidth();
-    const canvasHeight = fabricCanvas.getHeight();
-    const aspectRatio = canvasWidth / canvasHeight;
+      // Calculate image dimensions to fit on page with margins
+      const margin = 0.5; // 0.5 inch margins
+      const maxWidth = dimensions.width - 2 * margin;
+      const maxHeight = dimensions.height - 2.5 * margin; // Extra space for header
 
-    let imgWidth = maxWidth;
-    let imgHeight = imgWidth / aspectRatio;
+      const canvasWidth = fabricCanvas.getWidth();
+      const canvasHeight = fabricCanvas.getHeight();
+      const aspectRatio = canvasWidth / canvasHeight;
 
-    if (imgHeight > maxHeight) {
-      imgHeight = maxHeight;
-      imgWidth = imgHeight * aspectRatio;
+      let imgWidth = maxWidth;
+      let imgHeight = imgWidth / aspectRatio;
+
+      if (imgHeight > maxHeight) {
+        imgHeight = maxHeight;
+        imgWidth = imgHeight * aspectRatio;
+      }
+
+      // Center image horizontally
+      const xPos = (dimensions.width - imgWidth) / 2;
+      const yPos = 1.5; // Below header
+
+      // Add image to PDF
+      pdf.addImage(imageData, "PNG", xPos, yPos, imgWidth, imgHeight);
+
+      // Add footer
+      addPDFFooter(pdf, chart, dimensions);
+
+      // Generate blob
+      const pdfBlob = pdf.output("blob");
+      const url = URL.createObjectURL(pdfBlob);
+      const filename = `${sanitizeFilename(eventName)}-seating-chart.pdf`;
+
+      return {
+        success: true,
+        filename,
+        blob: pdfBlob,
+        url,
+      };
+    } finally {
+      // Always restore canvas visibility
+      restoreCanvas();
     }
-
-    // Center image horizontally
-    const xPos = (dimensions.width - imgWidth) / 2;
-    const yPos = 1.5; // Below header
-
-    // Add image to PDF
-    pdf.addImage(imageData, "PNG", xPos, yPos, imgWidth, imgHeight);
-
-    // Add footer
-    addPDFFooter(pdf, chart, dimensions);
-
-    // Generate blob
-    const pdfBlob = pdf.output("blob");
-    const url = URL.createObjectURL(pdfBlob);
-    const filename = `${sanitizeFilename(eventName)}-seating-chart.pdf`;
-
-    return {
-      success: true,
-      filename,
-      blob: pdfBlob,
-      url,
-    };
   } catch (error) {
     console.error("Error exporting PDF:", error);
     return {
@@ -465,6 +554,7 @@ export function generateGuestSeatingListCSV(
       "Email",
       "RSVP Status",
       "Dietary Restrictions",
+      "Meal Preference",
     ];
 
     // CSV rows
@@ -475,6 +565,7 @@ export function generateGuestSeatingListCSV(
       entry.email || "",
       entry.rsvp_status,
       entry.dietary_restrictions || "",
+      entry.meal_preference || "",
     ]);
 
     // Build CSV string
@@ -577,6 +668,7 @@ export function transformToGuestSeatingList(
         seat_number: assignment.seat_number,
         email: guest.email,
         dietary_restrictions: guest.dietary_restrictions || undefined,
+        meal_preference: guest.meal_preference || undefined,
         rsvp_status: guest.rsvp_status || "pending",
       });
     }
