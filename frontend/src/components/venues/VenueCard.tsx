@@ -17,7 +17,7 @@ import {
   PRICE_LEVEL_LABELS,
   getVenueTypeLabel,
 } from "@/types/venue.types";
-import { Star, MapPin, Clock, ExternalLink, Bookmark } from "lucide-react";
+import { Star, MapPin, Clock, ExternalLink, Bookmark, GitCompareArrows } from "lucide-react";
 import Image from "next/image";
 
 interface VenueCardProps {
@@ -27,6 +27,10 @@ interface VenueCardProps {
   selected?: boolean;
   isSaved?: boolean;
   onToggleSave?: (venue: VenueSearchResult) => void;
+  // Phase 7.1.3: Comparison props
+  isInCompare?: boolean;
+  onToggleCompare?: (venue: VenueSearchResult) => void;
+  canAddToCompare?: boolean;
   className?: string;
 }
 
@@ -37,6 +41,9 @@ export function VenueCard({
   selected = false,
   isSaved = false,
   onToggleSave,
+  isInCompare = false,
+  onToggleCompare,
+  canAddToCompare = true,
   className,
 }: VenueCardProps) {
   const handleClick = () => {
@@ -56,6 +63,13 @@ export function VenueCard({
     e.stopPropagation();
     if (onToggleSave) {
       onToggleSave(venue);
+    }
+  };
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleCompare) {
+      onToggleCompare(venue);
     }
   };
 
@@ -103,6 +117,32 @@ export function VenueCard({
               >
                 <Bookmark
                   className={cn("h-4 w-4", isSaved && "fill-current")}
+                />
+              </button>
+            )}
+            {/* Compare Button */}
+            {onToggleCompare && (
+              <button
+                onClick={handleToggleCompare}
+                disabled={!isInCompare && !canAddToCompare}
+                className={cn(
+                  "absolute left-2 top-2 rounded-full p-1.5 transition-colors",
+                  isInCompare
+                    ? "bg-violet-600 text-white"
+                    : !canAddToCompare
+                      ? "bg-background/60 text-muted-foreground/50 cursor-not-allowed"
+                      : "bg-background/80 text-muted-foreground hover:bg-background hover:text-violet-600"
+                )}
+                title={
+                  isInCompare
+                    ? "Remove from comparison"
+                    : !canAddToCompare
+                      ? "Maximum 4 venues can be compared"
+                      : "Add to comparison"
+                }
+              >
+                <GitCompareArrows
+                  className={cn("h-4 w-4", isInCompare && "fill-current")}
                 />
               </button>
             )}

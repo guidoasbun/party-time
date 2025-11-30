@@ -25,6 +25,7 @@ import {
   Plus,
   ExternalLink,
   Loader2,
+  GitCompareArrows,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -35,6 +36,12 @@ interface SavedVenuesListProps {
   onViewDetails?: (placeId: string) => void;
   onClearAll?: () => void;
   isLoading?: boolean;
+  // Phase 7.1.3: Comparison props
+  isInCompare?: (placeId: string) => boolean;
+  onToggleCompare?: (venue: SavedVenue) => void;
+  canAddToCompare?: boolean;
+  compareCount?: number;
+  onCompare?: () => void;
   className?: string;
 }
 
@@ -45,6 +52,11 @@ export function SavedVenuesList({
   onViewDetails,
   onClearAll,
   isLoading = false,
+  isInCompare,
+  onToggleCompare,
+  canAddToCompare = true,
+  compareCount = 0,
+  onCompare,
   className,
 }: SavedVenuesListProps) {
   // Loading state
@@ -77,22 +89,43 @@ export function SavedVenuesList({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Header with count and clear button */}
+      {/* Header with count, compare status, and actions */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          {savedVenues.length} saved venue{savedVenues.length !== 1 ? "s" : ""}
-        </p>
-        {onClearAll && savedVenues.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClearAll}
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
-            <Trash2 className="mr-1 h-3 w-3" />
-            Clear All
-          </Button>
-        )}
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-muted-foreground">
+            {savedVenues.length} saved venue{savedVenues.length !== 1 ? "s" : ""}
+          </p>
+          {compareCount > 0 && (
+            <Badge variant="secondary" className="flex items-center gap-1">
+              <GitCompareArrows className="h-3 w-3" />
+              {compareCount} selected
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {onCompare && compareCount >= 2 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onCompare}
+              className="bg-violet-600 hover:bg-violet-700 text-white"
+            >
+              <GitCompareArrows className="mr-1 h-3 w-3" />
+              Compare
+            </Button>
+          )}
+          {onClearAll && savedVenues.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onClearAll}
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="mr-1 h-3 w-3" />
+              Clear All
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Saved venues list */}
@@ -104,6 +137,9 @@ export function SavedVenuesList({
             onAddToEvent={onAddToEvent}
             onRemove={onRemove}
             onViewDetails={onViewDetails}
+            isInCompare={isInCompare?.(venue.placeId) ?? false}
+            onToggleCompare={onToggleCompare}
+            canAddToCompare={canAddToCompare}
           />
         ))}
       </div>
@@ -116,6 +152,10 @@ interface SavedVenueCardProps {
   onAddToEvent?: (venue: SavedVenue) => void;
   onRemove: (placeId: string) => void;
   onViewDetails?: (placeId: string) => void;
+  // Phase 7.1.3: Comparison props
+  isInCompare?: boolean;
+  onToggleCompare?: (venue: SavedVenue) => void;
+  canAddToCompare?: boolean;
 }
 
 function SavedVenueCard({
@@ -123,6 +163,9 @@ function SavedVenueCard({
   onAddToEvent,
   onRemove,
   onViewDetails,
+  isInCompare = false,
+  onToggleCompare,
+  canAddToCompare = true,
 }: SavedVenueCardProps) {
   return (
     <Card className="transition-colors hover:border-primary/50">
@@ -173,6 +216,29 @@ function SavedVenueCard({
 
             {/* Actions */}
             <div className="mt-2 flex items-center gap-2">
+              {/* Compare Toggle */}
+              {onToggleCompare && (
+                <Button
+                  variant={isInCompare ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => onToggleCompare(venue)}
+                  disabled={!isInCompare && !canAddToCompare}
+                  className={cn(
+                    "h-7 px-2 text-xs",
+                    isInCompare && "bg-violet-600 hover:bg-violet-700 text-white"
+                  )}
+                  title={
+                    isInCompare
+                      ? "Remove from comparison"
+                      : !canAddToCompare
+                        ? "Maximum 4 venues can be compared"
+                        : "Add to comparison"
+                  }
+                >
+                  <GitCompareArrows className="mr-1 h-3 w-3" />
+                  {isInCompare ? "Selected" : "Compare"}
+                </Button>
+              )}
               {onViewDetails && (
                 <Button
                   variant="ghost"
