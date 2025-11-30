@@ -32,8 +32,9 @@ import {
   useDeleteEventVenue,
 } from "@/hooks/useEventVenues";
 import { useVenueDetails } from "@/hooks/useVenueSearch";
-import { useUpdateEvent } from "@/hooks/api/useEvents";
+import { useUpdateEvent, eventKeys } from "@/hooks/api/useEvents";
 import { useToast } from "@/hooks/useToast";
+import { useQueryClient } from "@tanstack/react-query";
 import { useSavedVenues } from "@/hooks/useSavedVenues";
 import {
   VenueSearchResult,
@@ -104,6 +105,7 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   const deleteVenueMutation = useDeleteEventVenue(eventId);
   const updateEventMutation = useUpdateEvent();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Handle selecting a venue from search results
   const handleVenueSelect = useCallback(
@@ -171,6 +173,8 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
             venue_google_place_id: venue.google_place_id || undefined,
           },
         });
+        // Invalidate event detail queries to trigger instant UI update
+        queryClient.invalidateQueries({ queryKey: eventKeys.details() });
         toast({
           title: "Event Venue Updated",
           description: `${venue.name} is now set as the event venue.`,
@@ -183,7 +187,7 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
         });
       }
     },
-    [updateEventMutation, eventId, toast]
+    [updateEventMutation, eventId, queryClient, toast]
   );
 
   // Check if primary venue exists
