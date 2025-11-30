@@ -25,6 +25,8 @@ import {
   Triangle,
   X,
   Check,
+  Square,
+  Circle,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Label } from "@/components/ui/Label";
@@ -43,6 +45,7 @@ import {
   SpecialAreaType,
   SPECIAL_AREA_LABELS,
   type SpecialArea,
+  type SpecialAreaShape,
 } from "@/types/venue.types";
 import {
   createDefaultSpecialArea,
@@ -85,18 +88,20 @@ export function SpecialAreas({
   const [newAreaType, setNewAreaType] = useState<SpecialAreaType>(
     SpecialAreaType.STAGE
   );
+  const [newAreaShape, setNewAreaShape] = useState<SpecialAreaShape>("rectangle");
 
   // Add new special area
   const handleAddArea = useCallback(() => {
     const newArea: SpecialArea = {
       id: uuidv4(),
-      ...createDefaultSpecialArea(newAreaType, theme),
+      ...createDefaultSpecialArea(newAreaType, theme, undefined, newAreaShape),
     };
 
     onSpecialAreasChange([...specialAreas, newArea]);
     setShowAddForm(false);
     setNewAreaType(SpecialAreaType.STAGE);
-  }, [newAreaType, theme, specialAreas, onSpecialAreasChange]);
+    setNewAreaShape("rectangle");
+  }, [newAreaType, newAreaShape, theme, specialAreas, onSpecialAreasChange]);
 
   // Update special area
   const handleUpdateArea = useCallback(
@@ -172,6 +177,33 @@ export function SpecialAreas({
               />
             </div>
 
+            {/* Shape Selection */}
+            <div className="space-y-2">
+              <Label className="text-sm">Shape</Label>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={newAreaShape === "rectangle" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewAreaShape("rectangle")}
+                  className="flex-1"
+                >
+                  <Square className="h-4 w-4 mr-2" />
+                  Rectangle
+                </Button>
+                <Button
+                  type="button"
+                  variant={newAreaShape === "circle" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setNewAreaShape("circle")}
+                  className="flex-1"
+                >
+                  <Circle className="h-4 w-4 mr-2" />
+                  Circle
+                </Button>
+              </div>
+            </div>
+
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"
@@ -229,10 +261,15 @@ export function SpecialAreas({
                             <h4 className="font-medium text-sm">
                               {area.label}
                             </h4>
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground flex items-center gap-1">
                               {SPECIAL_AREA_LABELS[area.type]}
+                              {area.shape === "circle" ? (
+                                <Circle className="h-3 w-3 ml-1 inline" />
+                              ) : (
+                                <Square className="h-3 w-3 ml-1 inline" />
+                              )}
                               {area.isObstacle && (
-                                <span className="ml-2 text-destructive font-medium">
+                                <span className="ml-1 text-destructive font-medium">
                                   • Obstacle
                                 </span>
                               )}
@@ -301,6 +338,35 @@ export function SpecialAreas({
                             disabled={disabled}
                             className="mt-1"
                           />
+                        </div>
+                      </div>
+
+                      {/* Shape Toggle */}
+                      <div className="space-y-2">
+                        <Label className="text-sm">Shape</Label>
+                        <div className="flex gap-2">
+                          <Button
+                            type="button"
+                            variant={(area.shape || "rectangle") === "rectangle" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleUpdateArea(area.id, { shape: "rectangle" })}
+                            disabled={disabled}
+                            className="flex-1"
+                          >
+                            <Square className="h-4 w-4 mr-2" />
+                            Rectangle
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={area.shape === "circle" ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleUpdateArea(area.id, { shape: "circle" })}
+                            disabled={disabled}
+                            className="flex-1"
+                          >
+                            <Circle className="h-4 w-4 mr-2" />
+                            Circle
+                          </Button>
                         </div>
                       </div>
 

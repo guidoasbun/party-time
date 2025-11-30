@@ -8,7 +8,7 @@
 
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
 import {
   Save,
   Image as ImageIcon,
@@ -34,11 +34,15 @@ interface VenueLayoutProps {
   floorPlanUrl?: string;
   chartMetadata?: Record<string, unknown>;
   theme: "light" | "dark";
+  // Phase 6.3.7: Optional callback for real-time canvas updates (before save)
+  onChange?: (floorPlanUrl: string | null, metadata: VenueMetadata) => void;
   onSave: (
     floorPlanUrl: string | null,
     metadata: VenueMetadata
   ) => Promise<void>;
   disabled?: boolean;
+  // Phase 6.3.7: External special areas from canvas (for drag/resize sync)
+  externalSpecialAreas?: SpecialArea[];
 }
 
 export function VenueLayout({
@@ -47,15 +51,37 @@ export function VenueLayout({
   floorPlanUrl: initialFloorPlanUrl,
   chartMetadata,
   theme,
+  onChange,
   onSave,
   disabled = false,
+  externalSpecialAreas,
 }: VenueLayoutProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Parse initial venue metadata
-  const initialData = parseVenueMetadata(chartMetadata);
+  // Parse initial venue metadata - memoize to prevent recreation on every render
+  const initialData = useMemo(
+    () => parseVenueMetadata(chartMetadata),
+    [chartMetadata]
+  );
+
+  // Phase 6.3.7: Store initial values in refs for stable comparison
+  // These refs only update when chartMetadata changes (e.g., after save)
+  const initialSpecialAreasRef = useRef<string>(
+    JSON.stringify(initialData.specialAreas)
+  );
+  const initialFloorPlanSettingsRef = useRef<string>(
+    JSON.stringify(initialData.floorPlanSettings || DEFAULT_FLOOR_PLAN_SETTINGS)
+  );
+
+  // Update refs when initialData changes (after save or initial load)
+  useEffect(() => {
+    initialSpecialAreasRef.current = JSON.stringify(initialData.specialAreas);
+    initialFloorPlanSettingsRef.current = JSON.stringify(
+      initialData.floorPlanSettings || DEFAULT_FLOOR_PLAN_SETTINGS
+    );
+  }, [initialData]);
 
   // Local state
   const [floorPlanUrl, setFloorPlanUrl] = useState<string | undefined>(
@@ -68,25 +94,48 @@ export function VenueLayout({
     initialData.specialAreas
   );
 
-  // Track unsaved changes
+  // Phase 6.3.7: Track if we're currently syncing to prevent circular updates
+  const isSyncingFromExternalRef = useRef(false);
+
+  // Phase 6.3.7: Sync external special areas from canvas drag/resize
+  // This allows canvas modifications to update VenueLayout's internal state
+  useEffect(() => {
+    if (externalSpecialAreas && externalSpecialAreas.length > 0) {
+      // Only update if the external areas differ from current state
+      const externalJson = JSON.stringify(externalSpecialAreas);
+      const currentJson = JSON.stringify(specialAreas);
+      if (externalJson !== currentJson) {
+        // Mark that we're syncing from external to prevent onChange from triggering circular update
+        isSyncingFromExternalRef.current = true;
+        setSpecialAreas(externalSpecialAreas);
+        // Reset after a microtask to allow the state update to complete
+        queueMicrotask(() => {
+          isSyncingFromExternalRef.current = false;
+        });
+      }
+    }
+  }, [externalSpecialAreas]); // Intentionally not including specialAreas to avoid infinite loop
+
+  // Track unsaved changes - compare against stable refs, not fresh objects
   useEffect(() => {
     const hasChanges =
       floorPlanUrl !== initialFloorPlanUrl ||
-      JSON.stringify(specialAreas) !==
-        JSON.stringify(initialData.specialAreas) ||
-      JSON.stringify(floorPlanSettings) !==
-        JSON.stringify(
-          initialData.floorPlanSettings || DEFAULT_FLOOR_PLAN_SETTINGS
-        );
+      JSON.stringify(specialAreas) !== initialSpecialAreasRef.current ||
+      JSON.stringify(floorPlanSettings) !== initialFloorPlanSettingsRef.current;
 
     setHasUnsavedChanges(hasChanges);
-  }, [
-    floorPlanUrl,
-    specialAreas,
-    floorPlanSettings,
-    initialFloorPlanUrl,
-    initialData,
-  ]);
+  }, [floorPlanUrl, specialAreas, floorPlanSettings, initialFloorPlanUrl]);
+
+  // Phase 6.3.7: Notify parent of changes for real-time canvas updates
+  // Skip if we're syncing FROM external (to prevent circular updates)
+  useEffect(() => {
+    if (onChange && !isSyncingFromExternalRef.current) {
+      onChange(floorPlanUrl || null, {
+        specialAreas,
+        floorPlanSettings: floorPlanUrl ? floorPlanSettings : undefined,
+      });
+    }
+  }, [floorPlanUrl, specialAreas, floorPlanSettings, onChange]);
 
   // Handle floor plan upload
   const handleFloorPlanUpload = useCallback(

@@ -19,6 +19,9 @@ export enum SpecialAreaType {
   OBSTACLE = "obstacle",
 }
 
+// Phase 6.3.7: Shape type for special areas (rectangle or circle)
+export type SpecialAreaShape = "rectangle" | "circle";
+
 export const SPECIAL_AREA_LABELS: Record<SpecialAreaType, string> = {
   [SpecialAreaType.STAGE]: "Stage",
   [SpecialAreaType.DANCE_FLOOR]: "Dance Floor",
@@ -35,6 +38,7 @@ export const SPECIAL_AREA_LABELS: Record<SpecialAreaType, string> = {
 export interface SpecialArea {
   id: string; // UUID
   type: SpecialAreaType;
+  shape?: SpecialAreaShape; // Phase 6.3.7: Optional shape (defaults to "rectangle")
   label: string;
   x: number;
   y: number;
@@ -52,6 +56,9 @@ export interface FloorPlanSettings {
   scale: number; // Scaling factor (1.0 = original size)
   offsetX?: number; // X offset for positioning
   offsetY?: number; // Y offset for positioning
+  // Phase 6.3.7: Store applied scale values for size persistence across screen resizes
+  appliedScaleX?: number; // Actual scaleX applied to image
+  appliedScaleY?: number; // Actual scaleY applied to image
 }
 
 export interface AccessibilityPathSettings {
