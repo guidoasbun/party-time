@@ -4,8 +4,11 @@ API endpoints for seating chart management.
 FR-21: The system shall provide an interactive seating chart interface
 Phase 6.1.2: Seating Chart API Endpoints
 """
+import logging
 from typing import List, Optional
 from uuid import UUID
+
+logger = logging.getLogger(__name__)
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -655,6 +658,9 @@ async def auto_assign_guests(
     except ValueError as ve:
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
+        import traceback
+        logger.error(f"Auto-assign error: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Failed to auto-assign guests: {str(e)}")
 
 

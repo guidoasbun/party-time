@@ -313,6 +313,7 @@ export default function SeatingEditPage() {
             onCreateTable={createTable}
             onBulkCreateTables={bulkCreateTables}
             onUpdateChart={updateChart}
+            onRefresh={refetchChart}
           />
         </div>
       </div>
