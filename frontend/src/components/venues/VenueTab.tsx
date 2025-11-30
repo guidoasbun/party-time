@@ -26,6 +26,9 @@ import { VenueDetails } from "./VenueDetails";
 import { VenueMap } from "./VenueMap";
 import { ManualVenueForm } from "./ManualVenueForm";
 import { SavedVenuesList } from "./SavedVenuesList";
+import { VenueCompareBar } from "./VenueCompareBar";
+import { VenueCompareModal } from "./VenueCompareModal";
+import { useVenueComparison } from "@/hooks/useVenueComparison";
 import {
   useEventVenues,
   useAddEventVenue,
@@ -80,6 +83,7 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   const [selectedVenueId, setSelectedVenueId] = useState<string | null>(null);
   const [detailsPlaceId, setDetailsPlaceId] = useState<string | null>(null);
   const [venueToDelete, setVenueToDelete] = useState<EventVenue | null>(null);
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
 
   // Fetch event venues
   const { data: venues = [], isLoading, error } = useEventVenues(eventId);
@@ -99,6 +103,17 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
     clearAll: clearSavedVenues,
     isLoading: isSavedLoading,
   } = useSavedVenues(eventId);
+
+  // Venue comparison (Phase 7.1.3)
+  const {
+    compareList,
+    addToCompare,
+    removeFromCompare,
+    clearCompare,
+    isInCompare,
+    canAddMore,
+    compareCount,
+  } = useVenueComparison();
 
   // Mutations
   const addVenueMutation = useAddEventVenue(eventId);
@@ -161,6 +176,41 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
     [isSaved, unsaveVenue, saveVenue]
   );
 
+  // Handle toggling comparison on a saved venue
+  const handleToggleCompare = useCallback(
+    (venue: SavedVenue) => {
+      if (isInCompare(venue.placeId)) {
+        removeFromCompare(venue.placeId);
+      } else {
+        addToCompare({
+          placeId: venue.placeId,
+          name: venue.name,
+          photoUrl: venue.photoUrl,
+        });
+      }
+    },
+    [isInCompare, removeFromCompare, addToCompare]
+  );
+
+  // Handle opening compare modal
+  const handleOpenCompareModal = useCallback(() => {
+    setIsCompareModalOpen(true);
+  }, []);
+
+  // Handle selecting a venue from comparison modal
+  const handleSelectVenueFromCompare = useCallback(
+    async (placeId: string) => {
+      const venueData: EventVenueCreateRequest = {
+        place_id: placeId,
+      };
+      await addVenueMutation.mutateAsync(venueData);
+      setIsCompareModalOpen(false);
+      clearCompare();
+      setViewMode("list");
+    },
+    [addVenueMutation, clearCompare]
+  );
+
   // Handle setting an EventVenue as the primary event venue
   const handleSetAsEventVenue = useCallback(
     async (venue: EventVenue) => {
@@ -191,12 +241,14 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
   );
 
   // Check if primary venue exists
-  const hasPrimaryVenue = primaryVenue?.venue_name && primaryVenue?.venue_address;
+  const hasPrimaryVenue =
+    primaryVenue?.venue_name && primaryVenue?.venue_address;
 
   // Map markers for all venues (including primary venue if we have coordinates)
   const mapVenues = [
     // Add primary venue marker if we have details with coordinates
-    ...(primaryVenueDetails?.location?.latitude && primaryVenueDetails?.location?.longitude
+    ...(primaryVenueDetails?.location?.latitude &&
+    primaryVenueDetails?.location?.longitude
       ? [
           {
             id: "primary-venue",
@@ -369,6 +421,11 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
               onViewDetails={setDetailsPlaceId}
               onClearAll={clearSavedVenues}
               isLoading={isSavedLoading}
+              isInCompare={isInCompare}
+              onToggleCompare={handleToggleCompare}
+              canAddToCompare={canAddMore}
+              compareCount={compareCount}
+              onCompare={handleOpenCompareModal}
             />
           )}
 
@@ -421,7 +478,9 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
                         variant="outline"
                         size="sm"
                         className="mt-3"
-                        onClick={() => setDetailsPlaceId(primaryVenue.venue_google_place_id!)}
+                        onClick={() =>
+                          setDetailsPlaceId(primaryVenue.venue_google_place_id!)
+                        }
                       >
                         <ExternalLink className="mr-1 h-3 w-3" />
                         View Details
@@ -560,6 +619,23 @@ export function VenueTab({ eventId, primaryVenue, className }: VenueTabProps) {
           </div>
         </div>
       </Modal>
+
+      {/* Venue Comparison Bar (Phase 7.1.3) */}
+      <VenueCompareBar
+        compareList={compareList}
+        onRemove={removeFromCompare}
+        onClear={clearCompare}
+        onCompare={handleOpenCompareModal}
+      />
+
+      {/* Venue Comparison Modal (Phase 7.1.3) */}
+      <VenueCompareModal
+        open={isCompareModalOpen}
+        onClose={() => setIsCompareModalOpen(false)}
+        compareList={compareList}
+        onSelectVenue={handleSelectVenueFromCompare}
+        onRemoveFromCompare={removeFromCompare}
+      />
     </div>
   );
 }

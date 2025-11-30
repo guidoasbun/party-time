@@ -525,3 +525,39 @@ export const VENUE_SORT_OPTIONS = [
   { value: "price_asc", label: "Price (Low to High)" },
   { value: "price_desc", label: "Price (High to Low)" },
 ] as const;
+
+// ============================================================
+// Phase 7.1.3: Venue Comparison Types
+// ============================================================
+
+/**
+ * Maximum number of venues that can be compared at once
+ */
+export const MAX_COMPARE_VENUES = 4;
+
+/**
+ * Minimum number of venues required to compare
+ */
+export const MIN_COMPARE_VENUES = 2;
+
+/**
+ * Venue data for comparison bar display
+ */
+export interface CompareVenue {
+  placeId: string;
+  name: string;
+  photoUrl?: string;
+}
+
+/**
+ * Return type for useVenueComparison hook
+ */
+export interface UseVenueComparisonReturn {
+  compareList: CompareVenue[];
+  addToCompare: (venue: CompareVenue) => void;
+  removeFromCompare: (placeId: string) => void;
+  clearCompare: () => void;
+  isInCompare: (placeId: string) => boolean;
+  canAddMore: boolean;
+  compareCount: number;
+}
