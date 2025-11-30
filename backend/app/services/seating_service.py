@@ -23,7 +23,7 @@ from collections import defaultdict
 from app.models.seating_chart import SeatingChart, TableLayout, SeatAssignment
 from app.models.guest import Guest
 from app.models.event import Event
-from app.schemas.seating import AutoAssignRequest, SmartAssignPreferences, SuggestionScore
+from app.schemas.seating import AutoAssignRequest, SmartAssignPreferences, SuggestionScore, SeatAssignmentCreate
 from app.crud import crud_seating
 from app.utils.guest_matching import (
     score_guest_pair_compatibility,
@@ -100,12 +100,40 @@ class SeatingChartService:
             assignments = await self._distribute_strategy(unassigned_guests, tables, db)
         elif strategy == "smart":
             # Smart strategy returns (assignments, suggestions)
-            preferences = request.preferences if hasattr(request, 'preferences') else None
-            assignments, suggestions = await self._smart_strategy(unassigned_guests, tables, preferences, db)
+            # Convert preferences dict to SmartAssignPreferences if provided
+            preferences_dict = request.preferences if hasattr(request, 'preferences') else None
+            if preferences_dict and isinstance(preferences_dict, dict):
+                smart_preferences = SmartAssignPreferences(**preferences_dict)
+            else:
+                smart_preferences = None
+            assignments, suggestions = await self._smart_strategy(unassigned_guests, tables, smart_preferences, db)
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
 
-        # 6. Return assignment suggestions
+        # 6. PERSIST assignments to database
+        if assignments:
+            logger.info(f"Persisting {len(assignments)} seat assignments to database")
+            # Group assignments by table for bulk insert
+            assignments_by_table: Dict[str, List[SeatAssignmentCreate]] = defaultdict(list)
+            for assignment in assignments:
+                # Note: strategies use "table_id" key, not "table_layout_id"
+                table_id = assignment["table_id"]
+                seat_data = SeatAssignmentCreate(
+                    table_layout_id=UUID(table_id) if isinstance(table_id, str) else table_id,
+                    guest_id=UUID(assignment["guest_id"]) if isinstance(assignment["guest_id"], str) else assignment["guest_id"],
+                    seat_number=assignment["seat_number"],
+                )
+                assignments_by_table[str(table_id)].append(seat_data)
+
+            # Bulk create for each table
+            for table_id_str, seat_list in assignments_by_table.items():
+                table_id_uuid = UUID(table_id_str)
+                await crud_seating.create_seat_assignments_bulk(db, seat_list, table_id_uuid)
+
+            await db.commit()
+            logger.info(f"Successfully persisted {len(assignments)} seat assignments")
+
+        # 7. Return assignment results
         response = {
             "seating_chart_id": str(seating_chart_id),
             "strategy": strategy,

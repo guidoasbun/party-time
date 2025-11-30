@@ -16,6 +16,7 @@ import {
   Copy,
   LayoutGrid,
   ChevronDown,
+  Wand2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -33,6 +34,8 @@ export interface TableToolbarProps {
   onDeleteSelected: () => void;
   onDuplicateSelected: () => void;
   onAutoArrange?: () => void;
+  onAutoAssign?: () => void;
+  unseatedGuestCount?: number;
   disabled?: boolean;
   className?: string;
 }
@@ -55,6 +58,8 @@ export function TableToolbar({
   onDeleteSelected,
   onDuplicateSelected,
   onAutoArrange,
+  onAutoAssign,
+  unseatedGuestCount = 0,
   disabled = false,
   className = '',
 }: TableToolbarProps) {
@@ -181,7 +186,7 @@ export function TableToolbar({
               onClick={onDuplicateSelected}
               disabled={disabled}
               variant="outline"
-             
+
               className="gap-2"
               aria-label={`Duplicate ${selectedTableIds.length} selected table${multipleSelected ? 's' : ''}`}
             >
@@ -194,7 +199,7 @@ export function TableToolbar({
               onClick={onDeleteSelected}
               disabled={disabled}
               variant="outline"
-             
+
               className="gap-2"
               aria-label={`Delete ${selectedTableIds.length} selected table${multipleSelected ? 's' : ''}`}
             >
@@ -204,6 +209,25 @@ export function TableToolbar({
           </>
         ) : (
           <>
+            {/* Auto-Assign Button */}
+            {onAutoAssign && (
+              <Button
+                onClick={onAutoAssign}
+                disabled={disabled || tableCount === 0 || unseatedGuestCount === 0}
+                variant="default"
+                className="gap-2"
+                aria-label="Auto-assign guests to tables"
+              >
+                <Wand2 className="w-4 h-4" />
+                Auto-Assign
+                {unseatedGuestCount > 0 && (
+                  <Badge variant="secondary" className="ml-1">
+                    {unseatedGuestCount}
+                  </Badge>
+                )}
+              </Button>
+            )}
+
             {/* Bulk Actions Dropdown (when no selection) */}
             {onAutoArrange && (
               <div className="relative">
@@ -211,7 +235,7 @@ export function TableToolbar({
                   onClick={() => setShowBulkActions(!showBulkActions)}
                   disabled={disabled || tableCount === 0}
                   variant="outline"
-                 
+
                   className="gap-1"
                   aria-label="Bulk actions menu"
                   aria-expanded={showBulkActions}

@@ -7,6 +7,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { TableTemplates } from "./TableTemplates";
+import { AutoAssignDialog } from "./AutoAssignDialog";
 import {
   ChevronLeft,
   ChevronRight,
@@ -74,6 +75,7 @@ interface SeatingEditorLayoutProps {
     tables: Omit<TableLayoutCreate, "seating_chart_id">[]
   ) => Promise<TableLayout[]>;
   onUpdateChart: (updates: SeatingChartUpdate) => Promise<SeatingChart>;
+  onRefresh?: () => Promise<void>;
 }
 
 export function SeatingEditorLayout({
@@ -97,6 +99,7 @@ export function SeatingEditorLayout({
   onCreateTable,
   onBulkCreateTables,
   onUpdateChart,
+  onRefresh,
 }: SeatingEditorLayoutProps) {
   const { toast } = useToast();
   const { resolvedTheme } = useTheme();
@@ -105,6 +108,7 @@ export function SeatingEditorLayout({
   const [rightTab, setRightTab] = useState("tables");
   const [showGrid, setShowGrid] = useState(true);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [showAutoAssignDialog, setShowAutoAssignDialog] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
   // Track pending assignments to prevent race conditions / double-drops
@@ -139,6 +143,15 @@ export function SeatingEditorLayout({
       g.rsvp_status === RsvpStatus.ATTENDING ||
       g.rsvp_status === RsvpStatus.PENDING
   );
+
+  // Calculate unseated guests for auto-assign
+  const seatedGuestIds = new Set(seatAssignments.map((sa) => sa.guest_id));
+  const unseatedGuests = attendingGuests.filter(
+    (g) => g.rsvp_status === RsvpStatus.ATTENDING && !seatedGuestIds.has(g.id)
+  );
+
+  // Calculate total capacity
+  const totalCapacity = tables.reduce((sum, t) => sum + t.capacity, 0);
 
   // Get selected table details
   const selectedTable = tables.find((t) => t.id === selectedTableId);
@@ -315,6 +328,8 @@ export function SeatingEditorLayout({
                     }
                   }
                 }}
+                onAutoAssign={() => setShowAutoAssignDialog(true)}
+                unseatedGuestCount={unseatedGuests.length}
               />
 
               <div className="h-6 w-px bg-border mx-2" />
@@ -717,6 +732,30 @@ export function SeatingEditorLayout({
           canvasWidth={chart.venue_width}
           canvasHeight={chart.venue_height}
           existingTableCount={tables.length}
+        />
+      )}
+
+      {/* Auto-Assign Dialog */}
+      {chart && (
+        <AutoAssignDialog
+          open={showAutoAssignDialog}
+          onClose={() => setShowAutoAssignDialog(false)}
+          eventId={event.id}
+          chartId={chart.id}
+          unseatedGuests={unseatedGuests}
+          totalCapacity={totalCapacity}
+          seatedCount={seatAssignments.length}
+          onAssignComplete={async () => {
+            setShowAutoAssignDialog(false);
+            // Refresh data to show new assignments
+            if (onRefresh) {
+              await onRefresh();
+            }
+            toast({
+              title: "Guests assigned",
+              description: "Guests have been automatically assigned to tables.",
+            });
+          }}
         />
       )}
     </div>

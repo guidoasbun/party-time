@@ -298,7 +298,7 @@ def find_plus_one_pairs(guests: List[Dict]) -> List[Tuple[str, str]]:
         if not guest.get("plus_one_allowed"):
             continue
 
-        plus_one_name = guest.get("plus_one_name", "").strip()
+        plus_one_name = (guest.get("plus_one_name") or "").strip()
         if not plus_one_name:
             continue
 
@@ -310,7 +310,7 @@ def find_plus_one_pairs(guests: List[Dict]) -> List[Tuple[str, str]]:
                 continue
 
             # Check if other guest's full name matches plus_one_name
-            other_full_name = f"{other_guest.get('first_name', '')} {other_guest.get('last_name', '')}".strip()
+            other_full_name = f"{other_guest.get('first_name') or ''} {other_guest.get('last_name') or ''}".strip()
 
             if other_full_name.lower() == plus_one_name_lower:
                 # Found the plus-one guest
