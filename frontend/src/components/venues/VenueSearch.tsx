@@ -41,6 +41,7 @@ import {
   AlertCircle,
   Building2,
   Clock,
+  Bookmark,
 } from "lucide-react";
 
 interface VenueSearchProps {
@@ -315,7 +316,9 @@ export function VenueSearch({
         }
         setLocationError(null);
       } else if (data.status === "ZERO_RESULTS") {
-        setLocationError("Location not found. Try a different city or zipcode.");
+        setLocationError(
+          "Location not found. Try a different city or zipcode."
+        );
         setUserLocation(null);
       } else {
         setLocationError(`Geocoding failed: ${data.status}`);
@@ -331,26 +334,29 @@ export function VenueSearch({
   }, []);
 
   // Handle location input change with debounce
-  const handleLocationChange = useCallback((value: string) => {
-    setLocationQuery(value);
-    setLocationError(null);
+  const handleLocationChange = useCallback(
+    (value: string) => {
+      setLocationQuery(value);
+      setLocationError(null);
 
-    // Clear any pending geocode
-    if (geocodeTimeoutRef.current) {
-      clearTimeout(geocodeTimeoutRef.current);
-    }
+      // Clear any pending geocode
+      if (geocodeTimeoutRef.current) {
+        clearTimeout(geocodeTimeoutRef.current);
+      }
 
-    // Clear location immediately if input is cleared
-    if (!value.trim()) {
-      setUserLocation(null);
-      return;
-    }
+      // Clear location immediately if input is cleared
+      if (!value.trim()) {
+        setUserLocation(null);
+        return;
+      }
 
-    // Debounce geocoding (500ms)
-    geocodeTimeoutRef.current = setTimeout(() => {
-      geocodeLocation(value);
-    }, 500);
-  }, [geocodeLocation]);
+      // Debounce geocoding (500ms)
+      geocodeTimeoutRef.current = setTimeout(() => {
+        geocodeLocation(value);
+      }, 500);
+    },
+    [geocodeLocation]
+  );
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -378,10 +384,12 @@ export function VenueSearch({
             {isGeocoding ? (
               <Loader2 className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground animate-spin" />
             ) : (
-              <MapPin className={cn(
-                "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
-                userLocation ? "text-primary" : "text-muted-foreground"
-              )} />
+              <MapPin
+                className={cn(
+                  "absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2",
+                  userLocation ? "text-primary" : "text-muted-foreground"
+                )}
+              />
             )}
             <Input
               id="venue-location"
@@ -389,10 +397,7 @@ export function VenueSearch({
               placeholder="Enter city, zipcode, or address"
               value={locationQuery}
               onChange={(e) => handleLocationChange(e.target.value)}
-              className={cn(
-                "pl-10",
-                userLocation && "border-primary/50"
-              )}
+              className={cn("pl-10", userLocation && "border-primary/50")}
             />
           </div>
           <Button
@@ -527,11 +532,22 @@ export function VenueSearch({
         {/* Results List */}
         {!isLoading && filteredAndSortedResults.length > 0 && (
           <>
-            <p className="text-sm text-muted-foreground">
-              {filteredAndSortedResults.length === results.length
-                ? `${results.length} venue${results.length !== 1 ? "s" : ""} found`
-                : `${filteredAndSortedResults.length} of ${results.length} venue${results.length !== 1 ? "s" : ""} shown`}
-            </p>
+            <div className="space-y-1">
+              <p className="text-sm text-muted-foreground">
+                {filteredAndSortedResults.length === results.length
+                  ? `${results.length} venue${
+                      results.length !== 1 ? "s" : ""
+                    } found`
+                  : `${filteredAndSortedResults.length} of ${
+                      results.length
+                    } venue${results.length !== 1 ? "s" : ""} shown`}
+              </p>
+              <p className="text-md font-semibold text-muted-foreground/70 flex items-center gap-1">
+                <Bookmark className="h-3 w-3" />
+                Click the bookmark to save venues, then compare in the
+                &quot;Saved&quot; tab
+              </p>
+            </div>
             <div className="space-y-3">
               {filteredAndSortedResults.map((venue) => (
                 <VenueCard
@@ -562,17 +578,21 @@ export function VenueSearch({
         )}
 
         {/* Empty State - Filters removed all results */}
-        {!isLoading && hasSearched && results.length > 0 && filteredAndSortedResults.length === 0 && (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
-            <Building2 className="h-12 w-12 text-muted-foreground/50" />
-            <h3 className="mt-4 font-semibold text-foreground">
-              No matching venues
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {results.length} venue{results.length !== 1 ? "s" : ""} found, but none match your filters
-            </p>
-          </div>
-        )}
+        {!isLoading &&
+          hasSearched &&
+          results.length > 0 &&
+          filteredAndSortedResults.length === 0 && (
+            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-12 text-center">
+              <Building2 className="h-12 w-12 text-muted-foreground/50" />
+              <h3 className="mt-4 font-semibold text-foreground">
+                No matching venues
+              </h3>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {results.length} venue{results.length !== 1 ? "s" : ""} found,
+                but none match your filters
+              </p>
+            </div>
+          )}
 
         {/* Initial State */}
         {!isLoading && !hasSearched && (
