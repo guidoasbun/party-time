@@ -14,20 +14,35 @@ import { useSeatingChart } from "@/hooks/useSeatingChart";
 import { useEvent } from "@/hooks/useEvent";
 import { useEventGuests } from "@/hooks/useEventGuests";
 import { SeatingEditorLayout } from "@/components/seating/SeatingEditorLayout";
+import MobileSeatingView from "@/components/seating/MobileSeatingView";
 import { SaveIndicator } from "@/components/seating/SaveIndicator";
 import { SeatingHelp } from "@/components/seating/SeatingHelp";
 import { Button } from "@/components/ui/Button";
 import { ErrorMessage } from "@/components/ui/ErrorMessage";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { useToast } from "@/hooks/useToast";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function SeatingEditPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const { resolvedTheme } = useTheme();
   const eventId = params.id as string;
   const [showHelp, setShowHelp] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile viewport for responsive layout
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Fetch event data
   const {
@@ -288,33 +303,53 @@ export default function SeatingEditPage() {
           </div>
         </div>
 
-        {/* Main Editor */}
+        {/* Main Editor - Responsive: Mobile vs Desktop */}
         <div className="flex-1 overflow-hidden">
-          <SeatingEditorLayout
-            event={event}
-            chart={chart}
-            tables={tables || []}
-            seatAssignments={seatAssignments || []}
-            guests={guests || []}
-            statistics={statistics}
-            selectedTableId={selectedTableId}
-            canUndo={canUndo}
-            canRedo={canRedo}
-            onSelectTable={selectTable}
-            onUpdateTable={updateTable}
-            onDeleteTable={deleteTable}
-            onAssignGuest={(tableId, guestId, seatNumber) =>
-              assignGuest(tableId, guestId, seatNumber || 0)
-            }
-            onUnassignSeat={unassignSeat}
-            onSave={handleSave}
-            onUndo={undo}
-            onRedo={redo}
-            onCreateTable={createTable}
-            onBulkCreateTables={bulkCreateTables}
-            onUpdateChart={updateChart}
-            onRefresh={refetchChart}
-          />
+          {isMobile && chart ? (
+            // Mobile: Read-only view with Find My Seat
+            <MobileSeatingView
+              seatingChart={{
+                ...chart,
+                tables: tables || [],
+                total_tables: tables?.length || 0,
+                total_capacity:
+                  tables?.reduce((sum, t) => sum + t.capacity, 0) || 0,
+                total_assigned: seatAssignments?.length || 0,
+              }}
+              tables={tables || []}
+              guests={guests || []}
+              readOnly={true}
+              showFindMySeat={true}
+              theme={resolvedTheme}
+            />
+          ) : (
+            // Desktop: Full editor
+            <SeatingEditorLayout
+              event={event}
+              chart={chart}
+              tables={tables || []}
+              seatAssignments={seatAssignments || []}
+              guests={guests || []}
+              statistics={statistics}
+              selectedTableId={selectedTableId}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onSelectTable={selectTable}
+              onUpdateTable={updateTable}
+              onDeleteTable={deleteTable}
+              onAssignGuest={(tableId, guestId, seatNumber) =>
+                assignGuest(tableId, guestId, seatNumber || 0)
+              }
+              onUnassignSeat={unassignSeat}
+              onSave={handleSave}
+              onUndo={undo}
+              onRedo={redo}
+              onCreateTable={createTable}
+              onBulkCreateTables={bulkCreateTables}
+              onUpdateChart={updateChart}
+              onRefresh={refetchChart}
+            />
+          )}
         </div>
       </div>
 
