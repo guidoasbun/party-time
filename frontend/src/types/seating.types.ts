@@ -487,7 +487,11 @@ export type HistoryActionType =
   | "table_update"
   | "guest_assign"
   | "guest_unassign"
-  | "bulk_operation";
+  | "bulk_operation"
+  | "venue_floor_plan_update"
+  | "venue_special_area_add"
+  | "venue_special_area_update"
+  | "venue_special_area_delete";
 
 export interface HistoryAction<T = unknown> {
   id: string;

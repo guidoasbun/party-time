@@ -589,12 +589,23 @@ export function useSeatingChart({
         }
         break;
 
+      case "venue_floor_plan_update":
+        // Restore previous venue settings
+        if (action.inverseData) {
+          const previousVenue = action.inverseData as {
+            background_image_url?: string;
+            chart_metadata?: Record<string, unknown>;
+          };
+          updateChartMutation.mutate(previousVenue);
+        }
+        break;
+
       default:
         break;
     }
 
     console.log("Undo successful");
-  }, [history, updateTableMutation, unassignSeatMutation, assignGuestMutation]);
+  }, [history, updateTableMutation, unassignSeatMutation, assignGuestMutation, updateChartMutation]);
 
   /**
    * Redo last undone action
@@ -640,12 +651,23 @@ export function useSeatingChart({
         }
         break;
 
+      case "venue_floor_plan_update":
+        // Re-apply venue settings
+        if (action.data) {
+          const venueUpdates = action.data as {
+            background_image_url?: string;
+            chart_metadata?: Record<string, unknown>;
+          };
+          updateChartMutation.mutate(venueUpdates);
+        }
+        break;
+
       default:
         break;
     }
 
     console.log("Redo successful");
-  }, [history, updateTableMutation, assignGuestMutation, unassignSeatMutation]);
+  }, [history, updateTableMutation, assignGuestMutation, unassignSeatMutation, updateChartMutation]);
 
   // ============================================================================
   // Keyboard Shortcuts
@@ -664,6 +686,12 @@ export function useSeatingChart({
 
       // Cmd/Ctrl + Shift + Z: Redo
       if (ctrlOrCmd && e.key === "z" && e.shiftKey) {
+        e.preventDefault();
+        redo();
+      }
+
+      // Cmd/Ctrl + Y: Redo (alternative)
+      if (ctrlOrCmd && e.key === "y") {
         e.preventDefault();
         redo();
       }
@@ -825,6 +853,18 @@ export function useSeatingChart({
       return await bulkCreateTablesMutation.mutateAsync(tables);
     },
     updateChart: async (updates: SeatingChartUpdate) => {
+      // Record venue changes in history for undo/redo
+      if (updates.background_image_url !== undefined || updates.chart_metadata) {
+        const previousData = {
+          background_image_url: chart?.background_image_url,
+          chart_metadata: chart?.chart_metadata,
+        };
+        history.recordAction({
+          type: "venue_floor_plan_update",
+          data: updates,
+          inverseData: previousData,
+        });
+      }
       return await updateChartMutation.mutateAsync(updates);
     },
   };
