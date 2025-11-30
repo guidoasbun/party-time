@@ -396,6 +396,14 @@ export function SeatingEditorLayout({
                   )
                 );
               }}
+              // Phase 6.3.7: Handle floor plan position updates for persistence
+              onFloorPlanMove={(x, y) => {
+                setLocalFloorPlanSettings((prev) => ({
+                  ...(prev || { opacity: 0.5, locked: false, scale: 1 }),
+                  offsetX: x,
+                  offsetY: y,
+                }));
+              }}
               zoomState={{ scale: zoomLevel, offsetX: 0, offsetY: 0 }}
               onZoomChange={(newZoom) => setZoomLevel(newZoom.scale)}
               // Phase 6.3.5: Drag-and-Drop Assignment Venue-Aware

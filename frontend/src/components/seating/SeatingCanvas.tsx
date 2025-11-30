@@ -45,6 +45,8 @@ export interface SeatingCanvasProps {
   floorPlanUrl?: string;
   floorPlanSettings?: FloorPlanSettings;
   specialAreas?: SpecialArea[];
+  // Phase 6.3.7: Floor plan position persistence
+  onFloorPlanMove?: (x: number, y: number) => void;
   onSpecialAreaSelect?: (areaId: string | null) => void;
   onSpecialAreaMove?: (areaId: string, x: number, y: number) => void;
   // Phase 6.3.7: Special area update callback for canvas drag/resize
@@ -88,6 +90,7 @@ export default function SeatingCanvas({
   floorPlanUrl,
   floorPlanSettings,
   specialAreas = [],
+  onFloorPlanMove,
   onSpecialAreaSelect,
   onSpecialAreaMove,
   onSpecialAreaUpdate,
@@ -152,6 +155,7 @@ export default function SeatingCanvas({
   const onTableRotateRef = useRef(onTableRotate);
   const onTableResizeRef = useRef(onTableResize);
   const onSpecialAreaUpdateRef = useRef(onSpecialAreaUpdate);
+  const onFloorPlanMoveRef = useRef(onFloorPlanMove);
 
   // Keep refs synchronized with latest callbacks
   useEffect(() => {
@@ -159,7 +163,8 @@ export default function SeatingCanvas({
     onTableRotateRef.current = onTableRotate;
     onTableResizeRef.current = onTableResize;
     onSpecialAreaUpdateRef.current = onSpecialAreaUpdate;
-  }, [onTableMove, onTableRotate, onTableResize, onSpecialAreaUpdate]);
+    onFloorPlanMoveRef.current = onFloorPlanMove;
+  }, [onTableMove, onTableRotate, onTableResize, onSpecialAreaUpdate, onFloorPlanMove]);
 
   // Track floor plan image object
   const floorPlanImageRef = useRef<fabric.Image | null>(null);
@@ -268,11 +273,17 @@ export default function SeatingCanvas({
             lockMovementY: settings.locked,
           });
 
-          // Position at canvas center
-          img.set({
-            left: (canvasWidth - img.width! * scale) / 2,
-            top: (canvasHeight - img.height! * scale) / 2,
-          });
+          // Phase 6.3.7: Use stored offset if available, otherwise center
+          // IMPORTANT: offsetX/offsetY store RELATIVE offset from center, not absolute position
+          // This ensures floor plan position is preserved when canvas/screen size changes
+          const centerX = (canvasWidth - img.width! * scale) / 2;
+          const centerY = (canvasHeight - img.height! * scale) / 2;
+
+          // Apply relative offset to current center (or use center if no offset stored)
+          const left = settings.offsetX !== undefined ? centerX + settings.offsetX : centerX;
+          const top = settings.offsetY !== undefined ? centerY + settings.offsetY : centerY;
+
+          img.set({ left, top });
 
           // Store reference
           floorPlanImageRef.current = img;
@@ -707,6 +718,34 @@ export default function SeatingCanvas({
       const canvas = fabricCanvasRef.current;
       const target = e.target as fabric.Object | undefined;
       if (!canvas || !target) {
+        return;
+      }
+
+      // Phase 6.3.7: Handle floor plan move
+      const customObj = target as fabric.Object & { isFloorPlan?: boolean };
+      if (customObj.isFloorPlan) {
+        const canvas = fabricCanvasRef.current;
+        if (!canvas) return;
+
+        const left = target.left ?? 0;
+        const top = target.top ?? 0;
+
+        // Calculate the relative offset from center (not absolute position)
+        // This ensures position is preserved when canvas/screen size changes
+        const canvasWidth = canvas.getWidth();
+        const canvasHeight = canvas.getHeight();
+        const imgWidth = (target.width ?? 0) * (target.scaleX ?? 1);
+        const imgHeight = (target.height ?? 0) * (target.scaleY ?? 1);
+        const centerX = (canvasWidth - imgWidth) / 2;
+        const centerY = (canvasHeight - imgHeight) / 2;
+
+        // Store offset FROM center, not absolute position
+        const relativeOffsetX = left - centerX;
+        const relativeOffsetY = top - centerY;
+
+        if (onFloorPlanMoveRef.current) {
+          onFloorPlanMoveRef.current(relativeOffsetX, relativeOffsetY);
+        }
         return;
       }
 
