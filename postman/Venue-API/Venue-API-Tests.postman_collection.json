@@ -1,0 +1,1227 @@
+{
+	"info": {
+		"_postman_id": "venue-api-tests-2025",
+		"name": "Venue API Tests",
+		"description": "Comprehensive test collection for Venue API endpoints (Phase 7.1.1: Google Places API Integration).\n\nThis collection tests all venue endpoints including:\n- Google Places API search and details\n- Event venue management (CRUD)\n- Venue reordering\n- Error handling and validation\n\n**Setup:**\n1. Import this collection into Postman\n2. Import the Venue-API-Local environment\n3. Set the event_id variable to a valid event UUID\n4. Ensure backend is running on http://localhost:8000\n5. Run the \"1. Setup & Authentication\" folder first\n6. Execute requests sequentially or run entire collection\n\n**Features:**\n- ~25 requests across 6 folders\n- ~50+ automated test assertions\n- Auto-saves IDs for request chaining\n- Bearer token authentication\n- Comprehensive error scenarios\n\n**Documentation:** See VENUE-API-TESTING-GUIDE.md",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{access_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "1. Setup & Authentication",
+			"item": [
+				{
+					"name": "Health Check",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has status field\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData.status).to.eql('healthy');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 200ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/health",
+							"host": ["{{base_url}}"],
+							"path": ["health"]
+						},
+						"description": "Check if the API is running and healthy."
+					},
+					"response": []
+				},
+				{
+					"name": "Login - Get Access Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has access_token\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('access_token');",
+									"    ",
+									"    // Save access token to collection variable",
+									"    pm.collectionVariables.set(\"access_token\", jsonData.access_token);",
+									"});",
+									"",
+									"pm.test(\"Response has user_id\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('user_id');",
+									"    ",
+									"    // Save user_id for reference",
+									"    pm.collectionVariables.set(\"user_id\", jsonData.user_id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{test_email}}\",\n  \"password\": \"{{test_password}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "auth", "login"]
+						},
+						"description": "Authenticate and get access token for subsequent requests."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event - Verify Exists",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Event exists and has required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('planner_id');",
+									"    ",
+									"    // Ensure event_id is set",
+									"    pm.collectionVariables.set(\"event_id\", jsonData.id);",
+									"    console.log('Event verified: ' + jsonData.name);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/events/{{event_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "events", "{{event_id}}"]
+						},
+						"description": "Verify test event exists before adding venues."
+					},
+					"response": []
+				}
+			],
+			"description": "Setup requests to prepare for venue testing."
+		},
+		{
+			"name": "2. Google Places Search",
+			"item": [
+				{
+					"name": "Search Venues - Basic Query",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has results array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response has total_results and query fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('total_results');",
+									"    pm.expect(jsonData).to.have.property('query');",
+									"});",
+									"",
+									"pm.test(\"Venues have required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.results.length > 0) {",
+									"        const venue = jsonData.results[0];",
+									"        pm.expect(venue).to.have.property('place_id');",
+									"        pm.expect(venue).to.have.property('name');",
+									"        pm.expect(venue).to.have.property('address');",
+									"        pm.expect(venue).to.have.property('location');",
+									"        ",
+									"        // Save first place_id for subsequent tests",
+									"        pm.collectionVariables.set(\"search_place_id\", venue.place_id);",
+									"        console.log('Found venue: ' + venue.name);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/search?query={{search_query}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "search"],
+							"query": [
+								{
+									"key": "query",
+									"value": "{{search_query}}"
+								}
+							]
+						},
+						"description": "Search for venues with a basic text query."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Venues - With Location",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has results array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Search included location parameters\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    // Location-based search should return geographically relevant results",
+									"    console.log('Found ' + jsonData.total_results + ' venues near specified location');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/search?query={{search_query}}&latitude={{search_latitude}}&longitude={{search_longitude}}&radius=10000",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "search"],
+							"query": [
+								{
+									"key": "query",
+									"value": "{{search_query}}"
+								},
+								{
+									"key": "latitude",
+									"value": "{{search_latitude}}"
+								},
+								{
+									"key": "longitude",
+									"value": "{{search_longitude}}"
+								},
+								{
+									"key": "radius",
+									"value": "10000"
+								}
+							]
+						},
+						"description": "Search for venues near a specific location (New York City)."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Venues - With Filters",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has results array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('results');",
+									"    pm.expect(jsonData.results).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Venues meet minimum rating filter\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    jsonData.results.forEach(function(venue) {",
+									"        if (venue.rating) {",
+									"            pm.expect(venue.rating).to.be.at.least(4.0);",
+									"        }",
+									"    });",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/search?query=restaurant&venue_type=restaurant&min_rating=4.0&max_results=10",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "search"],
+							"query": [
+								{
+									"key": "query",
+									"value": "restaurant"
+								},
+								{
+									"key": "venue_type",
+									"value": "restaurant"
+								},
+								{
+									"key": "min_rating",
+									"value": "4.0"
+								},
+								{
+									"key": "max_results",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search for venues with type, rating, and result limit filters."
+					},
+					"response": []
+				},
+				{
+					"name": "Search Venues - Empty Query (Validation)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 422 (Validation Error)\", function () {",
+									"    pm.response.to.have.status(422);",
+									"});",
+									"",
+									"pm.test(\"Response has validation error detail\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/search?query=",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "search"],
+							"query": [
+								{
+									"key": "query",
+									"value": ""
+								}
+							]
+						},
+						"description": "Test validation error for empty search query."
+					},
+					"response": []
+				}
+			],
+			"description": "Test Google Places API search functionality."
+		},
+		{
+			"name": "3. Venue Details",
+			"item": [
+				{
+					"name": "Get Venue Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has venue details\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('place_id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('formatted_address');",
+									"    pm.expect(jsonData).to.have.property('location');",
+									"});",
+									"",
+									"pm.test(\"Location has lat/lng\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.location).to.have.property('latitude');",
+									"    pm.expect(jsonData.location).to.have.property('longitude');",
+									"});",
+									"",
+									"pm.test(\"Response may have optional fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    // These are optional but commonly present",
+									"    console.log('Rating: ' + (jsonData.rating || 'N/A'));",
+									"    console.log('Phone: ' + (jsonData.phone || 'N/A'));",
+									"    console.log('Website: ' + (jsonData.website || 'N/A'));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/{{test_place_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "{{test_place_id}}"]
+						},
+						"description": "Get detailed information about a venue from Google Places."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Venue Photos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is array of photos\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Photos have required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    if (jsonData.length > 0) {",
+									"        const photo = jsonData[0];",
+									"        pm.expect(photo).to.have.property('url');",
+									"        pm.expect(photo).to.have.property('width');",
+									"        pm.expect(photo).to.have.property('height');",
+									"        console.log('Found ' + jsonData.length + ' photos');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/{{test_place_id}}/photos?max_width=800&max_height=600&limit=5",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "{{test_place_id}}", "photos"],
+							"query": [
+								{
+									"key": "max_width",
+									"value": "800"
+								},
+								{
+									"key": "max_height",
+									"value": "600"
+								},
+								{
+									"key": "limit",
+									"value": "5"
+								}
+							]
+						},
+						"description": "Get photos for a venue."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Venue Details - Invalid Place ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Response has error detail\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/INVALID_PLACE_ID_12345",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "INVALID_PLACE_ID_12345"]
+						},
+						"description": "Test 404 error for invalid place ID."
+					},
+					"response": []
+				}
+			],
+			"description": "Test venue details and photo retrieval."
+		},
+		{
+			"name": "4. Event Venue Management",
+			"item": [
+				{
+					"name": "Add Google Venue to Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has venue data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('event_id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('address');",
+									"    pm.expect(jsonData).to.have.property('google_place_id');",
+									"    pm.expect(jsonData).to.have.property('is_manual');",
+									"    pm.expect(jsonData.is_manual).to.be.false;",
+									"    ",
+									"    // Save venue_id for subsequent tests",
+									"    pm.collectionVariables.set(\"venue_id\", jsonData.id);",
+									"    pm.collectionVariables.set(\"google_venue_id\", jsonData.id);",
+									"    console.log('Added Google venue: ' + jsonData.name);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"place_id\": \"{{test_place_id}}\",\n  \"notes\": \"Main ceremony venue - added via Postman test\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Add a Google Places venue to an event."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Manual Venue to Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has manual venue data\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('is_manual');",
+									"    pm.expect(jsonData.is_manual).to.be.true;",
+									"    pm.expect(jsonData.google_place_id).to.be.null;",
+									"    ",
+									"    // Save manual venue_id",
+									"    pm.collectionVariables.set(\"manual_venue_id\", jsonData.id);",
+									"    console.log('Added manual venue: ' + jsonData.name);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Private Family Estate\",\n  \"address\": \"123 Test Lane, Test City, TC 12345\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060,\n  \"phone\": \"+1-555-123-4567\",\n  \"website\": \"https://example.com/estate\",\n  \"notes\": \"Reception venue - private property\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Add a manually entered venue to an event."
+					},
+					"response": []
+				},
+				{
+					"name": "List Event Venues",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has venues list\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('venues');",
+									"    pm.expect(jsonData).to.have.property('total');",
+									"    pm.expect(jsonData).to.have.property('event_id');",
+									"    pm.expect(jsonData.venues).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Event has at least 2 venues\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.total).to.be.at.least(2);",
+									"    console.log('Event has ' + jsonData.total + ' venues');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Get all venues for an event."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Single Event Venue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response has venue details\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('id');",
+									"    pm.expect(jsonData).to.have.property('name');",
+									"    pm.expect(jsonData).to.have.property('address');",
+									"    pm.expect(jsonData).to.have.property('latitude');",
+									"    pm.expect(jsonData).to.have.property('longitude');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{venue_id}}"]
+						},
+						"description": "Get a specific venue for an event."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Event Venue with Google Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response includes google_details when requested\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    // google_details may be present if venue has a place_id",
+									"    if (jsonData.google_place_id) {",
+									"        pm.expect(jsonData).to.have.property('google_details');",
+									"        if (jsonData.google_details) {",
+									"            console.log('Google details included');",
+									"        }",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{google_venue_id}}?include_google_details=true",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{google_venue_id}}"],
+							"query": [
+								{
+									"key": "include_google_details",
+									"value": "true"
+								}
+							]
+						},
+						"description": "Get an event venue with fresh Google Places details."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Event Venue Notes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Notes were updated\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.notes).to.include('Updated notes');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"notes\": \"Updated notes - ceremony starts at 3pm\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{venue_id}}"]
+						},
+						"description": "Update notes for an event venue."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Manual Venue Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Manual venue details were updated\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.name).to.eql('Updated Family Estate');",
+									"    pm.expect(jsonData.phone).to.eql('+1-555-999-8888');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Updated Family Estate\",\n  \"phone\": \"+1-555-999-8888\",\n  \"notes\": \"Reception venue - updated contact info\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{manual_venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{manual_venue_id}}"]
+						},
+						"description": "Update details for a manual venue (name, phone, etc.)."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Venue from Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"pm.test(\"Response body is empty\", function () {",
+									"    pm.expect(pm.response.text()).to.be.empty;",
+									"    console.log('Manual venue removed successfully');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{manual_venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{manual_venue_id}}"]
+						},
+						"description": "Remove a venue from an event."
+					},
+					"response": []
+				}
+			],
+			"description": "Test event venue CRUD operations."
+		},
+		{
+			"name": "5. Venue Reordering",
+			"item": [
+				{
+					"name": "Add Second Venue for Reorder Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Second venue added\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.collectionVariables.set(\"second_venue_id\", jsonData.id);",
+									"    console.log('Added second venue for reorder test');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"After Party Location\",\n  \"address\": \"456 Party Street, Fun City, FC 67890\",\n  \"latitude\": 40.7580,\n  \"longitude\": -73.9855,\n  \"notes\": \"After party venue\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Add another venue for reorder testing."
+					},
+					"response": []
+				},
+				{
+					"name": "Reorder Event Venues",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Venues are reordered\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('venues');",
+									"    pm.expect(jsonData.venues).to.be.an('array');",
+									"    ",
+									"    // Verify order changed (second venue should now be first)",
+									"    if (jsonData.venues.length >= 2) {",
+									"        const secondVenueId = pm.collectionVariables.get('second_venue_id');",
+									"        pm.expect(jsonData.venues[0].id).to.eql(secondVenueId);",
+									"        console.log('Venues reordered successfully');",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"venue_ids\": [\"{{second_venue_id}}\", \"{{google_venue_id}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/reorder",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "reorder"]
+						},
+						"description": "Reorder venues for an event (swap order)."
+					},
+					"response": []
+				},
+				{
+					"name": "Reorder with Invalid Venue ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response has error detail\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"    pm.expect(jsonData.detail).to.include('not found');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"venue_ids\": [\"00000000-0000-0000-0000-000000000000\", \"{{google_venue_id}}\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/reorder",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "reorder"]
+						},
+						"description": "Test error handling for invalid venue ID in reorder request."
+					},
+					"response": []
+				}
+			],
+			"description": "Test venue reordering functionality."
+		},
+		{
+			"name": "6. Error Handling & Cleanup",
+			"item": [
+				{
+					"name": "Add Venue to Non-Existent Event",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 404\", function () {",
+									"    pm.response.to.have.status(404);",
+									"});",
+									"",
+									"pm.test(\"Response has error detail\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"place_id\": \"{{test_place_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/00000000-0000-0000-0000-000000000000/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "00000000-0000-0000-0000-000000000000", "venues"]
+						},
+						"description": "Test 404 error for non-existent event."
+					},
+					"response": []
+				},
+				{
+					"name": "Add Venue Without Auth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 401 or 403\", function () {",
+									"    pm.expect(pm.response.code).to.be.oneOf([401, 403]);",
+									"});",
+									"",
+									"pm.test(\"Response indicates auth required\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"place_id\": \"{{test_place_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Test 401 error when no authentication token provided."
+					},
+					"response": []
+				},
+				{
+					"name": "Manual Venue Missing Required Fields",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 400\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Response indicates missing fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('detail');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Incomplete Venue\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues"]
+						},
+						"description": "Test validation error for manual venue missing required fields."
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - Remove Second Venue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"console.log('Cleanup: Second venue removed');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{second_venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{second_venue_id}}"]
+						},
+						"description": "Cleanup: Remove the second venue added for reorder tests."
+					},
+					"response": []
+				},
+				{
+					"name": "Cleanup - Remove Google Venue",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 204\", function () {",
+									"    pm.response.to.have.status(204);",
+									"});",
+									"",
+									"console.log('Cleanup: Google venue removed');",
+									"console.log('All tests completed!');"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/{{api_version}}/venues/events/{{event_id}}/venues/{{google_venue_id}}",
+							"host": ["{{base_url}}"],
+							"path": ["{{api_version}}", "venues", "events", "{{event_id}}", "venues", "{{google_venue_id}}"]
+						},
+						"description": "Cleanup: Remove the Google venue added during tests."
+					},
+					"response": []
+				}
+			],
+			"description": "Test error handling and cleanup test data."
+		}
+	],
+	"variable": [
+		{
+			"key": "access_token",
+			"value": ""
+		},
+		{
+			"key": "user_id",
+			"value": ""
+		},
+		{
+			"key": "venue_id",
+			"value": ""
+		},
+		{
+			"key": "google_venue_id",
+			"value": ""
+		},
+		{
+			"key": "manual_venue_id",
+			"value": ""
+		},
+		{
+			"key": "second_venue_id",
+			"value": ""
+		},
+		{
+			"key": "search_place_id",
+			"value": ""
+		}
+	]
+}

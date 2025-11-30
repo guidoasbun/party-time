@@ -152,3 +152,328 @@ export const ALLOWED_IMAGE_TYPES = [
   "image/svg+xml",
 ];
 export const ALLOWED_IMAGE_EXTENSIONS = [".png", ".jpg", ".jpeg", ".svg"];
+
+// ============================================================
+// Google Places API Types (Phase 7.1.1)
+// FR-8: The system shall provide a venue search interface.
+// Phase 7.1.1: Google Places API Integration
+// ============================================================
+
+/**
+ * Geographic coordinates for a venue
+ */
+export interface VenueLocation {
+  latitude: number;
+  longitude: number;
+}
+
+/**
+ * Photo information from Google Places
+ */
+export interface VenuePhoto {
+  url: string;
+  width: number;
+  height: number;
+  attributions: string[];
+}
+
+/**
+ * Review information from Google Places
+ */
+export interface VenueReview {
+  author_name: string;
+  rating: number;
+  text: string;
+  time: number; // Unix timestamp
+  relative_time_description: string;
+  profile_photo_url?: string;
+}
+
+/**
+ * Opening hours period
+ */
+export interface VenueOpeningPeriod {
+  open_day: number; // 0=Sunday, 6=Saturday
+  open_time: string; // HH:MM format
+  close_day: number;
+  close_time: string;
+}
+
+/**
+ * Opening hours information
+ */
+export interface VenueOpeningHours {
+  open_now?: boolean;
+  weekday_text: string[];
+  periods: VenueOpeningPeriod[];
+}
+
+/**
+ * Search result from Google Places API
+ */
+export interface VenueSearchResult {
+  place_id: string;
+  name: string;
+  address: string;
+  location: VenueLocation;
+  rating?: number;
+  user_ratings_total?: number;
+  price_level?: number;
+  types: string[];
+  photo_url?: string;
+  open_now?: boolean;
+}
+
+/**
+ * Full venue details from Google Places API
+ */
+export interface VenueDetails {
+  place_id: string;
+  name: string;
+  address: string;
+  formatted_address: string;
+  location: VenueLocation;
+  rating?: number;
+  user_ratings_total?: number;
+  price_level?: number;
+  types: string[];
+  phone?: string;
+  website?: string;
+  opening_hours?: VenueOpeningHours;
+  photos: VenuePhoto[];
+  reviews: VenueReview[];
+  url?: string; // Google Maps URL
+  editorial_summary?: string;
+}
+
+/**
+ * Search parameters for venue search
+ */
+export interface VenueSearchParams {
+  query: string;
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+  venue_type?: string;
+  min_rating?: number;
+  max_results?: number;
+}
+
+/**
+ * Response from venue search endpoint
+ */
+export interface VenueSearchResponse {
+  results: VenueSearchResult[];
+  total_results: number;
+  query: string;
+  cached: boolean;
+}
+
+// ============================================================
+// Event Venue Types (Database Model)
+// ============================================================
+
+/**
+ * Saved venue for an event (stored in database)
+ */
+export interface EventVenue {
+  id: string;
+  event_id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  google_place_id?: string;
+  phone?: string;
+  website?: string;
+  rating?: number;
+  price_level?: number;
+  photo_url?: string;
+  is_manual: boolean;
+  notes?: string;
+  display_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Event venue with fresh Google details
+ */
+export interface EventVenueWithDetails extends EventVenue {
+  google_details?: VenueDetails;
+}
+
+/**
+ * Request to create an event venue
+ */
+export interface EventVenueCreateRequest {
+  place_id?: string;
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  website?: string;
+  notes?: string;
+}
+
+/**
+ * Request to update an event venue
+ */
+export interface EventVenueUpdateRequest {
+  notes?: string;
+  display_order?: number;
+  name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
+  phone?: string;
+  website?: string;
+}
+
+/**
+ * Response for listing event venues
+ */
+export interface EventVenuesListResponse {
+  venues: EventVenue[];
+  total: number;
+  event_id: string;
+}
+
+/**
+ * Request to reorder venues
+ */
+export interface EventVenueReorderRequest {
+  venue_ids: string[];
+}
+
+// ============================================================
+// Google Maps Types (for VenueMap component)
+// ============================================================
+
+/**
+ * Map theme styles for light/dark mode
+ */
+export const MAP_STYLES = {
+  light: [], // Default Google Maps style
+  dark: [
+    { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] },
+    {
+      featureType: "administrative.locality",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#d59563" }],
+    },
+    {
+      featureType: "poi",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#d59563" }],
+    },
+    {
+      featureType: "poi.park",
+      elementType: "geometry",
+      stylers: [{ color: "#263c3f" }],
+    },
+    {
+      featureType: "poi.park",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#6b9a76" }],
+    },
+    {
+      featureType: "road",
+      elementType: "geometry",
+      stylers: [{ color: "#38414e" }],
+    },
+    {
+      featureType: "road",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#212a37" }],
+    },
+    {
+      featureType: "road",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#9ca5b3" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "geometry",
+      stylers: [{ color: "#746855" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "geometry.stroke",
+      stylers: [{ color: "#1f2835" }],
+    },
+    {
+      featureType: "road.highway",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#f3d19c" }],
+    },
+    {
+      featureType: "transit",
+      elementType: "geometry",
+      stylers: [{ color: "#2f3948" }],
+    },
+    {
+      featureType: "transit.station",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#d59563" }],
+    },
+    {
+      featureType: "water",
+      elementType: "geometry",
+      stylers: [{ color: "#17263c" }],
+    },
+    {
+      featureType: "water",
+      elementType: "labels.text.fill",
+      stylers: [{ color: "#515c6d" }],
+    },
+    {
+      featureType: "water",
+      elementType: "labels.text.stroke",
+      stylers: [{ color: "#17263c" }],
+    },
+  ],
+} as const;
+
+/**
+ * Price level labels
+ */
+export const PRICE_LEVEL_LABELS: Record<number, string> = {
+  0: "Free",
+  1: "$",
+  2: "$$",
+  3: "$$$",
+  4: "$$$$",
+};
+
+/**
+ * Venue type display labels
+ */
+export const VENUE_TYPE_LABELS: Record<string, string> = {
+  restaurant: "Restaurant",
+  banquet_hall: "Banquet Hall",
+  event_venue: "Event Venue",
+  wedding_venue: "Wedding Venue",
+  hotel: "Hotel",
+  conference_center: "Conference Center",
+  bar: "Bar",
+  night_club: "Night Club",
+  park: "Park",
+  museum: "Museum",
+  art_gallery: "Art Gallery",
+  church: "Church",
+  community_center: "Community Center",
+};
+
+/**
+ * Google Places type to display label
+ */
+export function getVenueTypeLabel(type: string): string {
+  return (
+    VENUE_TYPE_LABELS[type] ||
+    type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+  );
+}

@@ -196,8 +196,7 @@ export const API_ENDPOINTS = {
 
   SEATING: {
     CREATE: (eventId: string) => `/api/v1/events/${eventId}/seating`,
-    GET_CHART: (eventId: string) =>
-      `/api/v1/events/${eventId}/seating`,
+    GET_CHART: (eventId: string) => `/api/v1/events/${eventId}/seating`,
     UPDATE_CHART: (eventId: string, chartId: string) =>
       `/api/v1/events/${eventId}/seating/${chartId}`,
     DELETE_CHART: (eventId: string, chartId: string) =>
@@ -222,6 +221,25 @@ export const API_ENDPOINTS = {
       `/api/v1/events/${eventId}/seating/${chartId}/auto-assign`,
     STATISTICS: (eventId: string, chartId: string) =>
       `/api/v1/events/${eventId}/seating/${chartId}/statistics`,
+  },
+  // Venue endpoints (Phase 7.1.1: Google Places API Integration)
+  // FR-8: The system shall provide a venue search interface.
+  // Phase 7.1.1: Google Places API Integration
+  VENUES: {
+    SEARCH: "/api/v1/venues/search",
+    GET_DETAILS: (placeId: string) => `/api/v1/venues/${placeId}`,
+    GET_PHOTOS: (placeId: string) => `/api/v1/venues/${placeId}/photos`,
+    // Event venues
+    LIST: (eventId: string) => `/api/v1/venues/events/${eventId}/venues`,
+    ADD: (eventId: string) => `/api/v1/venues/events/${eventId}/venues`,
+    GET: (eventId: string, venueId: string) =>
+      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+    UPDATE: (eventId: string, venueId: string) =>
+      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+    DELETE: (eventId: string, venueId: string) =>
+      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+    REORDER: (eventId: string) =>
+      `/api/v1/venues/events/${eventId}/venues/reorder`,
   },
 } as const;
 
