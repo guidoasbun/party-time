@@ -57,6 +57,14 @@ import {
 import { openPrintDialog } from "./PrintView";
 import { UUID } from "@/types/common.types";
 
+/**
+ * Venue metadata for export/print views
+ */
+interface VenueMetadata {
+  hasFloorPlan: boolean;
+  specialAreas: Array<{ type: string; label: string }>;
+}
+
 interface ExportSeatingProps {
   fabricCanvas: FabricCanvas | null;
   chart: SeatingChartWithTables;
@@ -66,6 +74,7 @@ interface ExportSeatingProps {
   eventName: string;
   eventDate?: string;
   venueName?: string;
+  venueMetadata?: VenueMetadata;
 }
 
 export default function ExportSeating(props: ExportSeatingProps) {
@@ -78,6 +87,7 @@ export default function ExportSeating(props: ExportSeatingProps) {
     eventName,
     eventDate,
     venueName,
+    venueMetadata,
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -140,7 +150,11 @@ export default function ExportSeating(props: ExportSeatingProps) {
     try {
       let result;
       if (format === "svg") {
-        result = await exportSeatingChartToSVG(fabricCanvas, eventName);
+        result = await exportSeatingChartToSVG(
+          fabricCanvas,
+          eventName,
+          exportOptions
+        );
       } else {
         result = await exportSeatingChartToImage(
           fabricCanvas,
@@ -174,6 +188,7 @@ export default function ExportSeating(props: ExportSeatingProps) {
         eventDate,
         venueName,
         options: printOptions,
+        venueMetadata,
       });
       showSuccess("Print dialog opened");
     } catch (error) {

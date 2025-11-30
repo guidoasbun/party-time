@@ -6,8 +6,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import type { Canvas as FabricCanvas } from "fabric";
 import { TableTemplates } from "./TableTemplates";
 import { AutoAssignDialog } from "./AutoAssignDialog";
+import ExportSeating from "./ExportSeating";
 import {
   ChevronLeft,
   ChevronRight,
@@ -111,6 +113,8 @@ export function SeatingEditorLayout({
   const [showAutoAssignDialog, setShowAutoAssignDialog] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [draggedGuestId, setDraggedGuestId] = useState<string | null>(null);
+  // FR-21: Phase 6.3.9 - Export & Sharing with Venue
+  const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   // Track pending assignments to prevent race conditions / double-drops
   const [pendingAssignments, setPendingAssignments] = useState<Set<string>>(
     () => new Set()
@@ -343,6 +347,29 @@ export function SeatingEditorLayout({
               >
                 <Grid3x3 className="h-4 w-4" />
               </Button>
+
+              <div className="h-6 w-px bg-border mx-2" />
+
+              {/* FR-21: Phase 6.3.9 - Export & Sharing with Venue */}
+              {chart && (
+                <ExportSeating
+                  fabricCanvas={fabricCanvas}
+                  chart={{ ...chart, tables } as SeatingChartWithTables}
+                  guests={guests}
+                  seatAssignments={seatAssignments}
+                  eventId={event.id}
+                  eventName={event.name}
+                  eventDate={event.start_date}
+                  venueName={event.venue_name}
+                  venueMetadata={{
+                    hasFloorPlan: !!localFloorPlanUrl,
+                    specialAreas: localSpecialAreas.map((area) => ({
+                      type: area.type,
+                      label: area.label || area.type,
+                    })),
+                  }}
+                />
+              )}
             </div>
 
             {/* Zoom controls */}
@@ -394,6 +421,8 @@ export function SeatingEditorLayout({
               floorPlanSettings={localFloorPlanSettings}
               specialAreas={localSpecialAreas}
               theme={resolvedTheme}
+              // FR-21: Phase 6.3.9 - Export & Sharing with Venue
+              onCanvasReady={setFabricCanvas}
               // Phase 6.3.7: Handle special area canvas drag/resize updates
               onSpecialAreaUpdate={(areaId, updates) => {
                 setLocalSpecialAreas((prev) =>

@@ -51,6 +51,7 @@ export interface Guest extends GuestBase, Timestamps {
   id: UUID;
   event_id: UUID;
   rsvp_status: RsvpStatus;
+  meal_preference?: string;
   invitation_sent_at?: string;
   rsvp_responded_at?: string;
   rsvp_token?: string; // only included in admin responses

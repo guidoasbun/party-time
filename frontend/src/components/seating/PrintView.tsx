@@ -19,6 +19,14 @@ import {
   transformToTableCards,
 } from "@/utils/seating-export";
 
+/**
+ * Venue metadata for print view
+ */
+interface VenueMetadata {
+  hasFloorPlan: boolean;
+  specialAreas: Array<{ type: string; label: string }>;
+}
+
 interface PrintViewProps {
   chart: SeatingChartWithTables;
   guests: Guest[];
@@ -27,6 +35,7 @@ interface PrintViewProps {
   eventDate?: string;
   venueName?: string;
   options: PrintOptions;
+  venueMetadata?: VenueMetadata;
 }
 
 /**
@@ -41,6 +50,7 @@ export function generatePrintHTML(props: PrintViewProps): string {
     eventDate,
     venueName,
     options,
+    venueMetadata,
   } = props;
 
   const guestSeatingList = transformToGuestSeatingList(
@@ -131,6 +141,33 @@ export function generatePrintHTML(props: PrintViewProps): string {
               font-size: 12px;
               color: #999;
               margin-top: 10px;
+            }
+
+            /* Venue Section Styles */
+            .venue-section {
+              background-color: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 6px;
+              padding: 12px 16px;
+              margin-bottom: 30px;
+              font-size: 12px;
+            }
+
+            .venue-section .venue-title {
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 8px;
+              font-size: 14px;
+            }
+
+            .venue-section .venue-item {
+              color: #475569;
+              margin: 4px 0;
+            }
+
+            .venue-section .venue-label {
+              font-weight: 500;
+              color: #1e293b;
             }
 
             /* Section Styles */
@@ -271,6 +308,28 @@ export function generatePrintHTML(props: PrintViewProps): string {
             Guests Seated: ${guestSeatingList.length}
           </div>
         </div>
+
+        ${
+          venueMetadata &&
+          (venueMetadata.hasFloorPlan || venueMetadata.specialAreas.length > 0)
+            ? `
+        <!-- Venue Layout Section -->
+        <div class="venue-section">
+          <div class="venue-title">Venue Layout</div>
+          ${
+            venueMetadata.hasFloorPlan
+              ? '<div class="venue-item"><span class="venue-label">Floor Plan:</span> Configured</div>'
+              : ""
+          }
+          ${
+            venueMetadata.specialAreas.length > 0
+              ? `<div class="venue-item"><span class="venue-label">Special Areas:</span> ${venueMetadata.specialAreas.map((a) => a.label || a.type).join(", ")}</div>`
+              : ""
+          }
+        </div>
+        `
+            : ""
+        }
 
         ${
           options.includeTableCards
