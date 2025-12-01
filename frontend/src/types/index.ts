@@ -90,10 +90,15 @@ export type {
   BudgetCategory,
   BudgetCategoryCreate,
   BudgetCategoryUpdate,
+  BudgetCategorySummary,
   Expense,
   ExpenseCreate,
   ExpenseUpdate,
+  ExpenseSummary,
   BudgetSummary,
+  BudgetAnalytics,
+  ExpenseSearchParams,
+  BudgetFilters,
 } from "./budget.types";
 
 export type {
