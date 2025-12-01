@@ -32,14 +32,41 @@ async def get_budget_category_by_id(db: AsyncSession, category_id: UUID) -> Opti
     return result.scalar_one_or_none()
 
 
-async def get_budget_categories_by_event(db: AsyncSession, event_id: UUID) -> List[BudgetCategory]:
-    """Get all budget categories for an event."""
+async def get_budget_categories_by_event(db: AsyncSession, event_id: UUID) -> List[Dict[str, Any]]:
+    """Get all budget categories for an event with calculated spent amounts."""
+    # Get categories with expense totals
     result = await db.execute(
-        select(BudgetCategory)
+        select(
+            BudgetCategory,
+            func.coalesce(func.sum(Expense.amount), 0).label('spent_amount'),
+            func.count(Expense.id).label('expense_count')
+        )
+        .outerjoin(Expense, BudgetCategory.id == Expense.category_id)
         .where(BudgetCategory.event_id == event_id)
+        .group_by(BudgetCategory.id)
         .order_by(BudgetCategory.name)
     )
-    return result.scalars().all()
+
+    categories = []
+    for row in result:
+        category = row[0]
+        spent_amount = float(row.spent_amount)
+        expense_count = row.expense_count
+        allocated = float(category.allocated_amount)
+
+        categories.append({
+            "id": str(category.id),
+            "event_id": str(category.event_id),
+            "name": category.name,
+            "allocated_amount": allocated,
+            "color": category.color,
+            "created_at": category.created_at.isoformat() if category.created_at else None,
+            "spent_amount": spent_amount,
+            "remaining_amount": allocated - spent_amount,
+            "expense_count": expense_count
+        })
+
+    return categories
 
 
 async def update_budget_category(db: AsyncSession, category_id: UUID, category_data: BudgetCategoryUpdate) -> Optional[BudgetCategory]:
@@ -194,12 +221,14 @@ async def get_budget_summary_by_event(db: AsyncSession, event_id: UUID) -> Dict[
     total_unpaid = unpaid_result.scalar() or Decimal('0.00')
     
     return {
-        "total_allocated": float(total_allocated),
+        "total_budget": float(total_allocated),
         "total_spent": float(total_spent),
         "total_paid": float(total_paid),
         "total_unpaid": float(total_unpaid),
         "remaining_budget": float(total_allocated - total_spent),
-        "budget_utilization_percentage": float((total_spent / total_allocated * 100)) if total_allocated > 0 else 0.0
+        "budget_utilization_percentage": float((total_spent / total_allocated * 100)) if total_allocated > 0 else 0.0,
+        "categories": [],  # Populated separately by frontend
+        "recent_expenses": []  # Populated separately by frontend
     }
 
 
