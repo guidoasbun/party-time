@@ -29,12 +29,13 @@ import type {
 
 interface BudgetTabProps {
   eventId: string;
+  eventBudgetTotal?: number;
   className?: string;
 }
 
 type TabValue = "overview" | "categories" | "expenses";
 
-export function BudgetTab({ eventId, className }: BudgetTabProps) {
+export function BudgetTab({ eventId, eventBudgetTotal, className }: BudgetTabProps) {
   const [activeTab, setActiveTab] = useState<TabValue>("overview");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
     null
@@ -202,6 +203,7 @@ export function BudgetTab({ eventId, className }: BudgetTabProps) {
         {/* Overview Tab */}
         <TabsContent value="overview" className="mt-6">
           <BudgetOverview
+            eventBudgetTotal={eventBudgetTotal}
             summary={summary ?? null}
             categories={categories}
             expenses={expenses}

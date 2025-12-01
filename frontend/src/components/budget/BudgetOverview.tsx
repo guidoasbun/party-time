@@ -15,7 +15,7 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  Wallet,
+  Target,
   PieChart,
   AlertTriangle,
   CheckCircle,
@@ -29,6 +29,7 @@ import {
 import type { BudgetCategory, Expense, BudgetSummary } from "@/types";
 
 interface BudgetOverviewProps {
+  eventBudgetTotal?: number;
   summary: BudgetSummary | null;
   categories: BudgetCategory[];
   expenses: Expense[];
@@ -39,6 +40,7 @@ interface BudgetOverviewProps {
 }
 
 export function BudgetOverview({
+  eventBudgetTotal,
   summary,
   categories,
   expenses,
@@ -48,10 +50,13 @@ export function BudgetOverview({
   className,
 }: BudgetOverviewProps) {
   // Calculate derived values
-  const totalBudget = summary?.total_budget ?? 0;
+  const totalBudget = summary?.total_budget ?? 0; // Sum of category allocations
   const totalSpent = summary?.total_spent ?? 0;
-  const remaining = totalBudget - totalSpent;
-  const utilization = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
+
+  // Use event budget target for remaining/utilization, fall back to allocated if not set
+  const budgetForCalculations = eventBudgetTotal ?? totalBudget;
+  const remaining = budgetForCalculations - totalSpent;
+  const utilization = budgetForCalculations > 0 ? (totalSpent / budgetForCalculations) * 100 : 0;
 
   // Get recent expenses (last 5)
   const recentExpenses = [...expenses]
@@ -133,24 +138,23 @@ export function BudgetOverview({
     <div className={cn("space-y-6", className)}>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Budget */}
+        {/* Budget Target */}
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-muted-foreground">
-                Total Budget
+                Budget Target
               </span>
               <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
-                <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                <Target className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               </div>
             </div>
             <div className="mt-2">
               <span className="text-2xl font-bold text-foreground">
-                {formatCurrency(totalBudget)}
+                {formatCurrency(eventBudgetTotal ?? 0)}
               </span>
               <p className="text-xs text-muted-foreground mt-1">
-                {categories.length} categor
-                {categories.length !== 1 ? "ies" : "y"}
+                Allocated: {formatCurrency(totalBudget)}
               </p>
             </div>
           </CardContent>

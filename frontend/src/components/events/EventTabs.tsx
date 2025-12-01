@@ -161,7 +161,7 @@ export function EventTabs({ event }: EventTabsProps) {
       badge: event.budget_total
         ? `$${(event.budget_total / 1000).toFixed(0)}k`
         : undefined,
-      content: <BudgetTab eventId={event.id} />,
+      content: <BudgetTab eventId={event.id} eventBudgetTotal={event.budget_total ?? undefined} />,
     },
     {
       id: "timeline",
