@@ -1,0 +1,111 @@
+email,first_name,last_name,phone,plus_one_allowed,plus_one_name,dietary_restrictions,notes
+emma.johnson@gmail.com,Emma,Johnson,555-123-4001,yes,Michael Johnson,vegetarian,Bride's college roommate
+michael.smith@outlook.com,Michael,Smith,555-123-4002,yes,Sarah Smith,,Groom's best friend
+olivia.williams@yahoo.com,Olivia,Williams,555-123-4003,no,,,Bride's cousin
+james.brown@gmail.com,James,Brown,555-123-4004,yes,Jennifer Brown,gluten-free,Work colleague
+sophia.davis@hotmail.com,Sophia,Davis,555-123-4005,yes,David Davis,vegan,Family friend
+william.miller@gmail.com,William,Miller,555-123-4006,no,,nut allergy,Groom's uncle
+isabella.wilson@outlook.com,Isabella,Wilson,555-123-4007,yes,Robert Wilson,,Bride's sister
+benjamin.moore@yahoo.com,Benjamin,Moore,555-123-4008,yes,Lisa Moore,dairy-free,Neighbor
+mia.taylor@gmail.com,Mia,Taylor,555-123-4009,no,,vegetarian,Childhood friend
+ethan.anderson@hotmail.com,Ethan,Anderson,555-123-4010,yes,Amy Anderson,,Groom's college friend
+charlotte.thomas@gmail.com,Charlotte,Thomas,555-123-4011,yes,Kevin Thomas,pescatarian,Bride's aunt
+alexander.jackson@outlook.com,Alexander,Jackson,555-123-4012,no,,shellfish allergy,Work colleague
+amelia.white@yahoo.com,Amelia,White,555-123-4013,yes,Daniel White,,Family friend
+henry.harris@gmail.com,Henry,Harris,555-123-4014,yes,Rachel Harris,kosher,Groom's mentor
+harper.martin@hotmail.com,Harper,Martin,555-123-4015,no,,vegan,Bride's coworker
+sebastian.garcia@gmail.com,Sebastian,Garcia,555-123-4016,yes,Maria Garcia,,Groom's cousin
+evelyn.martinez@outlook.com,Evelyn,Martinez,555-123-4017,yes,Carlos Martinez,gluten-free,Neighbor
+jack.robinson@yahoo.com,Jack,Robinson,555-123-4018,no,,nut allergy,Family friend
+abigail.clark@gmail.com,Abigail,Clark,555-123-4019,yes,Steven Clark,,Bride's high school friend
+daniel.rodriguez@hotmail.com,Daniel,Rodriguez,555-123-4020,yes,Anna Rodriguez,vegetarian,Groom's brother
+emily.lewis@gmail.com,Emily,Lewis,555-123-4021,no,,,Work colleague
+matthew.lee@outlook.com,Matthew,Lee,555-123-4022,yes,Grace Lee,halal,Bride's uncle
+ella.walker@yahoo.com,Ella,Walker,555-123-4023,yes,Brian Walker,,Groom's aunt
+owen.hall@gmail.com,Owen,Hall,555-123-4024,no,,dairy-free,Childhood friend
+aria.allen@hotmail.com,Aria,Allen,555-123-4025,yes,Mark Allen,vegan,Family friend
+lucas.young@gmail.com,Lucas,Young,555-123-4026,yes,Nicole Young,,Bride's cousin
+scarlett.hernandez@outlook.com,Scarlett,Hernandez,555-123-4027,no,,pescatarian,Groom's coworker
+liam.king@yahoo.com,Liam,King,555-123-4028,yes,Samantha King,vegetarian,Neighbor
+chloe.wright@gmail.com,Chloe,Wright,555-123-4029,yes,Jason Wright,,Work colleague
+noah.lopez@hotmail.com,Noah,Lopez,555-123-4030,no,,gluten-free,Bride's friend
+grace.hill@gmail.com,Grace,Hill,555-123-4031,yes,Timothy Hill,nut allergy,Groom's godfather
+aiden.scott@outlook.com,Aiden,Scott,555-123-4032,yes,Michelle Scott,,Family friend
+zoey.green@yahoo.com,Zoey,Green,555-123-4033,no,,vegan,Bride's mentor
+logan.adams@gmail.com,Logan,Adams,555-123-4034,yes,Laura Adams,,Groom's sister
+lily.baker@hotmail.com,Lily,Baker,555-123-4035,yes,Christopher Baker,dairy-free,Neighbor
+jackson.gonzalez@gmail.com,Jackson,Gonzalez,555-123-4036,no,,,Work colleague
+hannah.nelson@outlook.com,Hannah,Nelson,555-123-4037,yes,Paul Nelson,vegetarian,Bride's grandmother
+elijah.carter@yahoo.com,Elijah,Carter,555-123-4038,yes,Diana Carter,,Groom's cousin
+penelope.mitchell@gmail.com,Penelope,Mitchell,555-123-4039,no,,kosher,Family friend
+mason.perez@hotmail.com,Mason,Perez,555-123-4040,yes,Jennifer Perez,halal,Bride's coworker
+layla.roberts@gmail.com,Layla,Roberts,555-123-4041,yes,Andrew Roberts,,Groom's mentor
+jacob.turner@outlook.com,Jacob,Turner,555-123-4042,no,,shellfish allergy,Childhood friend
+riley.phillips@yahoo.com,Riley,Phillips,555-123-4043,yes,Eric Phillips,vegan,Bride's friend
+samuel.campbell@gmail.com,Samuel,Campbell,555-123-4044,yes,Christine Campbell,,Groom's aunt
+nora.parker@hotmail.com,Nora,Parker,555-123-4045,no,,gluten-free,Work colleague
+david.evans@gmail.com,David,Evans,555-123-4046,yes,Stephanie Evans,vegetarian,Family friend
+stella.edwards@outlook.com,Stella,Edwards,555-123-4047,yes,Matthew Edwards,,Bride's uncle
+carter.collins@yahoo.com,Carter,Collins,555-123-4048,no,,nut allergy,Groom's friend
+audrey.stewart@gmail.com,Audrey,Stewart,555-123-4049,yes,Ryan Stewart,,Neighbor
+wyatt.sanchez@hotmail.com,Wyatt,Sanchez,555-123-4050,yes,Monica Sanchez,dairy-free,Bride's cousin
+victoria.morris@gmail.com,Victoria,Morris,555-123-4051,no,,pescatarian,Work colleague
+gabriel.rogers@outlook.com,Gabriel,Rogers,555-123-4052,yes,Kelly Rogers,vegan,Groom's coworker
+hazel.reed@yahoo.com,Hazel,Reed,555-123-4053,yes,Jonathan Reed,,Family friend
+julian.cook@gmail.com,Julian,Cook,555-123-4054,no,,vegetarian,Bride's friend
+natalie.morgan@hotmail.com,Natalie,Morgan,555-123-4055,yes,Patrick Morgan,gluten-free,Groom's godmother
+leo.bell@gmail.com,Leo,Bell,555-123-4056,yes,Amanda Bell,,Neighbor
+aurora.murphy@outlook.com,Aurora,Murphy,555-123-4057,no,,halal,Childhood friend
+isaac.bailey@yahoo.com,Isaac,Bailey,555-123-4058,yes,Sharon Bailey,kosher,Work colleague
+savannah.rivera@gmail.com,Savannah,Rivera,555-123-4059,yes,Frank Rivera,,Bride's aunt
+luke.cooper@hotmail.com,Luke,Cooper,555-123-4060,no,,nut allergy,Groom's friend
+brooklyn.richardson@gmail.com,Brooklyn,Richardson,555-123-4061,yes,George Richardson,vegan,Family friend
+anthony.cox@outlook.com,Anthony,Cox,555-123-4062,yes,Linda Cox,,Bride's coworker
+claire.howard@yahoo.com,Claire,Howard,555-123-4063,no,,dairy-free,Groom's cousin
+dylan.ward@gmail.com,Dylan,Ward,555-123-4064,yes,Susan Ward,vegetarian,Neighbor
+leah.torres@hotmail.com,Leah,Torres,555-123-4065,yes,Victor Torres,,Work colleague
+lincoln.peterson@gmail.com,Lincoln,Peterson,555-123-4066,no,,shellfish allergy,Bride's friend
+madison.gray@outlook.com,Madison,Gray,555-123-4067,yes,Harold Gray,pescatarian,Groom's mentor
+nathan.ramirez@yahoo.com,Nathan,Ramirez,555-123-4068,yes,Rebecca Ramirez,,Family friend
+ellie.james@gmail.com,Ellie,James,555-123-4069,no,,gluten-free,Bride's sister-in-law
+christian.watson@hotmail.com,Christian,Watson,555-123-4070,yes,Deborah Watson,vegan,Groom's uncle
+paisley.brooks@gmail.com,Paisley,Brooks,555-123-4071,yes,Keith Brooks,,Childhood friend
+hunter.kelly@outlook.com,Hunter,Kelly,555-123-4072,no,,vegetarian,Work colleague
+elena.sanders@yahoo.com,Elena,Sanders,555-123-4073,yes,Donald Sanders,nut allergy,Bride's grandmother
+caleb.price@gmail.com,Caleb,Price,555-123-4074,yes,Patricia Price,,Groom's friend
+ivy.bennett@hotmail.com,Ivy,Bennett,555-123-4075,no,,dairy-free,Family friend
+asher.wood@gmail.com,Asher,Wood,555-123-4076,yes,Kimberly Wood,halal,Neighbor
+maya.barnes@outlook.com,Maya,Barnes,555-123-4077,yes,Douglas Barnes,,Bride's coworker
+josiah.ross@yahoo.com,Josiah,Ross,555-123-4078,no,,kosher,Groom's aunt
+piper.henderson@gmail.com,Piper,Henderson,555-123-4079,yes,Gerald Henderson,vegetarian,Childhood friend
+evan.coleman@hotmail.com,Evan,Coleman,555-123-4080,yes,Carol Coleman,,Work colleague
+quinn.jenkins@gmail.com,Quinn,Jenkins,555-123-4081,no,,vegan,Bride's friend
+xavier.perry@outlook.com,Xavier,Perry,555-123-4082,yes,Janet Perry,gluten-free,Groom's cousin
+ruby.powell@yahoo.com,Ruby,Powell,555-123-4083,yes,Roger Powell,,Family friend
+aaron.long@gmail.com,Aaron,Long,555-123-4084,no,,pescatarian,Bride's mentor
+caroline.patterson@hotmail.com,Caroline,Patterson,555-123-4085,yes,Wayne Patterson,nut allergy,Groom's coworker
+eli.hughes@gmail.com,Eli,Hughes,555-123-4086,yes,Alice Hughes,,Neighbor
+violet.flores@outlook.com,Violet,Flores,555-123-4087,no,,dairy-free,Work colleague
+jeremiah.washington@yahoo.com,Jeremiah,Washington,555-123-4088,yes,Brenda Washington,vegetarian,Bride's uncle
+willow.butler@gmail.com,Willow,Butler,555-123-4089,yes,Russell Butler,,Groom's friend
+adrian.simmons@hotmail.com,Adrian,Simmons,555-123-4090,no,,shellfish allergy,Family friend
+autumn.foster@gmail.com,Autumn,Foster,555-123-4091,yes,Roy Foster,vegan,Childhood friend
+colton.gonzales@outlook.com,Colton,Gonzales,555-123-4092,yes,Judith Gonzales,,Bride's aunt
+genesis.bryant@yahoo.com,Genesis,Bryant,555-123-4093,no,,gluten-free,Groom's mentor
+miles.alexander@gmail.com,Miles,Alexander,555-123-4094,yes,Teresa Alexander,halal,Work colleague
+skylar.russell@hotmail.com,Skylar,Russell,555-123-4095,yes,Carl Russell,,Bride's coworker
+jaxon.griffin@gmail.com,Jaxon,Griffin,555-123-4096,no,,kosher,Groom's godfather
+naomi.diaz@outlook.com,Naomi,Diaz,555-123-4097,yes,Philip Diaz,vegetarian,Neighbor
+robert.hayes@yahoo.com,Robert,Hayes,555-123-4098,yes,Sandra Hayes,,Family friend
+athena.myers@gmail.com,Athena,Myers,555-123-4099,no,,nut allergy,Bride's friend
+dominic.ford@hotmail.com,Dominic,Ford,555-123-4100,yes,Gloria Ford,dairy-free,Groom's sister
+emery.hamilton@gmail.com,Emery,Hamilton,555-123-4101,yes,Eugene Hamilton,,Work colleague
+everett.graham@outlook.com,Everett,Graham,555-123-4102,no,,vegan,Childhood friend
+olive.sullivan@yahoo.com,Olive,Sullivan,555-123-4103,yes,Harry Sullivan,pescatarian,Bride's cousin
+theodore.west@gmail.com,Theodore,West,555-123-4104,yes,Dorothy West,,Groom's aunt
+adalyn.wallace@hotmail.com,Adalyn,Wallace,555-123-4105,no,,gluten-free,Family friend
+jace.cole@gmail.com,Jace,Cole,555-123-4106,yes,Marilyn Cole,vegetarian,Bride's brother
+paislee.mendez@outlook.com,Paislee,Mendez,555-123-4107,yes,Randy Mendez,,Neighbor
+maverick.hunter@yahoo.com,Maverick,Hunter,555-123-4108,no,,shellfish allergy,Work colleague
+lucia.kim@gmail.com,Lucia,Kim,555-123-4109,yes,Jeremy Kim,halal,Groom's friend
+roman.barnes@hotmail.com,Roman,Barnes,555-123-4110,yes,Heather Barnes,,Bride's grandmother
