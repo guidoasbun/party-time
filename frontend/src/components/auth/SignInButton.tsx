@@ -1,22 +1,23 @@
 "use client"
 
-import { signIn, signOut, useSession } from "next-auth/react"
+import Link from "next/link"
+import { signOut, useSession } from "next-auth/react"
 import { Button } from "@/components/ui/Button"
 
 export default function SignInButton() {
   const { data: session, status } = useSession()
 
   if (status === "loading") {
-    return <div>Loading...</div>
+    return <div className="h-10 w-24 animate-pulse rounded-md bg-muted" />
   }
 
   if (session) {
     return (
       <div className="flex items-center gap-4">
-        <span className="text-sm">
-          Signed in as {session.user?.name || session.user?.email}
-        </span>
-        <Button 
+        <Link href="/dashboard" className="text-sm text-foreground hover:text-primary transition-colors">
+          {session.user?.name || session.user?.email}
+        </Link>
+        <Button
           onClick={() => signOut()}
           variant="outline"
         >
@@ -27,13 +28,10 @@ export default function SignInButton() {
   }
 
   return (
-    <div className="flex gap-2">
-      <Button 
-        onClick={() => signIn("cognito")}
-        className="bg-blue-600 hover:bg-blue-700 text-white"
-      >
-        Sign in with Cognito
+    <Link href="/auth/signin">
+      <Button>
+        Get Started
       </Button>
-    </div>
+    </Link>
   )
 }
