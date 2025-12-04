@@ -3,7 +3,6 @@
  * Basic tests to verify core functionality works
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { GuestList } from '@/components/guests/GuestList'
@@ -14,19 +13,19 @@ import { BulkActionsMenu } from '@/components/guests/BulkActionsMenu'
 import { RsvpStatus, type Guest } from '@/types'
 
 // Mock dependencies
-vi.mock('@/hooks/useToast', () => ({
+jest.mock('@/hooks/useToast', () => ({
   useToast: () => ({
-    toast: vi.fn()
+    toast: jest.fn()
   })
 }))
 
-vi.mock('@/lib/api/services', () => ({
+jest.mock('@/lib/api/services', () => ({
   guestsService: {
-    updateGuest: vi.fn().mockResolvedValue({}),
-    bulkDeleteGuests: vi.fn().mockResolvedValue({}),
-    bulkUpdateGuestsStatus: vi.fn().mockResolvedValue({}),
-    sendInvitations: vi.fn().mockResolvedValue({}),
-    exportGuests: vi.fn().mockResolvedValue({})
+    updateGuest: jest.fn().mockResolvedValue({}),
+    bulkDeleteGuests: jest.fn().mockResolvedValue({}),
+    bulkUpdateGuestsStatus: jest.fn().mockResolvedValue({}),
+    sendInvitations: jest.fn().mockResolvedValue({}),
+    exportGuests: jest.fn().mockResolvedValue({})
   }
 }))
 
@@ -97,14 +96,14 @@ const createTestQueryClient = () =>
 describe('GuestSearchBar', () => {
   it('renders search input', () => {
     render(
-      <GuestSearchBar value="" onValueChange={vi.fn()} />
+      <GuestSearchBar value="" onValueChange={jest.fn()} />
     )
 
     expect(screen.getByPlaceholderText(/search guests/i)).toBeInTheDocument()
   })
 
   it('calls onValueChange with debounce', async () => {
-    const onValueChange = vi.fn()
+    const onValueChange = jest.fn()
     render(
       <GuestSearchBar value="" onValueChange={onValueChange} debounceMs={100} />
     )
@@ -123,7 +122,7 @@ describe('GuestSearchBar', () => {
 
   it('shows clear button when has value', () => {
     render(
-      <GuestSearchBar value="test" onValueChange={vi.fn()} />
+      <GuestSearchBar value="test" onValueChange={jest.fn()} />
     )
 
     expect(screen.getByLabelText(/clear search/i)).toBeInTheDocument()
@@ -132,14 +131,14 @@ describe('GuestSearchBar', () => {
 
 describe('GuestFilters', () => {
   const defaultFilters = {
-    rsvp_statuses: [],
+    rsvp_statuses: [] as RsvpStatus[],
     plus_one_filter: 'all' as const,
     dietary_restrictions: 'all' as const
   }
 
   it('renders filter button', () => {
     render(
-      <GuestFilters filters={defaultFilters} onFiltersChange={vi.fn()} />
+      <GuestFilters filters={defaultFilters} onFiltersChange={jest.fn()} />
     )
 
     expect(screen.getByText(/filters/i)).toBeInTheDocument()
@@ -153,7 +152,7 @@ describe('GuestFilters', () => {
     }
 
     render(
-      <GuestFilters filters={activeFilters} onFiltersChange={vi.fn()} />
+      <GuestFilters filters={activeFilters} onFiltersChange={jest.fn()} />
     )
 
     expect(screen.getByText('3')).toBeInTheDocument()
@@ -161,7 +160,7 @@ describe('GuestFilters', () => {
 
   it('expands filter controls on button click', () => {
     render(
-      <GuestFilters filters={defaultFilters} onFiltersChange={vi.fn()} />
+      <GuestFilters filters={defaultFilters} onFiltersChange={jest.fn()} />
     )
 
     const filterButton = screen.getByText(/filters/i)
@@ -177,10 +176,10 @@ describe('BulkActionsMenu', () => {
     const { container } = render(
       <BulkActionsMenu
         selectedGuestIds={[]}
-        onDelete={vi.fn()}
-        onUpdateStatus={vi.fn()}
-        onSendInvitations={vi.fn()}
-        onExport={vi.fn()}
+        onDelete={jest.fn()}
+        onUpdateStatus={jest.fn()}
+        onSendInvitations={jest.fn()}
+        onExport={jest.fn()}
       />
     )
 
@@ -191,10 +190,10 @@ describe('BulkActionsMenu', () => {
     render(
       <BulkActionsMenu
         selectedGuestIds={['1', '2']}
-        onDelete={vi.fn()}
-        onUpdateStatus={vi.fn()}
-        onSendInvitations={vi.fn()}
-        onExport={vi.fn()}
+        onDelete={jest.fn()}
+        onUpdateStatus={jest.fn()}
+        onSendInvitations={jest.fn()}
+        onExport={jest.fn()}
       />
     )
 
@@ -205,10 +204,10 @@ describe('BulkActionsMenu', () => {
     render(
       <BulkActionsMenu
         selectedGuestIds={['1', '2']}
-        onDelete={vi.fn()}
-        onUpdateStatus={vi.fn()}
-        onSendInvitations={vi.fn()}
-        onExport={vi.fn()}
+        onDelete={jest.fn()}
+        onUpdateStatus={jest.fn()}
+        onSendInvitations={jest.fn()}
+        onExport={jest.fn()}
       />
     )
 
@@ -224,12 +223,12 @@ describe('BulkActionsMenu', () => {
 describe('GuestTable', () => {
   const mockProps = {
     guests: mockGuests,
-    selectedIds: [],
-    onSelectionChange: vi.fn(),
-    onUpdateGuest: vi.fn(),
+    selectedIds: [] as string[],
+    onSelectionChange: jest.fn(),
+    onUpdateGuest: jest.fn(),
     sortBy: 'first_name' as keyof Guest,
     sortOrder: 'asc' as const,
-    onSort: vi.fn()
+    onSort: jest.fn()
   }
 
   it('renders guest table with data', () => {
@@ -256,7 +255,7 @@ describe('GuestTable', () => {
   })
 
   it('handles individual guest selection', () => {
-    const onSelectionChange = vi.fn()
+    const onSelectionChange = jest.fn()
     render(<GuestTable {...mockProps} onSelectionChange={onSelectionChange} />)
 
     const checkbox = screen.getByLabelText(/select john doe/i)
@@ -279,7 +278,7 @@ describe('GuestList Integration', () => {
     isLoading: false,
     error: null,
     totalCount: 3,
-    onRefresh: vi.fn()
+    onRefresh: jest.fn()
   }
 
   it('renders guest list with all components', () => {
@@ -310,7 +309,7 @@ describe('GuestList Integration', () => {
 
   it('displays error state with retry button', () => {
     const queryClient = createTestQueryClient()
-    const onRefresh = vi.fn()
+    const onRefresh = jest.fn()
 
     render(
       <QueryClientProvider client={queryClient}>
