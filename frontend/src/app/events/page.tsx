@@ -13,6 +13,7 @@ import { EventList } from "@/components/events/EventList";
 import { EventFilters } from "@/components/events/EventFilters";
 import { EventsPageHeader } from "@/components/events/EventsPageHeader";
 import { Button } from "@/components/ui/Button";
+import { EventsPageSkeleton } from "@/components/ui/LoadingStates";
 import { useEvents } from "@/hooks/api/useEvents";
 import { useViewPreferences } from "@/hooks/useViewPreferences";
 import {
@@ -260,10 +261,9 @@ function EventsPageContent() {
   // Loading state for auth/user
   if (status === "loading" || userLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <EventsPageSkeleton />
         </div>
       </div>
     );
@@ -277,12 +277,9 @@ function EventsPageContent() {
   // Don't render if no user info yet
   if (!userInfo) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">
-            Loading user information...
-          </p>
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <EventsPageSkeleton />
         </div>
       </div>
     );

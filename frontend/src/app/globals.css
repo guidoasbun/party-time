@@ -25,13 +25,13 @@
   --radius: 0.5rem;
 
   /* Responsive spacing scale */
-  --spacing-xs: 0.25rem;   /* 4px */
-  --spacing-sm: 0.5rem;    /* 8px */
-  --spacing-md: 1rem;      /* 16px */
-  --spacing-lg: 1.5rem;    /* 24px */
-  --spacing-xl: 2rem;      /* 32px */
-  --spacing-2xl: 3rem;     /* 48px */
-  --spacing-3xl: 4rem;     /* 64px */
+  --spacing-xs: 0.25rem; /* 4px */
+  --spacing-sm: 0.5rem; /* 8px */
+  --spacing-md: 1rem; /* 16px */
+  --spacing-lg: 1.5rem; /* 24px */
+  --spacing-xl: 2rem; /* 32px */
+  --spacing-2xl: 3rem; /* 48px */
+  --spacing-3xl: 4rem; /* 64px */
 
   /* Touch target minimum sizes */
   --touch-target-min: 48px;
@@ -40,12 +40,12 @@
   --button-height-lg: 48px;
 
   /* Typography scale */
-  --font-size-xs: 0.75rem;   /* 12px */
-  --font-size-sm: 0.875rem;  /* 14px */
-  --font-size-base: 1rem;    /* 16px */
-  --font-size-lg: 1.125rem;  /* 18px */
-  --font-size-xl: 1.25rem;   /* 20px */
-  --font-size-2xl: 1.5rem;   /* 24px */
+  --font-size-xs: 0.75rem; /* 12px */
+  --font-size-sm: 0.875rem; /* 14px */
+  --font-size-base: 1rem; /* 16px */
+  --font-size-lg: 1.125rem; /* 18px */
+  --font-size-xl: 1.25rem; /* 20px */
+  --font-size-2xl: 1.5rem; /* 24px */
   --font-size-3xl: 1.875rem; /* 30px */
 
   /* Animation durations */
@@ -61,7 +61,8 @@
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
 }
 
 /* Dark Theme Override */
@@ -89,7 +90,8 @@
   /* Dark theme shadows */
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4),
+    0 4px 6px -4px rgb(0 0 0 / 0.3);
 
   /* Dark theme skeleton animations */
   --shimmer-start: rgba(255, 255, 255, 0);
@@ -137,9 +139,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", sans-serif;
   line-height: 1.6;
-  transition: background-color var(--duration-normal) ease, color var(--duration-normal) ease;
+  transition: background-color var(--duration-normal) ease,
+    color var(--duration-normal) ease;
 }
 
 /* Error Message Color Classes */
@@ -174,11 +178,13 @@ html.light {
 }
 
 html.dark * {
-  transition: background-color var(--duration-normal) ease, color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+  transition: background-color var(--duration-normal) ease,
+    color var(--duration-normal) ease, border-color var(--duration-normal) ease;
 }
 
 html.light * {
-  transition: background-color var(--duration-normal) ease, color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+  transition: background-color var(--duration-normal) ease,
+    color var(--duration-normal) ease, border-color var(--duration-normal) ease;
 }
 
 /* Prevent theme loading flash */
@@ -282,7 +288,8 @@ html {
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -292,10 +299,12 @@ html {
 
 /* Animation utility classes */
 .animate-shimmer {
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     var(--shimmer-start) 0%,
     var(--shimmer-middle) 50%,
-    var(--shimmer-end) 100%);
+    var(--shimmer-end) 100%
+  );
   background-size: 200px 100%;
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -307,10 +316,12 @@ html {
 /* Skeleton specific animations that respect reduced motion */
 @media (prefers-reduced-motion: no-preference) {
   .skeleton-shimmer {
-    background: linear-gradient(90deg,
+    background: linear-gradient(
+      90deg,
       var(--shimmer-start) 0%,
       var(--shimmer-middle) 50%,
-      var(--shimmer-end) 100%);
+      var(--shimmer-end) 100%
+    );
     background-size: 200px 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -486,13 +497,21 @@ html {
 }
 
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-2px);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(2px);
   }
 }
@@ -538,7 +557,8 @@ html {
     box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
   }
   to {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.8),
+      0 0 30px rgba(59, 130, 246, 0.6);
   }
 }
 
@@ -729,16 +749,18 @@ html {
 }
 
 .loading-overlay::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(90deg,
+  background: linear-gradient(
+    90deg,
     transparent 0%,
     rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%);
+    transparent 100%
+  );
   transform: translateX(-100%);
   animation: shimmer-loading 1.5s infinite;
 }
@@ -756,7 +778,7 @@ html {
 
 .grid-transition {
   transition: grid-template-columns 400ms cubic-bezier(0.4, 0, 0.2, 1),
-              gap 400ms cubic-bezier(0.4, 0, 0.2, 1);
+    gap 400ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Filter Panel Animations */
@@ -843,23 +865,51 @@ html {
 }
 
 /* Utility Classes for Complex Animations */
-.animate-delay-100 { animation-delay: 100ms; }
-.animate-delay-200 { animation-delay: 200ms; }
-.animate-delay-300 { animation-delay: 300ms; }
-.animate-delay-500 { animation-delay: 500ms; }
+.animate-delay-100 {
+  animation-delay: 100ms;
+}
+.animate-delay-200 {
+  animation-delay: 200ms;
+}
+.animate-delay-300 {
+  animation-delay: 300ms;
+}
+.animate-delay-500 {
+  animation-delay: 500ms;
+}
 
 /* Animation delays for hero blob effect */
-.animation-delay-100 { animation-delay: 100ms; }
-.animation-delay-200 { animation-delay: 200ms; }
-.animation-delay-2000 { animation-delay: 2s; }
-.animation-delay-4000 { animation-delay: 4s; }
+.animation-delay-100 {
+  animation-delay: 100ms;
+}
+.animation-delay-200 {
+  animation-delay: 200ms;
+}
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+.animation-delay-4000 {
+  animation-delay: 4s;
+}
 
-.animate-duration-100 { animation-duration: 100ms; }
-.animate-duration-200 { animation-duration: 200ms; }
-.animate-duration-300 { animation-duration: 300ms; }
-.animate-duration-500 { animation-duration: 500ms; }
-.animate-duration-700 { animation-duration: 700ms; }
-.animate-duration-1000 { animation-duration: 1000ms; }
+.animate-duration-100 {
+  animation-duration: 100ms;
+}
+.animate-duration-200 {
+  animation-duration: 200ms;
+}
+.animate-duration-300 {
+  animation-duration: 300ms;
+}
+.animate-duration-500 {
+  animation-duration: 500ms;
+}
+.animate-duration-700 {
+  animation-duration: 700ms;
+}
+.animate-duration-1000 {
+  animation-duration: 1000ms;
+}
 
 /* Performance Optimizations */
 .will-change-transform {
@@ -872,4 +922,52 @@ html {
 
 .will-change-auto {
   will-change: auto;
+}
+
+/* ================================================
+   CONFETTI & SUCCESS ANIMATIONS
+   * Phase 8.2 UI Polish and Mobile Optimization
+   ================================================ */
+
+@keyframes confetti-fall {
+  0% {
+    transform: translate(0, 0) rotate(var(--rotation, 0deg));
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+        var(--velocity-x, 0),
+        calc(100vh + var(--velocity-y, 0))
+      )
+      rotate(calc(var(--rotation, 0deg) + 720deg));
+    opacity: 0;
+  }
+}
+
+@keyframes checkmark-circle {
+  0% {
+    stroke-dashoffset: 166;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes checkmark-check {
+  0% {
+    stroke-dashoffset: 48;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Reduced motion support for confetti */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes confetti-fall {
+    0%,
+    100% {
+      opacity: 0;
+    }
+  }
 }

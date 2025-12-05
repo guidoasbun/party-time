@@ -9,6 +9,7 @@ import { StatsCards } from "@/components/dashboard/StatsCards"
 import { EventList } from "@/components/events/EventList"
 import { EventFilters } from "@/components/events/EventFilters"
 import { FAB } from "@/components/ui/FAB"
+import { DashboardSkeleton } from "@/components/ui/LoadingStates"
 import { useEvents } from "@/hooks/api/useEvents"
 import { UserProfileResponse } from "@/types/auth.types"
 import { EventFilters as EventFiltersType } from "@/types/event.types"
@@ -176,12 +177,9 @@ export default function DashboardPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
+      <DashboardLayout>
+        <DashboardSkeleton />
+      </DashboardLayout>
     )
   }
 
@@ -211,12 +209,7 @@ export default function DashboardPage() {
   if (!userInfo) {
     return (
       <DashboardLayout>
-        <DashboardSection>
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading user information...</p>
-          </div>
-        </DashboardSection>
+        <DashboardSkeleton />
       </DashboardLayout>
     )
   }
