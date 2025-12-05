@@ -3,6 +3,7 @@
 /**
  * FR-21: The system shall provide an interactive seating chart interface.
  * Phase 6.2.5: Seating Chart Polish & Integration
+ * Phase 9.1: Performance Optimization - Lazy load heavy tab components
  * EventTabs Component
  * Main tabbed interface for event detail pages with URL-based tab persistence
  */
@@ -10,6 +11,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
 import {
   Users,
   DollarSign,
@@ -26,9 +28,42 @@ import { InvitationStats } from "./InvitationStats";
 import { SendInvitationsModal } from "./SendInvitationsModal";
 import { Button } from "@/components/ui/Button";
 import { guestsService } from "@/lib/api/services";
-import { SeatingChartTab } from "@/components/seating/SeatingChartTab";
-import { VenueTab } from "@/components/venues/VenueTab";
-import { BudgetTab } from "@/components/budget/BudgetTab";
+
+// Phase 9.1: Lazy load heavy tab components for better initial load
+const SeatingChartTab = dynamic(
+  () =>
+    import("@/components/seating/SeatingChartTab").then(
+      (mod) => mod.SeatingChartTab
+    ),
+  {
+    loading: () => (
+      <div className="h-96 animate-pulse rounded-lg bg-muted" />
+    ),
+    ssr: false,
+  }
+);
+
+const VenueTab = dynamic(
+  () =>
+    import("@/components/venues/VenueTab").then((mod) => mod.VenueTab),
+  {
+    loading: () => (
+      <div className="h-96 animate-pulse rounded-lg bg-muted" />
+    ),
+    ssr: false,
+  }
+);
+
+const BudgetTab = dynamic(
+  () =>
+    import("@/components/budget/BudgetTab").then((mod) => mod.BudgetTab),
+  {
+    loading: () => (
+      <div className="h-64 animate-pulse rounded-lg bg-muted" />
+    ),
+    ssr: false,
+  }
+);
 
 interface EventTabsProps {
   event: Event;

@@ -1,10 +1,15 @@
 """
 FR-21: The system shall provide an interactive seating chart interface.
 Phase 6: 6.1.2 Seating Chart API Endpoints
+Phase 9.1: Performance Optimization - Added response timing middleware
 """
+import logging
+import time
 
 from fastapi import FastAPI, Request
 from app.core.config import get_settings
+
+logger = logging.getLogger(__name__)
 from app.api.v1.auth import router as auth_router
 from app.api.v1.events import router as events_router
 from app.api.v1.guests import router as guests_router
@@ -21,6 +26,27 @@ app = FastAPI(
     description="Party-Time Event Planning API",
     version="1.0.0",
 )
+
+# Phase 9.1: Performance Optimization - Response timing middleware
+@app.middleware("http")
+async def add_timing_header(request: Request, call_next):
+    """Add X-Response-Time header and log slow requests."""
+    start_time = time.perf_counter()
+
+    response = await call_next(request)
+
+    process_time = (time.perf_counter() - start_time) * 1000
+    response.headers["X-Response-Time"] = f"{process_time:.2f}ms"
+
+    # Log slow requests (> 500ms)
+    if process_time > 500:
+        logger.warning(
+            f"Slow request: {request.method} {request.url.path} "
+            f"took {process_time:.2f}ms"
+        )
+
+    return response
+
 
 # Complete CORS and OPTIONS handling middleware
 @app.middleware("http")

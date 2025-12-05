@@ -1,20 +1,20 @@
 /**
  * FR-21: The system shall provide an interactive seating chart interface.
  * Phase 6.3.12: Polish & Performance
+ * Phase 9.1: Performance Optimization - Added lazy loading for heavy components
  */
 
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { ArrowLeft, HelpCircle, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 
 import { useSeatingChart } from "@/hooks/useSeatingChart";
 import { useEvent } from "@/hooks/useEvent";
 import { useEventGuests } from "@/hooks/useEventGuests";
-import { SeatingEditorLayout } from "@/components/seating/SeatingEditorLayout";
-import MobileSeatingView from "@/components/seating/MobileSeatingView";
 import { SaveIndicator } from "@/components/seating/SaveIndicator";
 import { SeatingHelp } from "@/components/seating/SeatingHelp";
 import { FeatureTooltips } from "@/components/seating/FeatureTooltips";
@@ -25,6 +25,32 @@ import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { Breadcrumb } from "@/components/layout/Breadcrumb";
 import { useToast } from "@/hooks/useToast";
 import { useTheme } from "@/contexts/ThemeContext";
+
+// Phase 9.1: Lazy load heavy seating components
+const SeatingEditorLayout = dynamic(
+  () =>
+    import("@/components/seating/SeatingEditorLayout").then(
+      (mod) => mod.SeatingEditorLayout
+    ),
+  {
+    loading: () => <SeatingEditorSkeleton />,
+    ssr: false,
+  }
+);
+
+const MobileSeatingView = dynamic(
+  () => import("@/components/seating/MobileSeatingView"),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-pulse text-muted-foreground">
+          Loading mobile view...
+        </div>
+      </div>
+    ),
+    ssr: false,
+  }
+);
 
 export default function SeatingEditPage() {
   const params = useParams();

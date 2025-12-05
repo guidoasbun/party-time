@@ -1,10 +1,11 @@
 /**
  * FR-8: The system shall provide a venue search interface.
  * Phase 7.1.1: Google Places API Integration
- * VenuePhotoGallery Component (Phase 7.1.1: Google Places API Integration)
+ * Phase 9.1: Performance Optimization - Updated to use next/image
+ * VenuePhotoGallery Component
  *
  * Photo gallery with lightbox for venue photos:
- * - Responsive grid layout
+ * - Responsive grid layout with optimized images (WebP/AVIF)
  * - Lightbox modal for full-size viewing
  * - Keyboard navigation (arrow keys, escape)
  * - Touch-friendly on mobile
@@ -14,6 +15,7 @@
 
 import * as React from "react";
 import { useState, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { VenuePhoto } from "@/types/venue.types";
 import {
@@ -146,12 +148,18 @@ export function VenuePhotoGallery({
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
                 </div>
               ) : (
-                <img
+                <Image
                   src={photo.url}
                   alt={`Venue photo ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes={
+                    index === 0 && displayPhotos.length > 2
+                      ? "(max-width: 768px) 100vw, 66vw"
+                      : "(max-width: 768px) 50vw, 33vw"
+                  }
                   onError={() => handleImageError(index)}
-                  loading={index === 0 ? "eager" : "lazy"}
+                  priority={index === 0}
                 />
               )}
 
@@ -253,12 +261,17 @@ export function VenuePhotoGallery({
                 <ImageIcon className="h-16 w-16 text-muted-foreground" />
               </div>
             ) : (
-              <img
-                src={photos[currentIndex].url}
-                alt={`Venue photo ${currentIndex + 1}`}
-                className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
-                onError={() => handleImageError(currentIndex)}
-              />
+              <div className="relative" style={{ width: "85vw", height: "80vh" }}>
+                <Image
+                  src={photos[currentIndex].url}
+                  alt={`Venue photo ${currentIndex + 1}`}
+                  fill
+                  className="rounded-lg object-contain"
+                  sizes="85vw"
+                  priority
+                  onError={() => handleImageError(currentIndex)}
+                />
+              </div>
             )}
 
             {/* Photo counter */}
