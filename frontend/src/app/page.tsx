@@ -154,7 +154,7 @@ export default function Home() {
             <div className="flex items-center gap-8">
               <Link href="/" className="flex items-center">
                 <span className="text-2xl font-bold text-foreground">
-                  Party-Time
+                  Celebration Time
                 </span>
               </Link>
               <nav className="hidden md:flex items-center gap-6">
@@ -184,8 +184,8 @@ export default function Home() {
           <div className="text-center animate-fade-in">
             <div className="mb-8">
               <span className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter">
-                <span className="text-blue-900">Party</span>
-                <span className="bg-gradient-to-r from-blue-900 to-orange-500 bg-clip-text text-transparent">-</span>
+                <span className="text-blue-900">Celebration </span>
+
                 <span className="text-orange-500">Time</span>
               </span>
             </div>

@@ -5,6 +5,7 @@ import AuthProvider from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { KeyboardShortcutsProvider } from "@/contexts/KeyboardShortcutsContext";
+import { WebVitalsReporter } from "@/components/analytics/WebVitalsReporter";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,6 +32,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <WebVitalsReporter />
         <ThemeProvider defaultTheme="system" storageKey="party-time-theme">
           <QueryProvider>
             <AuthProvider>

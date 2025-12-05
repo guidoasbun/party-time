@@ -1,4 +1,5 @@
 """API endpoints for event management."""
+import logging
 from typing import List, Optional
 from uuid import UUID
 from datetime import datetime
@@ -7,9 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import get_db
 from app.core.auth import get_current_user
+from app.core.cache import cache_manager, CacheTTL
 from app.crud import crud_event
 from app.schemas.event import Event, EventCreate, EventUpdate
 from app.models.event import EventType, EventStatus
+
+logger = logging.getLogger(__name__)
 
 # FR-7: The system shall send email invitations
 # 5.2.3: Email Campaign Interface
@@ -23,6 +27,13 @@ from app.services.email_campaign_service import EmailCampaignService
 router = APIRouter()
 
 
+async def invalidate_user_events_cache(user_id: UUID) -> None:
+    """Invalidate all event caches for a user."""
+    pattern = f"events:*:{user_id}:*"
+    await cache_manager.invalidate_pattern(pattern)
+    logger.debug(f"Invalidated event cache for user {user_id}")
+
+
 @router.post("/", response_model=Event, status_code=201)
 async def create_event(
     event_data: EventCreate,
@@ -31,9 +42,11 @@ async def create_event(
 ):
     """Create a new event."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         event = await crud_event.create_event(db, event_data, user_id)
+        # Invalidate cache after creating event
+        await invalidate_user_events_cache(user_id)
         return event
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to create event: {str(e)}")
@@ -49,13 +62,41 @@ async def get_events(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
 ):
-    """Get events for the current user."""
+    """Get events for the current user with caching."""
     user_id = UUID(current_user["user_id"])
-    
+
+    # Build cache key (skip caching if include_relations - too complex)
+    if not include_relations:
+        cache_key = cache_manager.generate_key(
+            "events:list",
+            str(user_id),
+            skip=skip,
+            limit=limit,
+            type=event_type.value if event_type else None,
+            status=status.value if status else None
+        )
+
+        # Try cache first
+        cached_events = await cache_manager.get(cache_key)
+        if cached_events is not None:
+            logger.debug(f"Cache hit for events list: {cache_key}")
+            return [Event(**e) for e in cached_events]
+
     try:
         events = await crud_event.get_events_by_planner(
             db, user_id, skip, limit, event_type, status, include_relations
         )
+
+        # Cache the result (only if not including relations)
+        if not include_relations and events:
+            # Convert SQLAlchemy ORM objects to Pydantic models before serializing
+            await cache_manager.set(
+                cache_key,
+                [Event.model_validate(e).model_dump(mode="json") for e in events],
+                ttl=CacheTTL.SHORT
+            )
+            logger.debug(f"Cached events list: {cache_key}")
+
         return events
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to retrieve events: {str(e)}")
@@ -244,6 +285,8 @@ async def update_event(
         if not event:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
 
+        # Invalidate cache after update
+        await invalidate_user_events_cache(user_id)
         return event
     except HTTPException:
         raise
@@ -266,6 +309,8 @@ async def partial_update_event(
         if not event:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
 
+        # Invalidate cache after update
+        await invalidate_user_events_cache(user_id)
         return event
     except HTTPException:
         raise
@@ -282,12 +327,14 @@ async def update_event_status(
 ):
     """Update event status."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         event = await crud_event.update_event_status(db, event_id, status, user_id)
         if not event:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
+        # Invalidate cache after status update
+        await invalidate_user_events_cache(user_id)
         return event
     except HTTPException:
         raise
@@ -303,12 +350,14 @@ async def delete_event(
 ):
     """Delete an event."""
     user_id = UUID(current_user["user_id"])
-    
+
     try:
         success = await crud_event.delete_event(db, event_id, user_id)
         if not success:
             raise HTTPException(status_code=404, detail="Event not found or access denied")
-        
+
+        # Invalidate cache after delete
+        await invalidate_user_events_cache(user_id)
         return None
     except HTTPException:
         raise

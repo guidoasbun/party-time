@@ -1,8 +1,11 @@
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional, Dict, Any
+from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.cognito_service import cognito_service
 from app.services.google_oauth_service import google_oauth_service
+from app.core.dependencies import get_db
 import logging
 
 logger = logging.getLogger(__name__)
@@ -65,12 +68,64 @@ async def _verify_token(token: str) -> Dict[str, Any]:
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> Dict[str, Any]:
+async def ensure_user_exists(db: AsyncSession, user_info: Dict[str, Any]) -> None:
+    """
+    Ensure user exists in local database (first login sync from Cognito/Google).
+    Creates a user record if one doesn't exist with the Cognito/Google user_id.
+    """
+    from app.crud.crud_user import get_user_by_id
+    from app.models.user import User
+
+    user_id_str = user_info.get("user_id")
+    if not user_id_str:
+        return
+
+    try:
+        user_id = UUID(user_id_str)
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid user_id format: {user_id_str}")
+        return
+
+    # Check if user already exists
+    existing = await get_user_by_id(db, user_id)
+    if existing:
+        return
+
+    # Parse name into first/last
+    name = user_info.get("name", "") or ""
+    name_parts = name.split(" ", 1) if name else []
+    first_name = name_parts[0] if name_parts else "User"
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    # Create user with specific ID from Cognito/Google
+    db_user = User(
+        id=user_id,
+        email=user_info.get("email", ""),
+        first_name=first_name,
+        last_name=last_name,
+        is_active=True,
+        is_verified=user_info.get("email_verified", False)
+    )
+    db.add(db_user)
+    await db.commit()
+    logger.info(f"Created local user record for: {user_info.get('email')}")
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: AsyncSession = Depends(get_db)
+) -> Dict[str, Any]:
     """
     Dependency to get current authenticated user from JWT token.
     Supports both AWS Cognito and Google OAuth tokens.
+    Auto-creates local user record on first authenticated request.
     """
-    return await _verify_token(credentials.credentials)
+    user_info = await _verify_token(credentials.credentials)
+
+    # Ensure user exists in local database (for foreign key constraints)
+    await ensure_user_exists(db, user_info)
+
+    return user_info
 
 
 async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
