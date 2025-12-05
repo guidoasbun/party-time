@@ -4,6 +4,7 @@ import "./globals.css";
 import AuthProvider from "@/components/auth/AuthProvider";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { KeyboardShortcutsProvider } from "@/contexts/KeyboardShortcutsContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,7 +34,9 @@ export default function RootLayout({
         <ThemeProvider defaultTheme="system" storageKey="party-time-theme">
           <QueryProvider>
             <AuthProvider>
-              {children}
+              <KeyboardShortcutsProvider>
+                {children}
+              </KeyboardShortcutsProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

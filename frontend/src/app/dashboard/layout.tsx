@@ -9,6 +9,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { NavigationProvider } from '@/contexts/NavigationContext'
 import { Navigation } from '@/components/layout/Navigation'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { useSidebar } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
@@ -75,7 +76,7 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Navigation Sidebar */}
       <Navigation />
 
@@ -93,10 +94,13 @@ function DashboardLayoutContent({ children }: DashboardLayoutProps) {
           onSignOut={() => signOut({ callbackUrl: "/" })}
         />
 
-        <main className="flex-1">
+        <main className="flex-1 pb-20 lg:pb-0">
           {children}
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNav />
     </div>
   )
 }
