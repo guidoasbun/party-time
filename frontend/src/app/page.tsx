@@ -7,6 +7,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/Card";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
 
 // Feature data for the features section
 const features = [
@@ -166,27 +167,29 @@ export default function Home() {
                 </a>
               </nav>
             </div>
-            <SignInButton />
+            <div className="flex items-center gap-2">
+              <ThemeToggle variant="dropdown" />
+              <SignInButton />
+            </div>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        {/* Background decoration */}
+        {/* Background decoration - uses different blend modes for light/dark */}
         <div className="absolute inset-0 -z-10">
-          <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob" />
-          <div className="absolute top-0 -right-4 w-72 h-72 bg-sky-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000" />
-          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-cyan-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000" />
+          <div className="absolute top-0 -left-4 w-72 h-72 bg-primary/30 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 dark:opacity-30 animate-blob" />
+          <div className="absolute top-0 -right-4 w-72 h-72 bg-sky-300 dark:bg-sky-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 dark:opacity-30 animate-blob animation-delay-2000" />
+          <div className="absolute -bottom-8 left-20 w-72 h-72 bg-cyan-300 dark:bg-cyan-600 rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-xl opacity-70 dark:opacity-30 animate-blob animation-delay-4000" />
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32 lg:py-40">
           <div className="text-center animate-fade-in">
             <div className="mb-8">
               <span className="text-6xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tighter">
-                <span className="text-blue-900">Celebration </span>
-
-                <span className="text-orange-500">Time</span>
+                <span className="text-blue-900 dark:text-blue-400">Celebration </span>
+                <span className="text-orange-500 dark:text-orange-400">Time</span>
               </span>
             </div>
             <h1 className="text-5xl font-extrabold tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">

@@ -6,6 +6,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { KeyboardShortcutsProvider } from "@/contexts/KeyboardShortcutsContext";
 import { WebVitalsReporter } from "@/components/analytics/WebVitalsReporter";
+import { AnalyticsWrapper } from "@/components/analytics/AnalyticsWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,7 +38,7 @@ export default function RootLayout({
           <QueryProvider>
             <AuthProvider>
               <KeyboardShortcutsProvider>
-                {children}
+                <AnalyticsWrapper>{children}</AnalyticsWrapper>
               </KeyboardShortcutsProvider>
             </AuthProvider>
           </QueryProvider>

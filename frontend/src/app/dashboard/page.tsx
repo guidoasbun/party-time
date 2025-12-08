@@ -10,6 +10,8 @@ import { EventList } from "@/components/events/EventList"
 import { EventFilters } from "@/components/events/EventFilters"
 import { FAB } from "@/components/ui/FAB"
 import { DashboardSkeleton } from "@/components/ui/LoadingStates"
+import { OnboardingModal } from "@/components/onboarding/OnboardingWizard"
+import { useOnboarding } from "@/hooks/useOnboarding"
 import { useEvents } from "@/hooks/api/useEvents"
 import { UserProfileResponse } from "@/types/auth.types"
 import { EventFilters as EventFiltersType } from "@/types/event.types"
@@ -17,6 +19,8 @@ import { EventFilters as EventFiltersType } from "@/types/event.types"
 export default function DashboardPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { shouldShowOnboarding, isLoading: onboardingLoading } = useOnboarding()
+  const [showOnboarding, setShowOnboarding] = useState(false)
   const [userInfo, setUserInfo] = useState<UserProfileResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -147,6 +151,13 @@ export default function DashboardPage() {
       fetchUserInfo()
     }
   }, [status, session?.idToken, router])
+
+  // Show onboarding for new users after initial load
+  useEffect(() => {
+    if (!loading && !onboardingLoading && shouldShowOnboarding && userInfo) {
+      setShowOnboarding(true)
+    }
+  }, [loading, onboardingLoading, shouldShowOnboarding, userInfo])
 
   // Event action handlers
   const handleCreateEvent = () => {
@@ -324,6 +335,12 @@ export default function DashboardPage() {
       <FAB
         onClick={handleCreateEvent}
         label="Create New Event"
+      />
+
+      {/* Onboarding Modal for New Users */}
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onClose={() => setShowOnboarding(false)}
       />
     </>
   )
