@@ -2,6 +2,7 @@
 # All values needed for subsequent infrastructure phases and CI/CD
 # FR-22: The system shall be deployed on AWS Infrastructure.
 # Infrastructure Phase 1 - Foundation
+# Infrastructure Phase 2 - Data Layer
 #------------------------------------------------------------------------------
 # VPC Outputs
 #------------------------------------------------------------------------------
@@ -128,4 +129,123 @@ output "nat_gateway_ids" {
 output "internet_gateway_id" {
   description = "Internet Gateway ID"
   value       = module.networking.internet_gateway_id
+}
+
+#------------------------------------------------------------------------------
+# PHASE 2: DATA LAYER OUTPUTS
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# KMS Outputs
+#------------------------------------------------------------------------------
+output "kms_key_arn" {
+  description = "KMS key ARN for data encryption"
+  value       = module.kms.key_arn
+}
+
+output "kms_key_id" {
+  description = "KMS key ID"
+  value       = module.kms.key_id
+}
+
+#------------------------------------------------------------------------------
+# RDS Outputs
+#------------------------------------------------------------------------------
+output "rds_endpoint" {
+  description = "RDS instance endpoint (host:port)"
+  value       = module.rds.endpoint
+}
+
+output "rds_address" {
+  description = "RDS instance address (hostname)"
+  value       = module.rds.address
+}
+
+output "rds_port" {
+  description = "RDS instance port"
+  value       = module.rds.port
+}
+
+output "rds_database_name" {
+  description = "RDS database name"
+  value       = module.rds.database_name
+}
+
+output "rds_arn" {
+  description = "RDS instance ARN"
+  value       = module.rds.arn
+}
+
+#------------------------------------------------------------------------------
+# ElastiCache Outputs
+#------------------------------------------------------------------------------
+output "redis_primary_endpoint" {
+  description = "Redis primary endpoint"
+  value       = module.elasticache.primary_endpoint
+}
+
+output "redis_port" {
+  description = "Redis port"
+  value       = module.elasticache.port
+}
+
+output "redis_arn" {
+  description = "ElastiCache replication group ARN"
+  value       = module.elasticache.arn
+}
+
+#------------------------------------------------------------------------------
+# S3 Outputs
+#------------------------------------------------------------------------------
+output "assets_bucket_id" {
+  description = "Assets S3 bucket ID"
+  value       = module.s3.assets_bucket_id
+}
+
+output "assets_bucket_arn" {
+  description = "Assets S3 bucket ARN"
+  value       = module.s3.assets_bucket_arn
+}
+
+output "uploads_bucket_id" {
+  description = "Uploads S3 bucket ID"
+  value       = module.s3.uploads_bucket_id
+}
+
+output "uploads_bucket_arn" {
+  description = "Uploads S3 bucket ARN"
+  value       = module.s3.uploads_bucket_arn
+}
+
+#------------------------------------------------------------------------------
+# Secrets Manager Outputs
+#------------------------------------------------------------------------------
+output "database_secret_arn" {
+  description = "Database credentials secret ARN"
+  value       = module.secrets.database_secret_arn
+}
+
+output "redis_secret_arn" {
+  description = "Redis credentials secret ARN"
+  value       = module.secrets.redis_secret_arn
+}
+
+output "app_secret_arn" {
+  description = "Application secrets ARN"
+  value       = module.secrets.app_secret_arn
+}
+
+output "cognito_secret_arn" {
+  description = "Cognito configuration secret ARN"
+  value       = module.secrets.cognito_secret_arn
+}
+
+output "api_keys_secret_arn" {
+  description = "API keys secret ARN"
+  value       = module.secrets.api_keys_secret_arn
+}
+
+output "all_secret_arns" {
+  description = "List of all secret ARNs for ECS task definitions"
+  value       = module.secrets.all_secret_arns
 }

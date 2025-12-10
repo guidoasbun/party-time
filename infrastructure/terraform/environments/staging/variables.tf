@@ -1,6 +1,7 @@
 # Staging Environment Variables
 # FR-22: The system shall be deployed on AWS Infrastructure.
 # Infrastructure Phase 1 - Foundation
+# Infrastructure Phase 2 - Data Layer
 
 #------------------------------------------------------------------------------
 # General Configuration
@@ -70,4 +71,57 @@ variable "github_repo" {
   description = "GitHub repository name for OIDC authentication"
   type        = string
   default     = "party-time"
+}
+
+#------------------------------------------------------------------------------
+# Phase 2: Cognito Configuration (existing setup)
+# Provide via terraform.tfvars or TF_VAR_ environment variables
+#------------------------------------------------------------------------------
+variable "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_client_id" {
+  description = "Cognito Client ID"
+  type        = string
+  default     = ""
+}
+
+variable "cognito_client_secret" {
+  description = "Cognito Client Secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+#------------------------------------------------------------------------------
+# Phase 2: Third-Party API Keys
+# Provide via terraform.tfvars or TF_VAR_ environment variables
+#------------------------------------------------------------------------------
+variable "google_places_api_key" {
+  description = "Google Places API Key"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "google_client_id" {
+  description = "Google OAuth Client ID"
+  type        = string
+  default     = ""
+}
+
+variable "google_client_secret" {
+  description = "Google OAuth Client Secret"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "ses_from_email" {
+  description = "SES verified email for sending"
+  type        = string
+  default     = "noreply@celebration-time.com"
 }
