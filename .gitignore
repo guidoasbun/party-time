@@ -116,6 +116,26 @@ docker-compose.override.yml
 crash.log
 crash.*.log
 
+# Terraform plans (contain sensitive values)
+*.tfplan
+
+# SSH/SSL Keys and Certificates
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Cloud Provider Credentials
+credentials.json
+service-account*.json
+*-credentials.json
+
+# Additional Secrets
+*.secret
+.secrets/
+secrets.yaml
+secrets.yml
+
 # AWS
 .aws/
 
