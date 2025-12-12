@@ -161,6 +161,9 @@ resource "aws_cloudfront_distribution" "main" {
   http_version        = "http2and3"
   price_class         = "PriceClass_100" # US, Canada, Europe (cost-optimized)
 
+  # WAF Web ACL attachment (Phase 5 - Security)
+  web_acl_id = var.waf_web_acl_arn
+
   # Custom domain aliases
   aliases = var.domain_aliases
 

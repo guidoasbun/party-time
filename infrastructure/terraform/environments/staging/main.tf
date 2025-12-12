@@ -296,6 +296,9 @@ module "cloudfront" {
 
   # Origin verification (optional security header)
   origin_shield_header = var.cloudfront_origin_header
+
+  # Phase 5: WAF attachment
+  waf_web_acl_arn = module.security.waf_web_acl_arn
 }
 
 #------------------------------------------------------------------------------
@@ -313,4 +316,40 @@ module "route53" {
   # CloudFront distribution info
   cloudfront_domain_name    = module.cloudfront.domain_name
   cloudfront_hosted_zone_id = module.cloudfront.hosted_zone_id
+}
+
+#------------------------------------------------------------------------------
+# PHASE 5: SECURITY
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Security Module
+# Creates WAF, GuardDuty, Security Hub, VPC Flow Logs, CloudTrail
+#------------------------------------------------------------------------------
+module "security" {
+  source = "../../modules/security"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  # VPC for Flow Logs
+  vpc_id = module.networking.vpc_id
+
+  # KMS for encryption
+  kms_key_arn = module.kms.key_arn
+
+  # WAF configuration
+  rate_limit             = 2000 # Requests per 5 minutes per IP
+  enable_waf_logging     = true
+  waf_log_retention_days = 30
+
+  # GuardDuty configuration (staging: 6 hours for cost savings)
+  guardduty_finding_frequency = "SIX_HOURS"
+
+  # VPC Flow Logs configuration
+  flow_log_retention_days = 30
+
+  # CloudTrail configuration (disable CloudWatch for staging cost savings)
+  enable_cloudtrail_cloudwatch  = false
+  cloudtrail_log_retention_days = 30
 }
