@@ -252,19 +252,19 @@ jobs:
             SUBJECT="✅ [Party-Time] Infrastructure Updated - ${{ needs.setup.outputs.environment }}"
             MESSAGE="Terraform changes have been applied to ${{ needs.setup.outputs.environment }}.
 
-Commit: ${{ github.sha }}
-Actor: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}
 
-View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
             SUBJECT="❌ [Party-Time] Infrastructure Update FAILED - ${{ needs.setup.outputs.environment }}"
             MESSAGE="Terraform apply FAILED for ${{ needs.setup.outputs.environment }}.
 
-Commit: ${{ github.sha }}
-Actor: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Actor: ${{ github.actor }}
 
-Please check the workflow logs:
-${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            Please check the workflow logs:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
 
           aws ses send-email \

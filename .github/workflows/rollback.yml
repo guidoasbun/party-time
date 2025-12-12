@@ -281,12 +281,12 @@ jobs:
 
           MESSAGE="Rollback $STATUS for $ENV_LABEL environment.
 
-Services: ${{ inputs.service }}
-Revision: ${{ inputs.revision || 'previous' }}
-Actor: ${{ github.actor }}
-URL: ${{ needs.validate.outputs.app_url }}
+            Services: ${{ inputs.service }}
+            Revision: ${{ inputs.revision || 'previous' }}
+            Actor: ${{ github.actor }}
+            URL: ${{ needs.validate.outputs.app_url }}
 
-View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
           aws ses send-email \
             --from "noreply@celebration-time.com" \

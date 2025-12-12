@@ -325,27 +325,23 @@ jobs:
           if [ "$STATUS" = "SUCCESS" ]; then
             MESSAGE="Staging deployment completed successfully.
 
-Commit: ${{ github.sha }}
-Branch: staging
-Actor: ${{ github.actor }}
-URL: ${{ env.STAGING_URL }}
+            Commit: ${{ github.sha }}
+            Branch: staging
+            Actor: ${{ github.actor }}
+            URL: ${{ env.STAGING_URL }}
 
-Deployed services:
-- Frontend
-- Backend
-- Celery Worker
-- Celery Beat
+            Deployed services: Frontend, Backend, Celery Worker, Celery Beat
 
-View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
             MESSAGE="Staging deployment FAILED.
 
-Commit: ${{ github.sha }}
-Branch: staging
-Actor: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Branch: staging
+            Actor: ${{ github.actor }}
 
-Please check the GitHub Actions logs for details:
-${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            Please check the GitHub Actions logs for details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
 
           # Try to send via SES (may fail if not configured)

@@ -368,35 +368,27 @@ jobs:
           if [ "$STATUS" = "SUCCESS" ]; then
             MESSAGE="PRODUCTION deployment completed successfully!
 
-Commit: ${{ github.sha }}
-Branch: main
-Actor: ${{ github.actor }}
-URL: ${{ env.PRODUCTION_URL }}
+            Commit: ${{ github.sha }}
+            Branch: main
+            Actor: ${{ github.actor }}
+            URL: ${{ env.PRODUCTION_URL }}
 
-Deployed services:
-- Frontend
-- Backend
-- Celery Worker
-- Celery Beat
+            Deployed services: Frontend, Backend, Celery Worker, Celery Beat
 
-Extended health monitoring passed.
+            Extended health monitoring passed.
 
-View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           else
             MESSAGE="PRODUCTION deployment FAILED!
 
-Commit: ${{ github.sha }}
-Branch: main
-Actor: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Branch: main
+            Actor: ${{ github.actor }}
 
-IMMEDIATE ACTION REQUIRED!
+            IMMEDIATE ACTION REQUIRED!
 
-Please check:
-1. GitHub Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-2. AWS ECS console for service health
-3. CloudWatch logs for error details
-
-Consider running the rollback workflow if services are unhealthy."
+            Please check the GitHub Actions logs for details:
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           fi
 
           aws ses send-email \
