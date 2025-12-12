@@ -38,3 +38,9 @@ variable "origin_shield_header" {
   default     = "cloudfront-origin-verification-header"
   sensitive   = true
 }
+
+variable "waf_web_acl_arn" {
+  description = "WAF Web ACL ARN to attach to CloudFront distribution"
+  type        = string
+  default     = null
+}

@@ -88,6 +88,32 @@ resource "aws_kms_key" "main" {
             "kms:CallerAccount" = data.aws_caller_identity.current.account_id
           }
         }
+      },
+      {
+        Sid    = "AllowCloudTrailToDescribeKey"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action   = "kms:DescribeKey"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudTrailToEncrypt"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudtrail.amazonaws.com"
+        }
+        Action = "kms:GenerateDataKey*"
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "aws:SourceArn" = "arn:aws:cloudtrail:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:trail/${var.project_name}-${var.environment}-trail"
+          }
+          StringLike = {
+            "kms:EncryptionContext:aws:cloudtrail:arn" = "arn:aws:cloudtrail:*:${data.aws_caller_identity.current.account_id}:trail/*"
+          }
+        }
       }
     ]
   })

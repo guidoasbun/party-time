@@ -393,3 +393,54 @@ output "staging_api_url" {
   description = "Staging API URL (HTTPS)"
   value       = "https://${var.subdomain}.${var.domain_name}/api"
 }
+
+#------------------------------------------------------------------------------
+# PHASE 5: SECURITY OUTPUTS
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# WAF Outputs
+#------------------------------------------------------------------------------
+output "waf_web_acl_arn" {
+  description = "WAF Web ACL ARN"
+  value       = module.security.waf_web_acl_arn
+}
+
+output "waf_web_acl_id" {
+  description = "WAF Web ACL ID"
+  value       = module.security.waf_web_acl_id
+}
+
+#------------------------------------------------------------------------------
+# GuardDuty Outputs
+#------------------------------------------------------------------------------
+output "guardduty_detector_id" {
+  description = "GuardDuty detector ID"
+  value       = module.security.guardduty_detector_id
+}
+
+#------------------------------------------------------------------------------
+# VPC Flow Logs Outputs
+#------------------------------------------------------------------------------
+output "vpc_flow_log_id" {
+  description = "VPC Flow Log ID"
+  value       = module.security.vpc_flow_log_id
+}
+
+output "vpc_flow_log_group_name" {
+  description = "VPC Flow Logs CloudWatch Log Group name"
+  value       = module.security.vpc_flow_log_group_name
+}
+
+#------------------------------------------------------------------------------
+# CloudTrail Outputs
+#------------------------------------------------------------------------------
+output "cloudtrail_arn" {
+  description = "CloudTrail ARN"
+  value       = module.security.cloudtrail_arn
+}
+
+output "cloudtrail_s3_bucket_id" {
+  description = "CloudTrail S3 bucket ID"
+  value       = module.security.cloudtrail_s3_bucket_id
+}
