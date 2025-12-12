@@ -171,3 +171,85 @@ module "secrets" {
   google_client_secret  = var.google_client_secret
   ses_from_email        = var.ses_from_email
 }
+
+#------------------------------------------------------------------------------
+# PHASE 3: APPLICATION LAYER
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# ALB Module
+# Creates Application Load Balancer with path-based routing
+#------------------------------------------------------------------------------
+module "alb" {
+  source = "../../modules/alb"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  vpc_id                = module.networking.vpc_id
+  public_subnet_ids     = module.networking.public_subnet_ids
+  alb_security_group_id = module.networking.alb_security_group_id
+}
+
+#------------------------------------------------------------------------------
+# ECS Module
+# Creates ECS cluster, task definitions, services, and auto-scaling
+#------------------------------------------------------------------------------
+module "ecs" {
+  source = "../../modules/ecs"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # Networking
+  vpc_id                = module.networking.vpc_id
+  private_subnet_ids    = module.networking.private_subnet_ids
+  ecs_security_group_id = module.networking.ecs_security_group_id
+
+  # IAM Roles
+  ecs_task_execution_role_arn = module.iam.ecs_task_execution_role_arn
+  ecs_task_role_arn           = module.iam.ecs_task_role_arn
+
+  # ECR Repositories
+  frontend_repository_url = module.ecr.frontend_repository_url
+  backend_repository_url  = module.ecr.backend_repository_url
+
+  # Target Groups (from ALB module)
+  frontend_target_group_arn = module.alb.frontend_target_group_arn
+  backend_target_group_arn  = module.alb.backend_target_group_arn
+
+  # Secrets
+  database_secret_arn = module.secrets.database_secret_arn
+  redis_secret_arn    = module.secrets.redis_secret_arn
+  app_secret_arn      = module.secrets.app_secret_arn
+  cognito_secret_arn  = module.secrets.cognito_secret_arn
+  api_keys_secret_arn = module.secrets.api_keys_secret_arn
+
+  # Application URLs (use ALB DNS initially, update to custom domain in Phase 4)
+  api_url = "http://${module.alb.alb_dns_name}"
+  app_url = "http://${module.alb.alb_dns_name}"
+
+  # Staging scaling configuration (minimal for cost savings)
+  frontend_desired_count      = 1
+  frontend_min_count          = 1
+  frontend_max_count          = 4
+  backend_desired_count       = 1
+  backend_min_count           = 1
+  backend_max_count           = 4
+  celery_worker_desired_count = 1
+  celery_worker_min_count     = 1
+  celery_worker_max_count     = 3
+
+  # Staging resource sizing (minimal)
+  frontend_cpu         = 256
+  frontend_memory      = 512
+  backend_cpu          = 512
+  backend_memory       = 1024
+  celery_worker_cpu    = 256
+  celery_worker_memory = 512
+  celery_beat_cpu      = 256
+  celery_beat_memory   = 512
+
+  # Log retention
+  log_retention_days = 30
+}
