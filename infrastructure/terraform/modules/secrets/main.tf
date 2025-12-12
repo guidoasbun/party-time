@@ -15,6 +15,11 @@ resource "random_password" "jwt_secret_key" {
   special = true
 }
 
+resource "random_password" "nextauth_secret" {
+  length  = 64
+  special = true
+}
+
 #------------------------------------------------------------------------------
 # Database Credentials Secret
 #------------------------------------------------------------------------------
@@ -87,8 +92,9 @@ resource "aws_secretsmanager_secret" "app" {
 resource "aws_secretsmanager_secret_version" "app" {
   secret_id = aws_secretsmanager_secret.app.id
   secret_string = jsonencode({
-    SECRET_KEY     = random_password.secret_key.result
-    JWT_SECRET_KEY = random_password.jwt_secret_key.result
+    SECRET_KEY      = random_password.secret_key.result
+    JWT_SECRET_KEY  = random_password.jwt_secret_key.result
+    NEXTAUTH_SECRET = random_password.nextauth_secret.result
   })
 }
 
@@ -116,6 +122,7 @@ resource "aws_secretsmanager_secret_version" "cognito" {
     COGNITO_CLIENT_ID     = var.cognito_client_id
     COGNITO_CLIENT_SECRET = var.cognito_client_secret
     COGNITO_REGION        = var.aws_region
+    COGNITO_ISSUER        = var.cognito_user_pool_id != "" ? "https://cognito-idp.${var.aws_region}.amazonaws.com/${var.cognito_user_pool_id}" : ""
   })
 }
 

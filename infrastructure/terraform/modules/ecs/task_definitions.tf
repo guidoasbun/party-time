@@ -52,6 +52,40 @@ resource "aws_ecs_task_definition" "frontend" {
         {
           name  = "NEXT_PUBLIC_APP_URL"
           value = var.app_url
+        },
+        {
+          name  = "NEXTAUTH_URL"
+          value = var.app_url
+        }
+      ]
+
+      secrets = [
+        # NextAuth secret for session encryption
+        {
+          name      = "NEXTAUTH_SECRET"
+          valueFrom = "${var.app_secret_arn}:NEXTAUTH_SECRET::"
+        },
+        # Cognito OAuth provider
+        {
+          name      = "COGNITO_CLIENT_ID"
+          valueFrom = "${var.cognito_secret_arn}:COGNITO_CLIENT_ID::"
+        },
+        {
+          name      = "COGNITO_CLIENT_SECRET"
+          valueFrom = "${var.cognito_secret_arn}:COGNITO_CLIENT_SECRET::"
+        },
+        {
+          name      = "COGNITO_ISSUER"
+          valueFrom = "${var.cognito_secret_arn}:COGNITO_ISSUER::"
+        },
+        # Google OAuth provider
+        {
+          name      = "GOOGLE_CLIENT_ID"
+          valueFrom = "${var.api_keys_secret_arn}:GOOGLE_CLIENT_ID::"
+        },
+        {
+          name      = "GOOGLE_CLIENT_SECRET"
+          valueFrom = "${var.api_keys_secret_arn}:GOOGLE_CLIENT_SECRET::"
         }
       ]
 
