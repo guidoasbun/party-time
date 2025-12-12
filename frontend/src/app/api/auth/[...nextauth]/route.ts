@@ -4,6 +4,11 @@ import CognitoProvider from "next-auth/providers/cognito"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 
+// Detect if running behind CloudFront/ALB (internal HTTP but external HTTPS)
+// When NEXTAUTH_URL is set to https://, trust that the proxy handles SSL
+const isProduction = process.env.NODE_ENV === 'production'
+const useSecureCookies = isProduction && process.env.NEXTAUTH_URL?.startsWith('https://')
+
 const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
@@ -153,35 +158,35 @@ const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: useSecureCookies ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
-        domain: process.env.NODE_ENV === 'production' ? process.env.NEXTAUTH_COOKIE_DOMAIN : undefined,
+        secure: useSecureCookies,
+        domain: isProduction ? process.env.NEXTAUTH_COOKIE_DOMAIN : undefined,
       }
     },
     callbackUrl: {
-      name: `next-auth.callback-url`,
+      name: useSecureCookies ? `__Secure-next-auth.callback-url` : `next-auth.callback-url`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: useSecureCookies,
       }
     },
     csrfToken: {
-      name: `next-auth.csrf-token`,
+      name: useSecureCookies ? `__Host-next-auth.csrf-token` : `next-auth.csrf-token`,
       options: {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
-        secure: process.env.NODE_ENV === 'production',
+        secure: useSecureCookies,
       }
     }
   },
-  useSecureCookies: process.env.NODE_ENV === 'production',
+  useSecureCookies: useSecureCookies,
   secret: process.env.NEXTAUTH_SECRET,
 }
 

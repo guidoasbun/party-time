@@ -330,5 +330,66 @@ output "api_url" {
 
 output "api_docs_url" {
   description = "API documentation URL (Swagger UI)"
-  value       = "http://${module.alb.alb_dns_name}/docs"
+  value       = "https://${var.subdomain}.${var.domain_name}/docs"
+}
+
+#------------------------------------------------------------------------------
+# PHASE 4: DNS & CDN OUTPUTS
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# ACM Outputs
+#------------------------------------------------------------------------------
+output "certificate_arn" {
+  description = "ACM certificate ARN"
+  value       = module.acm.certificate_arn
+}
+
+output "certificate_domain_name" {
+  description = "ACM certificate primary domain"
+  value       = module.acm.certificate_domain_name
+}
+
+#------------------------------------------------------------------------------
+# CloudFront Outputs
+#------------------------------------------------------------------------------
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID"
+  value       = module.cloudfront.distribution_id
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain name (*.cloudfront.net)"
+  value       = module.cloudfront.domain_name
+}
+
+output "cloudfront_status" {
+  description = "CloudFront distribution status"
+  value       = module.cloudfront.status
+}
+
+#------------------------------------------------------------------------------
+# Route53 Outputs
+#------------------------------------------------------------------------------
+output "route53_zone_id" {
+  description = "Route53 hosted zone ID"
+  value       = module.route53.zone_id
+}
+
+output "staging_fqdn" {
+  description = "Fully qualified domain name for staging"
+  value       = module.route53.fqdn
+}
+
+#------------------------------------------------------------------------------
+# Updated Application URLs (HTTPS)
+#------------------------------------------------------------------------------
+output "staging_url" {
+  description = "Staging environment URL (HTTPS)"
+  value       = "https://${var.subdomain}.${var.domain_name}"
+}
+
+output "staging_api_url" {
+  description = "Staging API URL (HTTPS)"
+  value       = "https://${var.subdomain}.${var.domain_name}/api"
 }

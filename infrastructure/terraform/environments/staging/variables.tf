@@ -2,6 +2,8 @@
 # FR-22: The system shall be deployed on AWS Infrastructure.
 # Infrastructure Phase 1 - Foundation
 # Infrastructure Phase 2 - Data Layer
+# Infrastructure Phase 3 - Application Layer
+# Infrastructure Phase 4 - DNS & CDN
 
 #------------------------------------------------------------------------------
 # General Configuration
@@ -124,4 +126,26 @@ variable "ses_from_email" {
   description = "SES verified email for sending"
   type        = string
   default     = "noreply@celebration-time.com"
+}
+
+#------------------------------------------------------------------------------
+# Phase 4: DNS & CDN Configuration
+#------------------------------------------------------------------------------
+variable "domain_name" {
+  description = "Root domain name (e.g., celebration-time.com)"
+  type        = string
+  default     = "celebration-time.com"
+}
+
+variable "subdomain" {
+  description = "Subdomain prefix for this environment (e.g., 'staging' for staging.celebration-time.com)"
+  type        = string
+  default     = "staging"
+}
+
+variable "cloudfront_origin_header" {
+  description = "Secret header value for CloudFront origin verification"
+  type        = string
+  default     = "party-time-cloudfront-origin-2024"
+  sensitive   = true
 }

@@ -2,6 +2,8 @@
 # FR-22: The system shall be deployed on AWS Infrastructure.
 # Phase 1: Foundation - Networking, ECR, and IAM
 # Phase 2: Data Layer - KMS, S3, RDS, ElastiCache, Secrets
+# Phase 3: Application Layer - ALB, ECS
+# Phase 4: DNS & CDN - Route53, ACM, CloudFront
 
 #------------------------------------------------------------------------------
 # Networking Module
@@ -179,6 +181,7 @@ module "secrets" {
 #------------------------------------------------------------------------------
 # ALB Module
 # Creates Application Load Balancer with path-based routing
+# Updated in Phase 4 to include HTTPS listener
 #------------------------------------------------------------------------------
 module "alb" {
   source = "../../modules/alb"
@@ -188,6 +191,10 @@ module "alb" {
   vpc_id                = module.networking.vpc_id
   public_subnet_ids     = module.networking.public_subnet_ids
   alb_security_group_id = module.networking.alb_security_group_id
+
+  # Phase 4: HTTPS support
+  enable_https    = true
+  certificate_arn = module.acm.certificate_arn
 }
 
 #------------------------------------------------------------------------------
@@ -225,9 +232,9 @@ module "ecs" {
   cognito_secret_arn  = module.secrets.cognito_secret_arn
   api_keys_secret_arn = module.secrets.api_keys_secret_arn
 
-  # Application URLs (use ALB DNS initially, update to custom domain in Phase 4)
-  api_url = "http://${module.alb.alb_dns_name}"
-  app_url = "http://${module.alb.alb_dns_name}"
+  # Application URLs (Phase 4: use custom domain with HTTPS)
+  api_url = "https://${var.subdomain}.${var.domain_name}"
+  app_url = "https://${var.subdomain}.${var.domain_name}"
 
   # Staging scaling configuration (minimal for cost savings)
   frontend_desired_count      = 1
@@ -252,4 +259,58 @@ module "ecs" {
 
   # Log retention
   log_retention_days = 30
+}
+
+#------------------------------------------------------------------------------
+# PHASE 4: DNS & CDN
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# ACM Module
+# Creates SSL/TLS certificate with DNS validation
+#------------------------------------------------------------------------------
+module "acm" {
+  source = "../../modules/acm"
+
+  project_name = var.project_name
+  environment  = var.environment
+  domain_name  = var.domain_name
+  zone_id      = module.route53.zone_id
+}
+
+#------------------------------------------------------------------------------
+# CloudFront Module
+# Creates CDN distribution with security headers
+#------------------------------------------------------------------------------
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # Origin configuration
+  alb_dns_name    = module.alb.alb_dns_name
+  certificate_arn = module.acm.certificate_arn
+  domain_aliases  = ["${var.subdomain}.${var.domain_name}"]
+
+  # Origin verification (optional security header)
+  origin_shield_header = var.cloudfront_origin_header
+}
+
+#------------------------------------------------------------------------------
+# Route53 Module
+# Creates DNS records pointing to CloudFront
+#------------------------------------------------------------------------------
+module "route53" {
+  source = "../../modules/route53"
+
+  project_name = var.project_name
+  environment  = var.environment
+  domain_name  = var.domain_name
+  subdomain    = var.subdomain
+
+  # CloudFront distribution info
+  cloudfront_domain_name    = module.cloudfront.domain_name
+  cloudfront_hosted_zone_id = module.cloudfront.hosted_zone_id
 }

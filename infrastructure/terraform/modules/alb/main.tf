@@ -1,11 +1,13 @@
 # ALB Module - Application Load Balancer
 # FR-22: The system shall be deployed on AWS Infrastructure.
 # Infrastructure Phase 3 - Application Layer
+# Updated in Phase 4 to add HTTPS listener
 #
 # Creates:
 # - Application Load Balancer (internet-facing)
 # - Target Groups for frontend and backend
 # - HTTP Listener with path-based routing
+# - HTTPS Listener (when certificate_arn is provided)
 
 #------------------------------------------------------------------------------
 # Application Load Balancer
@@ -136,12 +138,66 @@ resource "aws_lb_listener_rule" "api" {
 
   condition {
     path_pattern {
-      values = ["/api/*", "/health", "/docs", "/openapi.json", "/redoc"]
+      values = ["/api/v1/*", "/health", "/docs", "/openapi.json", "/redoc"]
     }
   }
 
   tags = {
     Name        = "${var.project_name}-${var.environment}-api-rule"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+#------------------------------------------------------------------------------
+# HTTPS Listener (port 443)
+# Added in Phase 4 - only created when certificate_arn is provided
+#------------------------------------------------------------------------------
+resource "aws_lb_listener" "https" {
+  count = var.enable_https ? 1 : 0
+
+  load_balancer_arn = aws_lb.main.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.certificate_arn
+
+  # Default action: forward to frontend
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.frontend.arn
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-https-listener"
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+#------------------------------------------------------------------------------
+# Listener Rule: API Routes -> Backend (HTTPS)
+# Same routing as HTTP, but for HTTPS listener
+#------------------------------------------------------------------------------
+resource "aws_lb_listener_rule" "api_https" {
+  count = var.enable_https ? 1 : 0
+
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 100
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.backend.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["/api/v1/*", "/health", "/docs", "/openapi.json", "/redoc"]
+    }
+  }
+
+  tags = {
+    Name        = "${var.project_name}-${var.environment}-api-https-rule"
     Project     = var.project_name
     Environment = var.environment
   }
