@@ -1,0 +1,309 @@
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      service:
+        description: 'Service to rollback (or "all")'
+        required: true
+        type: choice
+        options:
+          - all
+          - frontend
+          - backend
+          - celery-worker
+          - celery-beat
+      revision:
+        description: 'Task definition revision (leave empty for previous)'
+        required: false
+        type: string
+      confirm:
+        description: 'Type "ROLLBACK" to confirm'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: '412381751532'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ============================================================================
+  # VALIDATION
+  # ============================================================================
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      ecs_cluster: ${{ steps.config.outputs.ecs_cluster }}
+      services: ${{ steps.config.outputs.services }}
+      app_url: ${{ steps.config.outputs.app_url }}
+    steps:
+      - name: Validate confirmation
+        if: inputs.confirm != 'ROLLBACK'
+        run: |
+          echo "ERROR: Confirmation string must be 'ROLLBACK'"
+          echo "You entered: '${{ inputs.confirm }}'"
+          exit 1
+
+      - name: Set environment configuration
+        id: config
+        run: |
+          ENV="${{ inputs.environment }}"
+
+          if [ "$ENV" = "staging" ]; then
+            echo "ecs_cluster=party-time-staging-cluster" >> $GITHUB_OUTPUT
+            echo "app_url=https://staging.celebration-time.com" >> $GITHUB_OUTPUT
+          else
+            echo "ecs_cluster=party-time-production-cluster" >> $GITHUB_OUTPUT
+            echo "app_url=https://celebration-time.com" >> $GITHUB_OUTPUT
+          fi
+
+          # Determine services to rollback
+          SERVICE="${{ inputs.service }}"
+          if [ "$SERVICE" = "all" ]; then
+            echo "services=frontend backend celery-worker celery-beat" >> $GITHUB_OUTPUT
+          else
+            echo "services=$SERVICE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display rollback plan
+        run: |
+          echo "==========================================="
+          echo "         ROLLBACK PLAN"
+          echo "==========================================="
+          echo ""
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Cluster: ${{ steps.config.outputs.ecs_cluster }}"
+          echo "Services: ${{ steps.config.outputs.services }}"
+          echo "Revision: ${{ inputs.revision || 'previous' }}"
+          echo ""
+          echo "==========================================="
+
+  # ============================================================================
+  # PRODUCTION APPROVAL (only for production rollbacks)
+  # ============================================================================
+  production-approval:
+    needs: validate
+    if: inputs.environment == 'production'
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval
+    steps:
+      - name: Production rollback approved
+        run: |
+          echo "Production rollback has been approved"
+          echo "WARNING: This will affect production users!"
+
+  # ============================================================================
+  # EXECUTE ROLLBACK
+  # ============================================================================
+  rollback:
+    needs: [validate, production-approval]
+    if: always() && needs.validate.result == 'success' && (needs.production-approval.result == 'success' || inputs.environment == 'staging')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-${{ inputs.environment }}-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Rollback services
+        run: |
+          CLUSTER="${{ needs.validate.outputs.ecs_cluster }}"
+          SERVICES="${{ needs.validate.outputs.services }}"
+          REVISION="${{ inputs.revision }}"
+          ENV="${{ inputs.environment }}"
+
+          echo "Starting rollback..."
+          echo ""
+
+          for SERVICE_SHORT in $SERVICES; do
+            SERVICE_NAME="party-time-${ENV}-${SERVICE_SHORT}"
+            echo "==========================================="
+            echo "Rolling back: $SERVICE_NAME"
+            echo "==========================================="
+
+            # Get current task definition
+            CURRENT_TD=$(aws ecs describe-services \
+              --cluster "$CLUSTER" \
+              --services "$SERVICE_NAME" \
+              --query 'services[0].taskDefinition' \
+              --output text)
+
+            echo "Current task definition: $CURRENT_TD"
+
+            # Extract family and revision
+            FAMILY=$(echo "$CURRENT_TD" | sed 's/.*task-definition\///' | cut -d':' -f1)
+            CURRENT_REV=$(echo "$CURRENT_TD" | rev | cut -d':' -f1 | rev)
+
+            echo "Family: $FAMILY"
+            echo "Current revision: $CURRENT_REV"
+
+            # Determine target revision
+            if [ -z "$REVISION" ]; then
+              TARGET_REV=$((CURRENT_REV - 1))
+            else
+              TARGET_REV="$REVISION"
+            fi
+
+            TARGET_TD="arn:aws:ecs:${{ env.AWS_REGION }}:${{ env.AWS_ACCOUNT_ID }}:task-definition/${FAMILY}:${TARGET_REV}"
+
+            echo "Target revision: $TARGET_REV"
+            echo "Target task definition: $TARGET_TD"
+
+            # Verify target revision exists
+            aws ecs describe-task-definition \
+              --task-definition "${FAMILY}:${TARGET_REV}" \
+              --query 'taskDefinition.taskDefinitionArn' \
+              --output text > /dev/null 2>&1 || {
+              echo "ERROR: Revision $TARGET_REV does not exist for $FAMILY"
+              exit 1
+            }
+
+            # Update service
+            echo "Updating service..."
+            aws ecs update-service \
+              --cluster "$CLUSTER" \
+              --service "$SERVICE_NAME" \
+              --task-definition "$TARGET_TD" \
+              --query 'service.serviceName' \
+              --output text
+
+            echo "Service updated to revision $TARGET_REV"
+            echo ""
+          done
+
+      - name: Wait for services to stabilize
+        run: |
+          CLUSTER="${{ needs.validate.outputs.ecs_cluster }}"
+          SERVICES="${{ needs.validate.outputs.services }}"
+          ENV="${{ inputs.environment }}"
+
+          # Build full service names
+          FULL_SERVICES=""
+          for SERVICE_SHORT in $SERVICES; do
+            FULL_SERVICES="$FULL_SERVICES party-time-${ENV}-${SERVICE_SHORT}"
+          done
+
+          echo "Waiting for services to stabilize: $FULL_SERVICES"
+          aws ecs wait services-stable \
+            --cluster "$CLUSTER" \
+            --services $FULL_SERVICES
+
+          echo "All services are stable!"
+
+  # ============================================================================
+  # VERIFY ROLLBACK
+  # ============================================================================
+  verify:
+    needs: [validate, rollback]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment propagation
+        run: sleep 30
+
+      - name: Health check
+        run: |
+          APP_URL="${{ needs.validate.outputs.app_url }}"
+
+          echo "Verifying rollback health..."
+          echo "URL: $APP_URL"
+
+          for i in {1..20}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$APP_URL/health" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Health check PASSED (HTTP $HTTP_CODE)"
+              exit 0
+            fi
+
+            echo "Attempt $i/20 - Got HTTP $HTTP_CODE, retrying..."
+            sleep 10
+          done
+
+          echo "Health check FAILED after rollback!"
+          exit 1
+
+  # ============================================================================
+  # NOTIFICATION
+  # ============================================================================
+  notify:
+    needs: [validate, rollback, verify]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-${{ inputs.environment }}-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Determine status
+        id: status
+        run: |
+          if [[ "${{ needs.verify.result }}" == "success" ]]; then
+            echo "status=SUCCESS" >> $GITHUB_OUTPUT
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+          else
+            echo "status=FAILED" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification
+        env:
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        run: |
+          if [ -z "$NOTIFICATION_EMAIL" ]; then
+            exit 0
+          fi
+
+          STATUS="${{ steps.status.outputs.status }}"
+          EMOJI="${{ steps.status.outputs.emoji }}"
+          ENV="${{ inputs.environment }}"
+
+          if [ "$ENV" = "production" ]; then
+            ENV_LABEL="PRODUCTION"
+          else
+            ENV_LABEL="Staging"
+          fi
+
+          SUBJECT="$EMOJI [Party-Time] Rollback $STATUS - $ENV_LABEL"
+
+          MESSAGE="Rollback $STATUS for $ENV_LABEL environment.
+
+Services: ${{ inputs.service }}
+Revision: ${{ inputs.revision || 'previous' }}
+Actor: ${{ github.actor }}
+URL: ${{ needs.validate.outputs.app_url }}
+
+View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          aws ses send-email \
+            --from "noreply@celebration-time.com" \
+            --destination "ToAddresses=$NOTIFICATION_EMAIL" \
+            --message "Subject={Data='$SUBJECT',Charset=UTF-8},Body={Text={Data='$MESSAGE',Charset=UTF-8}}" \
+            2>/dev/null || echo "Email notification skipped"
+
+      - name: Post rollback summary
+        run: |
+          echo "## Rollback Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Services:** ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Revision:** ${{ inputs.revision || 'previous' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** @${{ github.actor }}" >> $GITHUB_STEP_SUMMARY

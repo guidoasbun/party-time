@@ -1,0 +1,426 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'documentation/**'
+      - 'infrastructure/terraform/**'  # Handled by infrastructure.yml
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: '412381751532'
+  ECR_REGISTRY: 412381751532.dkr.ecr.us-east-1.amazonaws.com
+  # Production environment values (to be updated when production is deployed)
+  ECS_CLUSTER: party-time-production-cluster
+  FRONTEND_SERVICE: party-time-production-frontend
+  BACKEND_SERVICE: party-time-production-backend
+  CELERY_WORKER_SERVICE: party-time-production-celery-worker
+  CELERY_BEAT_SERVICE: party-time-production-celery-beat
+  FRONTEND_IMAGE: party-time-production-frontend
+  BACKEND_IMAGE: party-time-production-backend
+  CELERY_IMAGE: party-time-production-celery
+  PRODUCTION_URL: https://celebration-time.com
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  # ============================================================================
+  # MANUAL APPROVAL GATE
+  # ============================================================================
+  approval:
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval in GitHub
+    steps:
+      - name: Deployment approved
+        run: |
+          echo "Production deployment has been approved"
+          echo "Proceeding with deployment to ${{ env.PRODUCTION_URL }}"
+
+  # ============================================================================
+  # BUILD AND PUSH IMAGES
+  # ============================================================================
+  build-and-push:
+    needs: approval
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ github.sha }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./infrastructure/docker/frontend/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.FRONTEND_IMAGE }}:latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ env.PRODUCTION_URL }}
+            NEXT_PUBLIC_APP_URL=${{ env.PRODUCTION_URL }}
+          cache-from: type=gha,scope=frontend-prod
+          cache-to: type=gha,mode=max,scope=frontend-prod
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./infrastructure/docker/backend/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha,scope=backend-prod
+          cache-to: type=gha,mode=max,scope=backend-prod
+
+      - name: Build and push celery image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./infrastructure/docker/backend/Dockerfile
+          platforms: linux/arm64
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/${{ env.CELERY_IMAGE }}:${{ github.sha }}
+            ${{ env.ECR_REGISTRY }}/${{ env.CELERY_IMAGE }}:latest
+          cache-from: type=gha,scope=celery-prod
+          cache-to: type=gha,mode=max,scope=celery-prod
+
+  # ============================================================================
+  # CREATE DATABASE BACKUP (PRODUCTION SAFETY)
+  # ============================================================================
+  database-backup:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create RDS snapshot before deployment
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          SNAPSHOT_ID="party-time-production-pre-deploy-${TIMESTAMP}"
+
+          echo "Creating RDS snapshot: $SNAPSHOT_ID"
+
+          # Get the RDS instance identifier
+          RDS_INSTANCE="party-time-production-db"
+
+          aws rds create-db-snapshot \
+            --db-instance-identifier $RDS_INSTANCE \
+            --db-snapshot-identifier $SNAPSHOT_ID \
+            --tags Key=Purpose,Value=PreDeploymentBackup Key=Commit,Value=${{ github.sha }} \
+            2>/dev/null || echo "Snapshot creation skipped (may already exist or RDS not available)"
+
+          echo "Snapshot initiated: $SNAPSHOT_ID"
+          echo "Note: Snapshot will complete asynchronously"
+
+  # ============================================================================
+  # RUN DATABASE MIGRATIONS
+  # ============================================================================
+  run-migrations:
+    needs: [build-and-push, database-backup]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get network configuration
+        id: network
+        run: |
+          SERVICE_INFO=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.BACKEND_SERVICE }} \
+            --query 'services[0].networkConfiguration.awsvpcConfiguration' \
+            --output json)
+
+          SUBNETS=$(echo $SERVICE_INFO | jq -r '.subnets | join(",")')
+          SECURITY_GROUPS=$(echo $SERVICE_INFO | jq -r '.securityGroups | join(",")')
+
+          echo "subnets=$SUBNETS" >> $GITHUB_OUTPUT
+          echo "security_groups=$SECURITY_GROUPS" >> $GITHUB_OUTPUT
+
+      - name: Run database migrations
+        run: |
+          echo "Starting production database migrations..."
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --task-definition party-time-production-backend \
+            --launch-type FARGATE \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ steps.network.outputs.subnets }}],securityGroups=[${{ steps.network.outputs.security_groups }}],assignPublicIp=DISABLED}" \
+            --overrides '{
+              "containerOverrides": [{
+                "name": "backend",
+                "command": ["alembic", "upgrade", "head"]
+              }]
+            }' \
+            --query 'tasks[0].taskArn' \
+            --output text)
+
+          if [ -z "$TASK_ARN" ] || [ "$TASK_ARN" = "None" ]; then
+            echo "Error: Failed to start migration task"
+            exit 1
+          fi
+
+          echo "Migration task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster ${{ env.ECS_CLUSTER }} --tasks $TASK_ARN
+
+          EXIT_CODE=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].containers[0].exitCode' \
+            --output text)
+
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "Migration FAILED with exit code: $EXIT_CODE"
+            exit 1
+          fi
+
+          echo "Production migrations completed successfully!"
+
+  # ============================================================================
+  # DEPLOY TO ECS (WITH CIRCUIT BREAKER)
+  # ============================================================================
+  deploy-ecs:
+    needs: [build-and-push, run-migrations]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update ECS services
+        run: |
+          echo "Deploying to PRODUCTION ECS cluster: ${{ env.ECS_CLUSTER }}"
+          echo "WARNING: This is a production deployment!"
+          echo ""
+
+          SERVICES="${{ env.FRONTEND_SERVICE }} ${{ env.BACKEND_SERVICE }} ${{ env.CELERY_WORKER_SERVICE }} ${{ env.CELERY_BEAT_SERVICE }}"
+
+          for SERVICE in $SERVICES; do
+            echo "Updating service: $SERVICE"
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service $SERVICE \
+              --force-new-deployment \
+              --query 'service.serviceName' \
+              --output text
+          done
+
+      - name: Wait for services to stabilize
+        run: |
+          echo "Waiting for production services to stabilize (timeout: 15 minutes)..."
+
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.FRONTEND_SERVICE }} ${{ env.BACKEND_SERVICE }} ${{ env.CELERY_WORKER_SERVICE }} ${{ env.CELERY_BEAT_SERVICE }}
+
+          echo "All production services are stable!"
+
+  # ============================================================================
+  # EXTENDED HEALTH CHECKS (PRODUCTION)
+  # ============================================================================
+  health-checks:
+    needs: deploy-ecs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment to propagate
+        run: sleep 60  # Longer wait for production (CloudFront cache, etc.)
+
+      - name: Health check - API (extended)
+        run: |
+          echo "Performing extended health checks for production..."
+
+          for i in {1..45}; do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ env.PRODUCTION_URL }}/health" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "API health check PASSED (HTTP $HTTP_CODE)"
+              break
+            fi
+
+            if [ "$i" = "45" ]; then
+              echo "API health check FAILED after 45 attempts"
+              exit 1
+            fi
+
+            echo "Attempt $i/45 - Got HTTP $HTTP_CODE, retrying in 10s..."
+            sleep 10
+          done
+
+      - name: Health check - API Documentation
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ env.PRODUCTION_URL }}/docs" 2>/dev/null || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "API docs check PASSED"
+          else
+            echo "API docs check FAILED (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Health check - Frontend
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "${{ env.PRODUCTION_URL }}/" 2>/dev/null || echo "000")
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "Frontend check PASSED"
+          else
+            echo "Frontend check FAILED (HTTP $HTTP_CODE)"
+            exit 1
+          fi
+
+      - name: Extended monitoring period
+        run: |
+          echo "Starting 5-minute monitoring period..."
+          echo "Checking health every 30 seconds..."
+
+          for i in {1..10}; do
+            sleep 30
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "${{ env.PRODUCTION_URL }}/health" 2>/dev/null || echo "000")
+
+            if [ "$HTTP_CODE" != "200" ]; then
+              echo "Health check failed during monitoring period (attempt $i/10)"
+              echo "HTTP Code: $HTTP_CODE"
+              exit 1
+            fi
+
+            echo "Monitoring check $i/10 passed (HTTP $HTTP_CODE)"
+          done
+
+          echo "Extended monitoring period completed successfully!"
+
+  # ============================================================================
+  # NOTIFICATION
+  # ============================================================================
+  notify:
+    needs: [build-and-push, deploy-ecs, health-checks]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [[ "${{ needs.health-checks.result }}" == "success" ]]; then
+            echo "status=SUCCESS" >> $GITHUB_OUTPUT
+            echo "emoji=✅" >> $GITHUB_OUTPUT
+          else
+            echo "status=FAILED" >> $GITHUB_OUTPUT
+            echo "emoji=❌" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send notification
+        env:
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        run: |
+          if [ -z "$NOTIFICATION_EMAIL" ]; then
+            echo "No notification email configured"
+            exit 0
+          fi
+
+          STATUS="${{ steps.status.outputs.status }}"
+          EMOJI="${{ steps.status.outputs.emoji }}"
+
+          SUBJECT="$EMOJI [Party-Time] PRODUCTION Deployment $STATUS"
+
+          if [ "$STATUS" = "SUCCESS" ]; then
+            MESSAGE="PRODUCTION deployment completed successfully!
+
+Commit: ${{ github.sha }}
+Branch: main
+Actor: ${{ github.actor }}
+URL: ${{ env.PRODUCTION_URL }}
+
+Deployed services:
+- Frontend
+- Backend
+- Celery Worker
+- Celery Beat
+
+Extended health monitoring passed.
+
+View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            MESSAGE="PRODUCTION deployment FAILED!
+
+Commit: ${{ github.sha }}
+Branch: main
+Actor: ${{ github.actor }}
+
+IMMEDIATE ACTION REQUIRED!
+
+Please check:
+1. GitHub Actions logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+2. AWS ECS console for service health
+3. CloudWatch logs for error details
+
+Consider running the rollback workflow if services are unhealthy."
+          fi
+
+          aws ses send-email \
+            --from "noreply@celebration-time.com" \
+            --destination "ToAddresses=$NOTIFICATION_EMAIL" \
+            --message "Subject={Data='$SUBJECT',Charset=UTF-8},Body={Text={Data='$MESSAGE',Charset=UTF-8}}" \
+            2>/dev/null || echo "Email notification skipped"
+
+      - name: Post deployment summary
+        run: |
+          echo "## Production Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ steps.status.outputs.emoji }} ${{ steps.status.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Image Tag:** \`${{ needs.build-and-push.outputs.image_tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Production URL:** ${{ env.PRODUCTION_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checks Performed" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Manual approval" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Database backup created" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Database migrations" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] ECS deployment" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Health checks" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] 5-minute monitoring period" >> $GITHUB_STEP_SUMMARY

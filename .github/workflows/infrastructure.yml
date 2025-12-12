@@ -1,0 +1,274 @@
+name: Infrastructure (Terraform)
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'infrastructure/terraform/**'
+  pull_request:
+    branches: [main, staging]
+    paths:
+      - 'infrastructure/terraform/**'
+
+concurrency:
+  group: infrastructure-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: '412381751532'
+  TF_VERSION: '1.6.0'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write  # For posting plan comments
+
+jobs:
+  # ============================================================================
+  # DETERMINE ENVIRONMENT
+  # ============================================================================
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.env.outputs.environment }}
+      working_directory: ${{ steps.env.outputs.working_directory }}
+    steps:
+      - name: Determine environment
+        id: env
+        run: |
+          if [[ "${{ github.base_ref }}" == "main" ]] || [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+            echo "working_directory=infrastructure/terraform/environments/production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+            echo "working_directory=infrastructure/terraform/environments/staging" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Display configuration
+        run: |
+          echo "Environment: ${{ steps.env.outputs.environment }}"
+          echo "Working Directory: ${{ steps.env.outputs.working_directory }}"
+
+  # ============================================================================
+  # TERRAFORM PLAN
+  # ============================================================================
+  terraform-plan:
+    needs: setup
+    runs-on: ubuntu-latest
+    outputs:
+      plan_exit_code: ${{ steps.plan.outputs.exitcode }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-${{ needs.setup.outputs.environment }}-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Terraform Format Check
+        id: fmt
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform fmt -check -recursive -diff
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform init -input=false
+
+      - name: Terraform Validate
+        id: validate
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform validate -no-color
+
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform plan -no-color -input=false -out=tfplan 2>&1 | tee plan.txt
+
+          # Capture exit code
+          echo "exitcode=$?" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ needs.setup.outputs.environment }}
+          path: |
+            ${{ needs.setup.outputs.working_directory }}/tfplan
+            ${{ needs.setup.outputs.working_directory }}/plan.txt
+          retention-days: 7
+
+      - name: Post Plan to PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const planPath = '${{ needs.setup.outputs.working_directory }}/plan.txt';
+
+            let plan = '';
+            try {
+              plan = fs.readFileSync(planPath, 'utf8');
+            } catch (error) {
+              plan = 'Unable to read plan output';
+            }
+
+            // Truncate if too long (GitHub comment limit is 65536 chars)
+            const maxLength = 60000;
+            if (plan.length > maxLength) {
+              plan = plan.substring(0, maxLength) + '\n\n... (truncated)';
+            }
+
+            const output = `## Terraform Plan - ${{ needs.setup.outputs.environment }}
+
+            #### Format Check: \`${{ steps.fmt.outcome }}\`
+            #### Initialization: \`${{ steps.init.outcome }}\`
+            #### Validation: \`${{ steps.validate.outcome }}\`
+            #### Plan: \`${{ steps.plan.outcome }}\`
+
+            <details><summary>Show Plan</summary>
+
+            \`\`\`terraform
+            ${plan}
+            \`\`\`
+
+            </details>
+
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*
+            *Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+      - name: Terraform Plan Status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+  # ============================================================================
+  # MANUAL APPROVAL (for push to main/staging only)
+  # ============================================================================
+  approval:
+    needs: [setup, terraform-plan]
+    if: github.event_name == 'push' && needs.terraform-plan.outputs.plan_exit_code != '1'
+    runs-on: ubuntu-latest
+    environment: infrastructure  # Requires manual approval
+    steps:
+      - name: Approval granted
+        run: |
+          echo "Infrastructure changes approved for ${{ needs.setup.outputs.environment }}"
+          echo "Proceeding with terraform apply..."
+
+  # ============================================================================
+  # TERRAFORM APPLY (only on push, after approval)
+  # ============================================================================
+  terraform-apply:
+    needs: [setup, terraform-plan, approval]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-${{ needs.setup.outputs.environment }}-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ needs.setup.outputs.environment }}
+          path: ${{ needs.setup.outputs.working_directory }}
+
+      - name: Terraform Init
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform init -input=false
+
+      - name: Terraform Apply
+        run: |
+          cd ${{ needs.setup.outputs.working_directory }}
+          terraform apply -auto-approve -input=false tfplan
+
+      - name: Post Apply Summary
+        run: |
+          echo "## Terraform Apply Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Infrastructure changes have been applied successfully." >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # NOTIFICATION
+  # ============================================================================
+  notify:
+    needs: [setup, terraform-apply]
+    if: always() && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-${{ needs.setup.outputs.environment }}-github-actions
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Send notification
+        env:
+          NOTIFICATION_EMAIL: ${{ secrets.NOTIFICATION_EMAIL }}
+        run: |
+          if [ -z "$NOTIFICATION_EMAIL" ]; then
+            echo "No notification email configured"
+            exit 0
+          fi
+
+          if [[ "${{ needs.terraform-apply.result }}" == "success" ]]; then
+            SUBJECT="✅ [Party-Time] Infrastructure Updated - ${{ needs.setup.outputs.environment }}"
+            MESSAGE="Terraform changes have been applied to ${{ needs.setup.outputs.environment }}.
+
+Commit: ${{ github.sha }}
+Actor: ${{ github.actor }}
+
+View workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          else
+            SUBJECT="❌ [Party-Time] Infrastructure Update FAILED - ${{ needs.setup.outputs.environment }}"
+            MESSAGE="Terraform apply FAILED for ${{ needs.setup.outputs.environment }}.
+
+Commit: ${{ github.sha }}
+Actor: ${{ github.actor }}
+
+Please check the workflow logs:
+${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          fi
+
+          aws ses send-email \
+            --from "noreply@celebration-time.com" \
+            --destination "ToAddresses=$NOTIFICATION_EMAIL" \
+            --message "Subject={Data='$SUBJECT',Charset=UTF-8},Body={Text={Data='$MESSAGE',Charset=UTF-8}}" \
+            2>/dev/null || echo "Email notification skipped"

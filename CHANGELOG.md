@@ -4,6 +4,231 @@ This file documents the detailed completion history of each development phase fo
 
 ---
 
+## Phase 10.6: Infrastructure Phase 6 - CI/CD Pipeline (December 12, 2025)
+
+Implemented comprehensive CI/CD pipeline with GitHub Actions for automated testing, building, and deployment.
+
+### GitHub Workflows Created (5 workflows)
+
+| Workflow | File | Trigger | Purpose |
+|----------|------|---------|---------|
+| CI Pipeline | `ci.yml` | Pull requests | Lint, test, build, security scan |
+| Staging Deploy | `staging-deploy.yml` | Push to `staging` | Auto-deploy to staging environment |
+| Production Deploy | `production-deploy.yml` | Push to `main` | Deploy with manual approval |
+| Infrastructure | `infrastructure.yml` | Changes to `terraform/**` | Terraform plan/apply |
+| Rollback | `rollback.yml` | Manual trigger | Rollback ECS services |
+
+### CI Pipeline Features
+
+- **Path Filtering**: Only runs jobs when relevant paths change
+- **Frontend Jobs**: ESLint, Jest tests with coverage, Next.js build
+- **Backend Jobs**: Black formatter check, pytest with coverage, Docker build
+- **Security Scanning**: Trivy vulnerability scanner with SARIF output
+- **Caching**: npm and pip dependencies cached for faster builds
+
+### Deployment Pipeline Features
+
+- **GitHub OIDC**: Passwordless AWS authentication (no access keys)
+- **ARM64 Builds**: Docker buildx with `linux/arm64` for Graviton2
+- **Docker Layer Caching**: GitHub Actions cache (`type=gha`)
+- **Database Migrations**: Alembic via ECS RunTask before deployment
+- **Health Checks**: Multi-endpoint verification (`/health`, `/docs`, `/`)
+- **Concurrency Control**: Prevents parallel deployments
+
+### Helper Scripts Created
+
+```
+infrastructure/scripts/
+├── deploy.sh       # ECS service deployment
+├── rollback.sh     # ECS rollback to previous task definition
+├── db-migrate.sh   # Run Alembic migrations via ECS RunTask
+└── health-check.sh # Deployment health verification
+```
+
+### Files Deleted
+
+- `.github/workflows/webpack.yml` - Outdated generic webpack workflow
+
+### IAM Permissions Added
+
+Updated `infrastructure/terraform/modules/iam/github_oidc.tf`:
+- `ecs:RunTask` - For running database migrations
+- `ses:SendEmail`, `ses:SendRawEmail` - For deployment notifications
+- `rds:CreateDBSnapshot`, `rds:DescribeDBSnapshots` - For pre-deployment backups
+
+### GitHub Configuration Required
+
+| Item | Value |
+|------|-------|
+| Secret: `AWS_ACCOUNT_ID` | `412381751532` |
+| Secret: `AWS_REGION` | `us-east-1` |
+| Secret: `NOTIFICATION_EMAIL` | `guido@asbun.io` |
+| Environment: `production` | Required reviewers |
+| Environment: `infrastructure` | Required reviewers |
+
+### Rollback Workflow Features
+
+- Manual trigger with `workflow_dispatch`
+- Environment selection (staging/production)
+- Service selection (all or individual)
+- Optional revision number specification
+- Requires "ROLLBACK" confirmation string
+- Production rollbacks require additional approval
+
+### Estimated Monthly Cost
+
+No additional AWS cost (GitHub Actions free tier, SES pay-per-use)
+
+---
+
+## Phase 10.5: Infrastructure Phase 5 - Security (December 12, 2025)
+
+Deployed Phase 5 of AWS infrastructure: security hardening with WAF, GuardDuty, Security Hub, VPC Flow Logs, and CloudTrail.
+
+### AWS Resources Created (19 total)
+
+**WAF v2 Web ACL:**
+- Web ACL: `party-time-staging-waf` (CLOUDFRONT scope)
+- AWS Managed Rules: CommonRuleSet, KnownBadInputsRuleSet, SQLiRuleSet
+- Rate Limiting: 2000 requests/5 min per IP
+- CloudWatch Log Group for blocked requests
+
+**GuardDuty:**
+- Detector ID: `50cb1b7670d56f1b728bd90418cbe7fc`
+- S3 Protection: Enabled
+- Finding Frequency: 6 hours (staging)
+
+**Security Hub:**
+- CIS AWS Foundations Benchmark v1.4.0
+- AWS Foundational Security Best Practices v1.0.0
+- GuardDuty integration enabled
+
+**VPC Flow Logs:**
+- Flow Log: `fl-09c11f8e701f4e196`
+- Log Group: `/aws/vpc/party-time-staging-flow-logs`
+- Traffic Type: ALL, Aggregation: 1 minute
+
+**CloudTrail:**
+- Trail: `party-time-staging-trail`
+- S3 Bucket: `party-time-staging-cloudtrail-412381751532`
+- Log File Validation: Enabled
+- Encryption: SSE-S3
+
+### Key Resource IDs
+
+| Resource | ID |
+|----------|-----|
+| WAF Web ACL | `c80dbc88-9200-4e8b-8d49-784789858525` |
+| GuardDuty Detector | `50cb1b7670d56f1b728bd90418cbe7fc` |
+| VPC Flow Log | `fl-09c11f8e701f4e196` |
+| CloudTrail | `party-time-staging-trail` |
+| CloudTrail S3 | `party-time-staging-cloudtrail-412381751532` |
+
+### Files Created (8 files)
+
+```
+infrastructure/terraform/modules/security/
+├── main.tf              # CloudTrail S3 bucket, data sources
+├── waf.tf               # WAF v2 Web ACL with OWASP rules
+├── guardduty.tf         # GuardDuty detector with S3 protection
+├── securityhub.tf       # Security Hub with CIS benchmark
+├── vpc_flow_logs.tf     # VPC Flow Logs to CloudWatch
+├── cloudtrail.tf        # CloudTrail for API logging
+├── variables.tf         # Input variables
+└── outputs.tf           # Output values
+```
+
+### Files Modified
+
+- `infrastructure/terraform/modules/kms/main.tf` - Added CloudTrail policy statements
+- `infrastructure/terraform/modules/cloudfront/variables.tf` - Added waf_web_acl_arn variable
+- `infrastructure/terraform/modules/cloudfront/main.tf` - Added web_acl_id to distribution
+- `infrastructure/terraform/environments/staging/main.tf` - Added security module
+- `infrastructure/terraform/environments/staging/outputs.tf` - Added Phase 5 outputs
+
+### Implementation Notes
+
+- GuardDuty was pre-existing in account - imported via `terraform import`
+- CloudTrail uses SSE-S3 encryption (simplified from KMS due to policy complexity)
+- WAF attached to CloudFront distribution for edge protection
+
+### Estimated Monthly Cost
+
+~$160/month cumulative (+$19 from Phase 4: WAF ~$10, GuardDuty ~$4, Security Hub ~$2, CloudTrail ~$3)
+
+---
+
+## Phase 10.4: Infrastructure Phase 4 - DNS & CDN (December 12, 2025)
+
+Deployed Phase 4 of AWS infrastructure: domain configuration, SSL certificates, and CloudFront CDN.
+
+### AWS Resources Created (19 total)
+
+**ACM Certificate:**
+- Certificate ARN: `arn:aws:acm:us-east-1:412381751532:certificate/2103c5ff-a7e8-48ea-8b21-bbc8def08e18`
+- Domains: `*.celebration-time.com`, `celebration-time.com`
+- Validation: DNS (Route 53)
+
+**CloudFront Distribution:**
+- Distribution ID: `E3UCHPJQWJ3FUW`
+- Domain: `d3hnj8w4p8l2rf.cloudfront.net`
+- Origin: ALB (party-time-staging-alb)
+- HTTP/2 and HTTP/3 enabled
+- Security headers via Response Headers Policy
+
+**Route 53:**
+- Zone ID: `Z059688014D054YF4WXUE`
+- A and AAAA records for staging.celebration-time.com
+
+**ALB HTTPS:**
+- HTTPS Listener on port 443
+- TLS 1.3 policy (ELBSecurityPolicy-TLS13-1-2-2021-06)
+
+### Application URLs
+
+| Endpoint | URL |
+|----------|-----|
+| Staging Frontend | https://staging.celebration-time.com/ |
+| Staging API | https://staging.celebration-time.com/api |
+| API Docs | https://staging.celebration-time.com/docs |
+| Health Check | https://staging.celebration-time.com/health |
+
+### Security Headers Configured
+
+- `Strict-Transport-Security`: max-age=31536000; includeSubDomains; preload
+- `Content-Security-Policy`: Configured for Google APIs, Cognito, self
+- `X-Frame-Options`: DENY
+- `X-Content-Type-Options`: nosniff
+- `X-XSS-Protection`: 1; mode=block
+- `Referrer-Policy`: strict-origin-when-cross-origin
+
+### Files Created (9 files)
+
+```
+infrastructure/terraform/modules/
+├── acm/
+│   ├── main.tf, variables.tf, outputs.tf
+├── cloudfront/
+│   ├── main.tf, variables.tf, outputs.tf
+└── route53/
+    ├── main.tf, variables.tf, outputs.tf
+```
+
+### Files Modified
+
+- `infrastructure/terraform/modules/alb/main.tf` - Added HTTPS listener
+- `infrastructure/terraform/modules/alb/variables.tf` - Added enable_https variable
+- `infrastructure/terraform/modules/alb/outputs.tf` - Added https_listener_arn
+- `infrastructure/terraform/environments/staging/main.tf` - Added acm, cloudfront, route53 modules
+- `infrastructure/terraform/environments/staging/variables.tf` - Added domain variables
+- `infrastructure/terraform/environments/staging/outputs.tf` - Added Phase 4 outputs
+
+### Estimated Monthly Cost
+
+~$141/month cumulative (+$6 from Phase 3: CloudFront ~$5, Route 53 ~$1)
+
+---
+
 ## Phase 10.3: Infrastructure Phase 3 - Application Layer (December 12, 2025)
 
 Deployed Phase 3 of AWS infrastructure: containerized applications on ECS Fargate with ALB load balancing.

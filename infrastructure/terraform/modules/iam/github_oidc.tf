@@ -53,9 +53,11 @@ resource "aws_iam_role" "github_actions" {
 # GitHub Actions Policy
 # Permissions for CI/CD operations:
 # - Push images to ECR
-# - Deploy to ECS
+# - Deploy to ECS (including RunTask for migrations)
 # - Pass IAM roles to ECS tasks
 # - Create CloudWatch log groups
+# - Send notifications via SES (optional)
+# - Create RDS snapshots (for production backups)
 #------------------------------------------------------------------------------
 resource "aws_iam_role_policy" "github_actions" {
   name = "${var.project_name}-${var.environment}-github-actions-policy"
@@ -96,7 +98,8 @@ resource "aws_iam_role_policy" "github_actions" {
           "ecs:ListTasks",
           "ecs:RegisterTaskDefinition",
           "ecs:UpdateService",
-          "ecs:TagResource"
+          "ecs:TagResource",
+          "ecs:RunTask"
         ]
         Resource = "*"
       },
@@ -120,6 +123,28 @@ resource "aws_iam_role_policy" "github_actions" {
           "logs:PutLogEvents"
         ]
         Resource = "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/ecs/${var.project_name}/*"
+      },
+      {
+        Sid    = "SESNotifications"
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "RDSBackup"
+        Effect = "Allow"
+        Action = [
+          "rds:CreateDBSnapshot",
+          "rds:DescribeDBSnapshots",
+          "rds:AddTagsToResource"
+        ]
+        Resource = [
+          "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:db:${var.project_name}-*",
+          "arn:aws:rds:${var.aws_region}:${data.aws_caller_identity.current.account_id}:snapshot:${var.project_name}-*"
+        ]
       }
     ]
   })
