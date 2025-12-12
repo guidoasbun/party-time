@@ -249,3 +249,86 @@ output "all_secret_arns" {
   description = "List of all secret ARNs for ECS task definitions"
   value       = module.secrets.all_secret_arns
 }
+
+#------------------------------------------------------------------------------
+# PHASE 3: APPLICATION LAYER OUTPUTS
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# ALB Outputs
+#------------------------------------------------------------------------------
+output "alb_dns_name" {
+  description = "ALB DNS name (use this to access the application)"
+  value       = module.alb.alb_dns_name
+}
+
+output "alb_arn" {
+  description = "ALB ARN"
+  value       = module.alb.alb_arn
+}
+
+output "alb_zone_id" {
+  description = "ALB Route 53 zone ID (for DNS alias records)"
+  value       = module.alb.alb_zone_id
+}
+
+output "frontend_target_group_arn" {
+  description = "Frontend target group ARN"
+  value       = module.alb.frontend_target_group_arn
+}
+
+output "backend_target_group_arn" {
+  description = "Backend target group ARN"
+  value       = module.alb.backend_target_group_arn
+}
+
+#------------------------------------------------------------------------------
+# ECS Outputs
+#------------------------------------------------------------------------------
+output "ecs_cluster_name" {
+  description = "ECS cluster name"
+  value       = module.ecs.cluster_name
+}
+
+output "ecs_cluster_arn" {
+  description = "ECS cluster ARN"
+  value       = module.ecs.cluster_arn
+}
+
+output "frontend_service_name" {
+  description = "Frontend ECS service name"
+  value       = module.ecs.frontend_service_name
+}
+
+output "backend_service_name" {
+  description = "Backend ECS service name"
+  value       = module.ecs.backend_service_name
+}
+
+output "celery_worker_service_name" {
+  description = "Celery worker ECS service name"
+  value       = module.ecs.celery_worker_service_name
+}
+
+output "celery_beat_service_name" {
+  description = "Celery beat ECS service name"
+  value       = module.ecs.celery_beat_service_name
+}
+
+#------------------------------------------------------------------------------
+# Application URLs
+#------------------------------------------------------------------------------
+output "application_url" {
+  description = "Application URL (use this to access the app)"
+  value       = "http://${module.alb.alb_dns_name}"
+}
+
+output "api_url" {
+  description = "API URL (use this for API requests)"
+  value       = "http://${module.alb.alb_dns_name}/api"
+}
+
+output "api_docs_url" {
+  description = "API documentation URL (Swagger UI)"
+  value       = "http://${module.alb.alb_dns_name}/docs"
+}

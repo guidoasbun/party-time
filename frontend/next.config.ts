@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployment
+  // Required for ECS Fargate deployment
+  output: 'standalone',
+
   // Enable compression for smaller response sizes
   compress: true,
 

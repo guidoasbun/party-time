@@ -4,6 +4,97 @@ This file documents the detailed completion history of each development phase fo
 
 ---
 
+## Phase 10.3: Infrastructure Phase 3 - Application Layer (December 12, 2025)
+
+Deployed Phase 3 of AWS infrastructure: containerized applications on ECS Fargate with ALB load balancing.
+
+### AWS Resources Created (25 total)
+
+**Application Load Balancer:**
+- ALB: `party-time-staging-alb-1362014547.us-east-1.elb.amazonaws.com`
+- Frontend Target Group: port 3000, health check `/`
+- Backend Target Group: port 8000, health check `/health`
+- HTTP Listener with path-based routing rules
+- Routes: `/*` → frontend, `/api/*`, `/health`, `/docs`, `/openapi.json`, `/redoc` → backend
+
+**ECS Cluster:**
+- Cluster: `party-time-staging-cluster` (Container Insights enabled)
+- Capacity Providers: FARGATE, FARGATE_SPOT
+
+**ECS Services (all ARM64 Graviton2):**
+- Frontend Service: Next.js on port 3000 (min: 1, max: 4)
+- Backend Service: FastAPI on port 8000 (min: 1, max: 4)
+- Celery Worker Service: async task processing (min: 1, max: 3)
+- Celery Beat Service: scheduled tasks (singleton, count: 1)
+
+**Task Definitions:**
+- Frontend: 256 CPU, 512 MB memory
+- Backend: 512 CPU, 1024 MB memory
+- Celery Worker: 256 CPU, 512 MB memory
+- Celery Beat: 256 CPU, 512 MB memory
+
+**Auto-Scaling:**
+- CPU-based target tracking (70% threshold)
+- Scale-out cooldown: 60s, Scale-in cooldown: 300s
+- Applied to frontend, backend, celery-worker (not celery-beat)
+
+**CloudWatch Log Groups:**
+- `/ecs/party-time/staging/frontend`
+- `/ecs/party-time/staging/backend`
+- `/ecs/party-time/staging/celery-worker`
+- `/ecs/party-time/staging/celery-beat`
+
+### Docker Images Built and Pushed
+
+- Frontend: Multi-stage Next.js build with standalone output (ARM64)
+- Backend: FastAPI with uvicorn, psycopg2 dependencies (ARM64)
+
+### Application URLs
+
+| Endpoint | URL |
+|----------|-----|
+| Frontend | http://party-time-staging-alb-1362014547.us-east-1.elb.amazonaws.com/ |
+| API | http://party-time-staging-alb-1362014547.us-east-1.elb.amazonaws.com/api |
+| API Docs | http://party-time-staging-alb-1362014547.us-east-1.elb.amazonaws.com/docs |
+| Health | http://party-time-staging-alb-1362014547.us-east-1.elb.amazonaws.com/health |
+
+### Files Created (14 files)
+
+```
+infrastructure/docker/
+├── frontend/
+│   ├── Dockerfile
+│   └── .dockerignore
+└── backend/
+    ├── Dockerfile
+    └── .dockerignore
+
+infrastructure/terraform/modules/
+├── alb/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── outputs.tf
+└── ecs/
+    ├── main.tf
+    ├── task_definitions.tf
+    ├── services.tf
+    ├── autoscaling.tf
+    ├── variables.tf
+    └── outputs.tf
+```
+
+### Files Modified
+
+- `frontend/next.config.ts` - Added `output: 'standalone'`
+- `infrastructure/terraform/environments/staging/main.tf` - Added ALB and ECS modules
+- `infrastructure/terraform/environments/staging/outputs.tf` - Added Phase 3 outputs
+
+### Estimated Monthly Cost
+
+~$135/month cumulative (+$63 from Phase 2: ALB ~$20, ECS ~$43)
+
+---
+
 ## Phase 10.1: Infrastructure Phase 1 - Foundation (December 8, 2025)
 
 Deployed Phase 1 of AWS infrastructure: networking foundation, container registry, and IAM roles.
