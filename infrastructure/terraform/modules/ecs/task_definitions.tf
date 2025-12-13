@@ -99,7 +99,7 @@ resource "aws_ecs_task_definition" "frontend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1"]
+        command     = ["CMD-SHELL", "wget -q -O /dev/null http://localhost:3000/ || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
@@ -235,7 +235,7 @@ resource "aws_ecs_task_definition" "backend" {
       }
 
       healthCheck = {
-        command     = ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8000/health || exit 1"]
+        command     = ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
         interval    = 30
         timeout     = 5
         retries     = 3
