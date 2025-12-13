@@ -7,6 +7,10 @@ import { ApiError } from "@/types";
  * This ensures that even if NEXT_PUBLIC_API_URL is incorrectly set to HTTP,
  * requests will be upgraded to HTTPS when the page is served over HTTPS.
  *
+ * IMPORTANT: This function must be called at RUNTIME (not module load time)
+ * to correctly detect the browser's protocol. The axios baseURL is set to
+ * a placeholder and the actual URL is resolved in the request interceptor.
+ *
  * Works in both client-side (browser) and server-side (Node.js) contexts:
  * - Client-side: Checks window.location.protocol
  * - Server-side: Checks NODE_ENV and NEXTAUTH_URL for production detection
@@ -31,7 +35,11 @@ export const getApiBaseUrl = (): string => {
   return url;
 };
 
-const API_BASE_URL = getApiBaseUrl();
+// Store the raw URL for build time - actual HTTPS upgrade happens at runtime in interceptor
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// For backward compatibility - this is evaluated at runtime when called
+const API_BASE_URL = RAW_API_URL;
 
 // Custom error classes
 export class ApiException extends Error {
@@ -106,10 +114,18 @@ export const apiClient = axios.create({
   validateStatus: (status) => status < 500, // Don't throw for 4xx errors
 });
 
-// Request interceptor to add auth token and request ID
+// Request interceptor to add auth token, request ID, and handle HTTPS upgrade
 apiClient.interceptors.request.use(
   async (config) => {
     try {
+      // HTTPS upgrade: Dynamically set baseURL at runtime to ensure HTTPS when page is served over HTTPS
+      // This is necessary because NEXT_PUBLIC_* env vars are baked in at build time,
+      // and we can't detect window.location.protocol until runtime
+      const runtimeBaseUrl = getApiBaseUrl();
+      if (config.baseURL !== runtimeBaseUrl) {
+        config.baseURL = runtimeBaseUrl;
+      }
+
       // Add authentication token (unless explicitly disabled in test)
       if (
         process.env.NODE_ENV !== "test" ||
@@ -318,31 +334,37 @@ export const createApiClient = (config?: ApiClientConfig) => {
 
   // Apply the same interceptors manually since handlers array is not accessible
   client.interceptors.request.use(
-    async (config) => {
+    async (reqConfig) => {
       try {
+        // HTTPS upgrade: Dynamically set baseURL at runtime
+        const runtimeBaseUrl = getApiBaseUrl();
+        if (reqConfig.baseURL !== runtimeBaseUrl) {
+          reqConfig.baseURL = runtimeBaseUrl;
+        }
+
         // Add authentication token
         const session = await getSession();
         if (session?.idToken) {
-          config.headers.Authorization = `Bearer ${session.idToken}`;
+          reqConfig.headers.Authorization = `Bearer ${session.idToken}`;
         }
 
         // Add request ID for cancellation support
-        const requestId = `${config.method?.toUpperCase()}-${
-          config.url
+        const requestId = `${reqConfig.method?.toUpperCase()}-${
+          reqConfig.url
         }-${Date.now()}`;
-        config.metadata = { requestId };
+        reqConfig.metadata = { requestId };
 
         // Set up abort controller for cancellation
         const controller = new AbortController();
-        config.signal = controller.signal;
+        reqConfig.signal = controller.signal;
         cancelTokens.set(requestId, controller);
 
         // Add request timestamp for debugging
-        config.headers["X-Request-Timestamp"] = new Date().toISOString();
+        reqConfig.headers["X-Request-Timestamp"] = new Date().toISOString();
       } catch (error) {
         console.warn("Failed to prepare API request:", error);
       }
-      return config;
+      return reqConfig;
     },
     () => {
       return Promise.reject(new NetworkException("Request preparation failed"));
