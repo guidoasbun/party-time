@@ -17,16 +17,17 @@ env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: '412381751532'
   ECR_REGISTRY: 412381751532.dkr.ecr.us-east-1.amazonaws.com
-  # Production environment values (to be updated when production is deployed)
-  ECS_CLUSTER: party-time-production-cluster
-  FRONTEND_SERVICE: party-time-production-frontend
-  BACKEND_SERVICE: party-time-production-backend
-  CELERY_WORKER_SERVICE: party-time-production-celery-worker
-  CELERY_BEAT_SERVICE: party-time-production-celery-beat
-  FRONTEND_IMAGE: party-time-production-frontend
-  BACKEND_IMAGE: party-time-production-backend
-  CELERY_IMAGE: party-time-production-celery
-  PRODUCTION_URL: https://celebration-time.com
+  # TODO: Update to production resources when Phase 8 infrastructure is deployed
+  # Currently deploying to staging infrastructure for CI/CD testing
+  ECS_CLUSTER: party-time-staging-cluster
+  FRONTEND_SERVICE: party-time-staging-frontend
+  BACKEND_SERVICE: party-time-staging-backend
+  CELERY_WORKER_SERVICE: party-time-staging-celery-worker
+  CELERY_BEAT_SERVICE: party-time-staging-celery-beat
+  FRONTEND_IMAGE: party-time-staging-frontend
+  BACKEND_IMAGE: party-time-staging-backend
+  CELERY_IMAGE: party-time-staging-celery
+  PRODUCTION_URL: https://staging.celebration-time.com
 
 permissions:
   id-token: write
@@ -60,7 +61,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          # TODO: Change to party-time-production-github-actions when Phase 8 is deployed
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-staging-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
@@ -122,7 +124,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          # TODO: Change to party-time-production-github-actions when Phase 8 is deployed
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-staging-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Create RDS snapshot before deployment
@@ -133,7 +136,8 @@ jobs:
           echo "Creating RDS snapshot: $SNAPSHOT_ID"
 
           # Get the RDS instance identifier
-          RDS_INSTANCE="party-time-production-db"
+          # TODO: Change to party-time-production-db when Phase 8 is deployed
+          RDS_INSTANCE="party-time-staging-db"
 
           aws rds create-db-snapshot \
             --db-instance-identifier $RDS_INSTANCE \
@@ -157,7 +161,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          # TODO: Change to party-time-production-github-actions when Phase 8 is deployed
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-staging-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Get network configuration
@@ -179,9 +184,10 @@ jobs:
         run: |
           echo "Starting production database migrations..."
 
+          # TODO: Change to party-time-production-backend when Phase 8 is deployed
           TASK_ARN=$(aws ecs run-task \
             --cluster ${{ env.ECS_CLUSTER }} \
-            --task-definition party-time-production-backend \
+            --task-definition party-time-staging-backend \
             --launch-type FARGATE \
             --network-configuration "awsvpcConfiguration={subnets=[${{ steps.network.outputs.subnets }}],securityGroups=[${{ steps.network.outputs.security_groups }}],assignPublicIp=DISABLED}" \
             --overrides '{
@@ -224,7 +230,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          # TODO: Change to party-time-production-github-actions when Phase 8 is deployed
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-staging-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Update ECS services
@@ -337,7 +344,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-production-github-actions
+          # TODO: Change to party-time-production-github-actions when Phase 8 is deployed
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/party-time-staging-github-actions
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Determine deployment status
