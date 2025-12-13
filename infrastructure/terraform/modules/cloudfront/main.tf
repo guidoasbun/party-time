@@ -55,7 +55,7 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' *.googleapis.com *.gstatic.com",
         "style-src 'self' 'unsafe-inline' fonts.googleapis.com",
         "img-src 'self' data: https: maps.googleapis.com maps.gstatic.com *.googleusercontent.com",
-        "connect-src 'self' *.googleapis.com *.amazoncognito.com cognito-idp.${var.aws_region}.amazonaws.com",
+        "connect-src 'self' https://*.celebration-time.com *.googleapis.com *.amazoncognito.com cognito-idp.${var.aws_region}.amazonaws.com",
         "font-src 'self' fonts.gstatic.com",
         "frame-ancestors 'none'",
         "base-uri 'self'",
