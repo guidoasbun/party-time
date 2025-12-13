@@ -3,6 +3,7 @@ import type { NextAuthOptions } from "next-auth"
 import CognitoProvider from "next-auth/providers/cognito"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 // Detect if running behind CloudFront/ALB (internal HTTP but external HTTPS)
 // When NEXTAUTH_URL is set to https://, trust that the proxy handles SSL
@@ -37,7 +38,7 @@ const authOptions: NextAuthOptions = {
           // For credentials authentication, we'll use AWS Cognito's InitiateAuth
           // This requires implementing the backend authentication flow
           // For now, we'll call our backend to authenticate
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
+          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
