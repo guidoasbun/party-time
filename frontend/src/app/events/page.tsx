@@ -22,6 +22,7 @@ import {
 import { SortOption, SortDirection } from "@/types/preferences.types";
 import { UserProfileResponse } from "@/types/auth.types";
 import { cn } from "@/lib/utils";
+import { getApiBaseUrl } from "@/lib/api-client";
 
 // Force dynamic rendering - this page uses client-side features
 
@@ -187,7 +188,7 @@ function EventsPageContent() {
     if (status === "authenticated" && session?.idToken) {
       const fetchUserInfo = async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
+          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/me`, {
             headers: {
               Authorization: `Bearer ${session.idToken}`,
               "Content-Type": "application/json",

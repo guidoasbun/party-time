@@ -2,7 +2,7 @@
  * Guests service module
  */
 
-import { api, withRetry } from "@/lib/api-client";
+import { api, withRetry, getApiBaseUrl } from "@/lib/api-client";
 import { getSession } from "next-auth/react";
 import {
   Guest,
@@ -236,9 +236,7 @@ export class GuestsService {
     }
 
     const response = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      }${API_ENDPOINTS.GUESTS.IMPORT_PREVIEW(eventId)}`,
+      `${getApiBaseUrl()}${API_ENDPOINTS.GUESTS.IMPORT_PREVIEW(eventId)}`,
       {
         method: "POST",
         headers,
@@ -273,9 +271,7 @@ export class GuestsService {
     }
 
     const url = new URL(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      }${API_ENDPOINTS.GUESTS.IMPORT_EXECUTE(eventId)}`
+      `${getApiBaseUrl()}${API_ENDPOINTS.GUESTS.IMPORT_EXECUTE(eventId)}`
     );
     url.searchParams.append("skip_duplicates", skipDuplicates.toString());
 
@@ -714,9 +710,7 @@ export class GuestsService {
     }
 
     const response = await fetch(
-      `${
-        process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-      }/api/v1/events/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(
+      `${getApiBaseUrl()}/api/v1/events/${eventId}/guests/${guestId}/qr-code?${new URLSearchParams(
         params
       )}`,
       {
