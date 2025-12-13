@@ -15,6 +15,7 @@ import { useOnboarding } from "@/hooks/useOnboarding"
 import { useEvents } from "@/hooks/api/useEvents"
 import { UserProfileResponse } from "@/types/auth.types"
 import { EventFilters as EventFiltersType } from "@/types/event.types"
+import { getApiBaseUrl } from "@/lib/api-client"
 
 export default function DashboardPage() {
   const { data: session, status } = useSession()
@@ -127,7 +128,7 @@ export default function DashboardPage() {
     if (status === "authenticated" && session?.idToken) {
       const fetchUserInfo = async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
+          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/me`, {
             headers: {
               "Authorization": `Bearer ${session.idToken}`,
               "Content-Type": "application/json",

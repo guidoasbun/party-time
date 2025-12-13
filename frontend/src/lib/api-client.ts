@@ -2,7 +2,36 @@ import axios, { AxiosError, AxiosResponse, isAxiosError } from "axios";
 import { getSession } from "next-auth/react";
 import { ApiError } from "@/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+/**
+ * Get the API base URL with automatic HTTPS upgrade in production.
+ * This ensures that even if NEXT_PUBLIC_API_URL is incorrectly set to HTTP,
+ * requests will be upgraded to HTTPS when the page is served over HTTPS.
+ *
+ * Works in both client-side (browser) and server-side (Node.js) contexts:
+ * - Client-side: Checks window.location.protocol
+ * - Server-side: Checks NODE_ENV and NEXTAUTH_URL for production detection
+ */
+export const getApiBaseUrl = (): string => {
+  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+  // Client-side: Check if page is served over HTTPS
+  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+    return url.replace(/^http:/, "https:");
+  }
+
+  // Server-side: Check if running in production with HTTPS configured
+  if (
+    typeof window === "undefined" &&
+    process.env.NODE_ENV === "production" &&
+    process.env.NEXTAUTH_URL?.startsWith("https://")
+  ) {
+    return url.replace(/^http:/, "https:");
+  }
+
+  return url;
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // Custom error classes
 export class ApiException extends Error {

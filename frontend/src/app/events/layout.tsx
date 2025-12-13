@@ -15,6 +15,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader'
 import { useSidebar } from '@/contexts/NavigationContext'
 import { cn } from '@/lib/utils'
 import { UserProfileResponse } from '@/types/auth.types'
+import { getApiBaseUrl } from '@/lib/api-client'
 
 interface EventsLayoutProps {
   children: React.ReactNode
@@ -37,7 +38,7 @@ function EventsLayoutContent({ children }: EventsLayoutProps) {
     if (status === "authenticated" && session?.idToken) {
       const fetchUserInfo = async () => {
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/me`, {
+          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/me`, {
             headers: {
               "Authorization": `Bearer ${session.idToken}`,
               "Content-Type": "application/json",
