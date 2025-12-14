@@ -7,6 +7,7 @@ import logging
 import time
 
 from fastapi import FastAPI, Request
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,11 @@ app = FastAPI(
     description="Party-Time Event Planning API",
     version="1.0.0",
 )
+
+# ProxyHeadersMiddleware: Respect X-Forwarded-Proto header from CloudFront/ALB
+# This ensures redirects (like trailing slash redirects) use HTTPS instead of HTTP
+# when the app is behind a reverse proxy that terminates SSL
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 # Phase 9.1: Performance Optimization - Response timing middleware
 @app.middleware("http")
