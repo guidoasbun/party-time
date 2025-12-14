@@ -36,6 +36,7 @@ COPY . .
 
 # Build arguments for NEXT_PUBLIC_* environment variables
 # These must be set at build time as they're embedded in the client bundle
+# Cache buster: 2024-12-14-v1 - Force rebuild to pick up HTTPS fix
 ARG NEXT_PUBLIC_API_URL=http://localhost:8000
 ARG NEXT_PUBLIC_APP_URL=http://localhost:3000
 ARG NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
