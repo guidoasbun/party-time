@@ -26,13 +26,27 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Party-Time Event Planning API",
     version="1.0.0",
-    redirect_slashes=False,  # Disable trailing slash redirects to avoid HTTP/HTTPS issues
 )
 
 # ProxyHeadersMiddleware: Respect X-Forwarded-Proto header from CloudFront/ALB
 # This ensures redirects (like trailing slash redirects) use HTTPS instead of HTTP
 # when the app is behind a reverse proxy that terminates SSL
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
+
+# CloudFront forwards CloudFront-Forwarded-Proto instead of X-Forwarded-Proto
+# This middleware copies it to X-Forwarded-Proto so ProxyHeadersMiddleware can use it
+@app.middleware("http")
+async def cloudfront_proto_header(request: Request, call_next):
+    """Copy CloudFront-Forwarded-Proto to X-Forwarded-Proto for proper HTTPS detection."""
+    cf_proto = request.headers.get("cloudfront-forwarded-proto")
+    if cf_proto and not request.headers.get("x-forwarded-proto"):
+        # Create mutable headers
+        request.scope["headers"] = [
+            (k, v) for k, v in request.scope["headers"]
+            if k.lower() != b"x-forwarded-proto"
+        ] + [(b"x-forwarded-proto", cf_proto.encode())]
+    return await call_next(request)
 
 # Phase 9.1: Performance Optimization - Response timing middleware
 @app.middleware("http")
