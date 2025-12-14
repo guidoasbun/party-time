@@ -26,6 +26,7 @@ app = FastAPI(
     title=settings.PROJECT_NAME,
     description="Party-Time Event Planning API",
     version="1.0.0",
+    redirect_slashes=False,  # Disable trailing slash redirects to avoid HTTP/HTTPS issues
 )
 
 # ProxyHeadersMiddleware: Respect X-Forwarded-Proto header from CloudFront/ALB
