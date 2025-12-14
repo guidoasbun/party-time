@@ -45,7 +45,7 @@ async def get_guest_by_token(
     return guest
 
 
-@router.get("/rsvp/{token}/validate", response_model=RSVPValidationResponse)
+@router.get("/rsvp/{token}/validate/", response_model=RSVPValidationResponse)
 async def validate_rsvp_token(
     token: str,
     request: Request,
@@ -102,7 +102,7 @@ async def validate_rsvp_token(
     )
 
 
-@router.get("/rsvp/{token}/event-details", response_model=RSVPEventDetailsResponse)
+@router.get("/rsvp/{token}/event-details/", response_model=RSVPEventDetailsResponse)
 async def get_rsvp_event_details(
     token: str,
     request: Request,
@@ -171,7 +171,7 @@ async def get_rsvp_event_details(
     )
 
 
-@router.post("/rsvp/{token}/respond", response_model=RSVPSubmissionResponse)
+@router.post("/rsvp/{token}/respond/", response_model=RSVPSubmissionResponse)
 async def submit_rsvp_response(
     token: str,
     request: Request,
@@ -291,7 +291,7 @@ async def submit_rsvp_response(
     )
 
 
-@router.patch("/rsvp/{token}/preferences", response_model=dict)
+@router.patch("/rsvp/{token}/preferences/", response_model=dict)
 async def update_rsvp_preferences(
     token: str,
     request: Request,
@@ -338,7 +338,7 @@ async def update_rsvp_preferences(
     }
 
 
-@router.patch("/rsvp/{token}/plus-one", response_model=dict)
+@router.patch("/rsvp/{token}/plus-one/", response_model=dict)
 async def update_plus_one(
     token: str,
     request: Request,
@@ -386,7 +386,7 @@ async def update_plus_one(
 
 # FR-7: Email Automation
 # Phase 5.2.4: Automated Email Flows - Unsubscribe Page
-@router.patch("/rsvp/{token}/email-preferences", response_model=RSVPEmailPreferencesResponse)
+@router.patch("/rsvp/{token}/email-preferences/", response_model=RSVPEmailPreferencesResponse)
 async def update_email_preferences(
     token: str,
     request: Request,
@@ -426,7 +426,7 @@ async def update_email_preferences(
     )
 
 
-@router.get("/rsvp/unsubscribe/{unsubscribe_token}", response_model=dict)
+@router.get("/rsvp/unsubscribe/{unsubscribe_token}/", response_model=dict)
 async def get_unsubscribe_page(
     unsubscribe_token: str,
     db: AsyncSession = Depends(get_db)
@@ -464,7 +464,7 @@ async def get_unsubscribe_page(
     }
 
 
-@router.post("/rsvp/unsubscribe/{unsubscribe_token}", response_model=UnsubscribeResponse)
+@router.post("/rsvp/unsubscribe/{unsubscribe_token}/", response_model=UnsubscribeResponse)
 async def unsubscribe_from_emails(
     unsubscribe_token: str,
     unsubscribe_data: UnsubscribeRequest,

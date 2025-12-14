@@ -44,7 +44,7 @@ seating_service = SeatingChartService()
 # ============================================================================
 
 
-@router.post("/{event_id}/seating", response_model=SeatingChartResponse, status_code=201)
+@router.post("/{event_id}/seating/", response_model=SeatingChartResponse, status_code=201)
 async def create_seating_chart(
     event_id: UUID,
     chart_data: SeatingChartCreate,
@@ -80,7 +80,7 @@ async def create_seating_chart(
         raise HTTPException(status_code=500, detail=f"Failed to create seating chart: {str(e)}")
 
 
-@router.get("/{event_id}/seating", response_model=SeatingChartWithTables)
+@router.get("/{event_id}/seating/", response_model=SeatingChartWithTables)
 async def get_seating_chart(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -176,7 +176,7 @@ async def get_seating_chart(
         raise HTTPException(status_code=500, detail=f"Failed to get seating chart: {str(e)}")
 
 
-@router.put("/{event_id}/seating/{chart_id}", response_model=SeatingChartResponse)
+@router.put("/{event_id}/seating/{chart_id}/", response_model=SeatingChartResponse)
 async def update_seating_chart(
     event_id: UUID,
     chart_id: UUID,
@@ -211,7 +211,7 @@ async def update_seating_chart(
         raise HTTPException(status_code=500, detail=f"Failed to update seating chart: {str(e)}")
 
 
-@router.delete("/{event_id}/seating/{chart_id}", status_code=200)
+@router.delete("/{event_id}/seating/{chart_id}/", status_code=200)
 async def delete_seating_chart(
     event_id: UUID,
     chart_id: UUID,
@@ -253,7 +253,7 @@ async def delete_seating_chart(
 # ============================================================================
 
 
-@router.post("/{event_id}/seating/{chart_id}/tables", response_model=TableLayoutResponse, status_code=201)
+@router.post("/{event_id}/seating/{chart_id}/tables/", response_model=TableLayoutResponse, status_code=201)
 async def create_table_layout(
     event_id: UUID,
     chart_id: UUID,
@@ -287,7 +287,7 @@ async def create_table_layout(
         raise HTTPException(status_code=500, detail=f"Failed to create table: {str(e)}")
 
 
-@router.post("/{event_id}/seating/{chart_id}/tables/bulk", response_model=List[TableLayoutResponse], status_code=201)
+@router.post("/{event_id}/seating/{chart_id}/tables/bulk/", response_model=List[TableLayoutResponse], status_code=201)
 async def create_tables_bulk(
     event_id: UUID,
     chart_id: UUID,
@@ -325,7 +325,7 @@ async def create_tables_bulk(
         raise HTTPException(status_code=500, detail=f"Failed to create tables: {str(e)}")
 
 
-@router.get("/{event_id}/seating/{chart_id}/tables/{table_id}", response_model=TableLayoutWithSeats)
+@router.get("/{event_id}/seating/{chart_id}/tables/{table_id}/", response_model=TableLayoutWithSeats)
 async def get_table_layout(
     event_id: UUID,
     chart_id: UUID,
@@ -369,7 +369,7 @@ async def get_table_layout(
         raise HTTPException(status_code=500, detail=f"Failed to get table: {str(e)}")
 
 
-@router.put("/{event_id}/seating/{chart_id}/tables/{table_id}", response_model=TableLayoutResponse)
+@router.put("/{event_id}/seating/{chart_id}/tables/{table_id}/", response_model=TableLayoutResponse)
 async def update_table_layout(
     event_id: UUID,
     chart_id: UUID,
@@ -419,7 +419,7 @@ async def update_table_layout(
         raise HTTPException(status_code=500, detail=f"Failed to update table: {str(e)}")
 
 
-@router.delete("/{event_id}/seating/{chart_id}/tables/{table_id}", status_code=200)
+@router.delete("/{event_id}/seating/{chart_id}/tables/{table_id}/", status_code=200)
 async def delete_table_layout(
     event_id: UUID,
     chart_id: UUID,
@@ -467,7 +467,7 @@ async def delete_table_layout(
 # ============================================================================
 
 
-@router.post("/{event_id}/seating/{chart_id}/tables/{table_id}/seats", response_model=SeatAssignmentResponse, status_code=201)
+@router.post("/{event_id}/seating/{chart_id}/tables/{table_id}/seats/", response_model=SeatAssignmentResponse, status_code=201)
 async def create_seat_assignment(
     event_id: UUID,
     chart_id: UUID,
@@ -515,7 +515,7 @@ async def create_seat_assignment(
         raise HTTPException(status_code=500, detail=f"Failed to create seat assignment: {str(e)}")
 
 
-@router.put("/{event_id}/seating/{chart_id}/seats/{seat_id}", response_model=SeatAssignmentResponse)
+@router.put("/{event_id}/seating/{chart_id}/seats/{seat_id}/", response_model=SeatAssignmentResponse)
 async def update_seat_assignment(
     event_id: UUID,
     chart_id: UUID,
@@ -569,7 +569,7 @@ async def update_seat_assignment(
         raise HTTPException(status_code=500, detail=f"Failed to update seat assignment: {str(e)}")
 
 
-@router.delete("/{event_id}/seating/{chart_id}/seats/{seat_id}", status_code=200)
+@router.delete("/{event_id}/seating/{chart_id}/seats/{seat_id}/", status_code=200)
 async def delete_seat_assignment(
     event_id: UUID,
     chart_id: UUID,
@@ -622,7 +622,7 @@ async def delete_seat_assignment(
 # ============================================================================
 
 
-@router.post("/{event_id}/seating/{chart_id}/auto-assign", status_code=200)
+@router.post("/{event_id}/seating/{chart_id}/auto-assign/", status_code=200)
 async def auto_assign_guests(
     event_id: UUID,
     chart_id: UUID,
@@ -664,7 +664,7 @@ async def auto_assign_guests(
         raise HTTPException(status_code=500, detail=f"Failed to auto-assign guests: {str(e)}")
 
 
-@router.get("/{event_id}/seating/{chart_id}/statistics", status_code=200)
+@router.get("/{event_id}/seating/{chart_id}/statistics/", status_code=200)
 async def get_seating_statistics(
     event_id: UUID,
     chart_id: UUID,

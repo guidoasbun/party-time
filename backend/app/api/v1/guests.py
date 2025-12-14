@@ -65,7 +65,7 @@ async def create_guest(
         raise HTTPException(status_code=400, detail=f"Failed to create guest: {str(e)}")
 
 
-@router.post("/{event_id}/guests/bulk", response_model=List[Guest], status_code=201)
+@router.post("/{event_id}/guests/bulk/", response_model=List[Guest], status_code=201)
 async def create_guests_bulk(
     event_id: UUID,
     guests_data: List[GuestCreate],
@@ -155,7 +155,7 @@ async def get_guests(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve guests: {str(e)}")
 
 
-@router.get("/{event_id}/guests/stats")
+@router.get("/{event_id}/guests/stats/")
 async def get_guest_stats(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -196,7 +196,7 @@ async def get_guest_stats(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve guest stats: {str(e)}")
 
 
-@router.get("/{event_id}/guests/dietary-restrictions")
+@router.get("/{event_id}/guests/dietary-restrictions/")
 async def get_guests_with_dietary_restrictions(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -221,7 +221,7 @@ async def get_guests_with_dietary_restrictions(
 """ FR-6: The system shall display an RSVP submission page.
     5.1.3: RSVP Management Dashboard
 """
-@router.get("/{event_id}/guests/rsvp-timeline", response_model=List[RSVPTimelineItem])
+@router.get("/{event_id}/guests/rsvp-timeline/", response_model=List[RSVPTimelineItem])
 async def get_rsvp_timeline(
     event_id: UUID,
     limit: int = Query(30, ge=1, le=100, description="Number of timeline items to return"),
@@ -276,7 +276,7 @@ async def get_rsvp_timeline(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve RSVP timeline: {str(e)}")
 
 
-@router.get("/{event_id}/guests/search", response_model=List[Guest])
+@router.get("/{event_id}/guests/search/", response_model=List[Guest])
 async def search_guests(
     event_id: UUID,
     q: str = Query(..., min_length=1, description="Search query"),
@@ -303,7 +303,7 @@ async def search_guests(
         raise HTTPException(status_code=500, detail=f"Failed to search guests: {str(e)}")
 
 
-@router.get("/{event_id}/guests/{guest_id}", response_model=Guest)
+@router.get("/{event_id}/guests/{guest_id}/", response_model=Guest)
 async def get_guest(
     event_id: UUID,
     guest_id: UUID,
@@ -330,7 +330,7 @@ async def get_guest(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve guest: {str(e)}")
 
 
-@router.put("/{event_id}/guests/{guest_id}", response_model=Guest)
+@router.put("/{event_id}/guests/{guest_id}/", response_model=Guest)
 async def update_guest(
     event_id: UUID,
     guest_id: UUID,
@@ -366,7 +366,7 @@ async def update_guest(
         raise HTTPException(status_code=400, detail=f"Failed to update guest: {str(e)}")
 
 
-@router.delete("/{event_id}/guests/{guest_id}", status_code=204)
+@router.delete("/{event_id}/guests/{guest_id}/", status_code=204)
 async def delete_guest(
     event_id: UUID,
     guest_id: UUID,
@@ -400,7 +400,7 @@ async def delete_guest(
 
 # RSVP endpoints (public - no authentication required)
 
-@router.get("/rsvp/{rsvp_token}", response_model=Guest)
+@router.get("/rsvp/{rsvp_token}/", response_model=Guest)
 async def get_guest_by_rsvp_token(
     rsvp_token: str,
     db: AsyncSession = Depends(get_db)
@@ -418,7 +418,7 @@ async def get_guest_by_rsvp_token(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve guest: {str(e)}")
 
 
-@router.post("/rsvp/{rsvp_token}", response_model=Guest)
+@router.post("/rsvp/{rsvp_token}/", response_model=Guest)
 async def update_guest_rsvp(
     rsvp_token: str,
     rsvp_data: GuestRSVPUpdate,
@@ -448,7 +448,7 @@ async def update_guest_rsvp(
 
 # Guest utilities
 
-@router.get("/{event_id}/guests/{guest_id}/rsvp-token")
+@router.get("/{event_id}/guests/{guest_id}/rsvp-token/")
 async def get_guest_rsvp_token(
     event_id: UUID,
     guest_id: UUID,
@@ -476,7 +476,7 @@ async def get_guest_rsvp_token(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve RSVP token: {str(e)}")
 
 
-@router.post("/{event_id}/guests/{guest_id}/send-invitation", response_model=Guest)
+@router.post("/{event_id}/guests/{guest_id}/send-invitation/", response_model=Guest)
 async def send_invitation(
     event_id: UUID,
     guest_id: UUID,
@@ -509,7 +509,7 @@ async def send_invitation(
         raise HTTPException(status_code=500, detail=f"Failed to send invitation: {str(e)}")
 
 
-@router.post("/{event_id}/guests/invitations", response_model=BulkInvitationResponse)
+@router.post("/{event_id}/guests/invitations/", response_model=BulkInvitationResponse)
 async def send_bulk_invitations(
     event_id: UUID,
     request: GuestInvitationRequest,
@@ -561,7 +561,7 @@ async def send_bulk_invitations(
         raise HTTPException(status_code=500, detail=f"Failed to send invitations: {str(e)}")
 
 
-@router.post("/{event_id}/guests/bulk-delete", status_code=200)
+@router.post("/{event_id}/guests/bulk-delete/", status_code=200)
 async def bulk_delete_guests(
     event_id: UUID,
     guest_ids: List[UUID] = Body(..., embed=True),
@@ -599,7 +599,7 @@ async def bulk_delete_guests(
         raise HTTPException(status_code=500, detail=f"Failed to delete guests: {str(e)}")
 
 
-@router.patch("/{event_id}/guests/bulk-update", status_code=200)
+@router.patch("/{event_id}/guests/bulk-update/", status_code=200)
 async def bulk_update_guest_status(
     event_id: UUID,
     guest_ids: List[UUID] = Body(..., embed=True),
@@ -641,7 +641,7 @@ async def bulk_update_guest_status(
 
 # RSVP Token Management Endpoints
 
-@router.get("/{event_id}/guests/{guest_id}/invitation-link", response_model=InvitationLinkData)
+@router.get("/{event_id}/guests/{guest_id}/invitation-link/", response_model=InvitationLinkData)
 async def get_invitation_link(
     event_id: UUID,
     guest_id: UUID,
@@ -694,7 +694,7 @@ async def get_invitation_link(
         raise HTTPException(status_code=500, detail=f"Failed to generate invitation link: {str(e)}")
 
 
-@router.get("/{event_id}/guests/{guest_id}/qr-code")
+@router.get("/{event_id}/guests/{guest_id}/qr-code/")
 async def get_qr_code(
     event_id: UUID,
     guest_id: UUID,
@@ -747,7 +747,7 @@ async def get_qr_code(
         raise HTTPException(status_code=500, detail=f"Failed to generate QR code: {str(e)}")
 
 
-@router.post("/{event_id}/guests/{guest_id}/regenerate-token", response_model=Guest)
+@router.post("/{event_id}/guests/{guest_id}/regenerate-token/", response_model=Guest)
 async def regenerate_token(
     event_id: UUID,
     guest_id: UUID,
@@ -797,7 +797,7 @@ async def regenerate_token(
         raise HTTPException(status_code=500, detail=f"Failed to regenerate token: {str(e)}")
 
 
-@router.get("/rsvp/{rsvp_token}/validate", response_model=TokenValidationResult)
+@router.get("/rsvp/{rsvp_token}/validate/", response_model=TokenValidationResult)
 async def validate_rsvp_token(
     rsvp_token: str,
     db: AsyncSession = Depends(get_db)
@@ -832,7 +832,7 @@ async def validate_rsvp_token(
         )
 
 
-@router.get("/rsvp/{rsvp_token}/event-details", response_model=RSVPEventDetails)
+@router.get("/rsvp/{rsvp_token}/event-details/", response_model=RSVPEventDetails)
 async def get_rsvp_event_details(
     rsvp_token: str,
     db: AsyncSession = Depends(get_db)
@@ -895,7 +895,7 @@ async def get_rsvp_event_details(
 
 # CSV Import Endpoints
 
-@router.post("/{event_id}/guests/import-preview", response_model=CSVImportPreview)
+@router.post("/{event_id}/guests/import-preview/", response_model=CSVImportPreview)
 async def preview_csv_import(
     event_id: UUID,
     file: UploadFile = File(...),
@@ -945,7 +945,7 @@ async def preview_csv_import(
         raise HTTPException(status_code=500, detail=f"Failed to preview CSV import: {str(e)}")
 
 
-@router.post("/{event_id}/guests/import-execute", response_model=CSVImportResult)
+@router.post("/{event_id}/guests/import-execute/", response_model=CSVImportResult)
 async def execute_csv_import(
     event_id: UUID,
     file: UploadFile = File(...),

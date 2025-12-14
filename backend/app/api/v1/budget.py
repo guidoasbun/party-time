@@ -16,7 +16,7 @@ router = APIRouter()
 
 # Budget Category Endpoints
 
-@router.post("/{event_id}/budget/categories", response_model=BudgetCategory, status_code=201)
+@router.post("/{event_id}/budget/categories/", response_model=BudgetCategory, status_code=201)
 async def create_budget_category(
     event_id: UUID,
     category_data: BudgetCategoryCreate,
@@ -40,7 +40,7 @@ async def create_budget_category(
         raise HTTPException(status_code=400, detail=f"Failed to create budget category: {str(e)}")
 
 
-@router.get("/{event_id}/budget/categories", response_model=None)
+@router.get("/{event_id}/budget/categories/", response_model=None)
 async def get_budget_categories(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -63,7 +63,7 @@ async def get_budget_categories(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve budget categories: {str(e)}")
 
 
-@router.patch("/{event_id}/budget/categories/{category_id}", response_model=BudgetCategory)
+@router.patch("/{event_id}/budget/categories/{category_id}/", response_model=BudgetCategory)
 async def update_budget_category(
     event_id: UUID,
     category_id: UUID,
@@ -93,7 +93,7 @@ async def update_budget_category(
         raise HTTPException(status_code=400, detail=f"Failed to update budget category: {str(e)}")
 
 
-@router.delete("/{event_id}/budget/categories/{category_id}", status_code=204)
+@router.delete("/{event_id}/budget/categories/{category_id}/", status_code=204)
 async def delete_budget_category(
     event_id: UUID,
     category_id: UUID,
@@ -127,7 +127,7 @@ async def delete_budget_category(
 
 # Expense Endpoints
 
-@router.post("/{event_id}/budget/expenses", response_model=Expense, status_code=201)
+@router.post("/{event_id}/budget/expenses/", response_model=Expense, status_code=201)
 async def create_expense(
     event_id: UUID,
     expense_data: ExpenseCreate,
@@ -157,7 +157,7 @@ async def create_expense(
         raise HTTPException(status_code=400, detail=f"Failed to create expense: {str(e)}")
 
 
-@router.get("/{event_id}/budget/expenses", response_model=List[Expense])
+@router.get("/{event_id}/budget/expenses/", response_model=List[Expense])
 async def get_expenses(
     event_id: UUID,
     category_id: Optional[UUID] = Query(None, description="Filter by category"),
@@ -186,7 +186,7 @@ async def get_expenses(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve expenses: {str(e)}")
 
 
-@router.get("/{event_id}/budget/expenses/recent", response_model=List[Expense])
+@router.get("/{event_id}/budget/expenses/recent/", response_model=List[Expense])
 async def get_recent_expenses(
     event_id: UUID,
     limit: int = Query(10, ge=1, le=50, description="Number of recent expenses to return"),
@@ -210,7 +210,7 @@ async def get_recent_expenses(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve recent expenses: {str(e)}")
 
 
-@router.get("/{event_id}/budget/expenses/{expense_id}", response_model=Expense)
+@router.get("/{event_id}/budget/expenses/{expense_id}/", response_model=Expense)
 async def get_expense(
     event_id: UUID,
     expense_id: UUID,
@@ -237,7 +237,7 @@ async def get_expense(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve expense: {str(e)}")
 
 
-@router.patch("/{event_id}/budget/expenses/{expense_id}", response_model=Expense)
+@router.patch("/{event_id}/budget/expenses/{expense_id}/", response_model=Expense)
 async def update_expense(
     event_id: UUID,
     expense_id: UUID,
@@ -273,7 +273,7 @@ async def update_expense(
         raise HTTPException(status_code=400, detail=f"Failed to update expense: {str(e)}")
 
 
-@router.delete("/{event_id}/budget/expenses/{expense_id}", status_code=204)
+@router.delete("/{event_id}/budget/expenses/{expense_id}/", status_code=204)
 async def delete_expense(
     event_id: UUID,
     expense_id: UUID,
@@ -305,7 +305,7 @@ async def delete_expense(
         raise HTTPException(status_code=500, detail=f"Failed to delete expense: {str(e)}")
 
 
-@router.patch("/{event_id}/budget/expenses/{expense_id}/mark-paid", response_model=Expense)
+@router.patch("/{event_id}/budget/expenses/{expense_id}/mark-paid/", response_model=Expense)
 async def mark_expense_as_paid(
     event_id: UUID,
     expense_id: UUID,
@@ -334,7 +334,7 @@ async def mark_expense_as_paid(
         raise HTTPException(status_code=400, detail=f"Failed to mark expense as paid: {str(e)}")
 
 
-@router.patch("/{event_id}/budget/expenses/{expense_id}/mark-unpaid", response_model=Expense)
+@router.patch("/{event_id}/budget/expenses/{expense_id}/mark-unpaid/", response_model=Expense)
 async def mark_expense_as_unpaid(
     event_id: UUID,
     expense_id: UUID,
@@ -365,7 +365,7 @@ async def mark_expense_as_unpaid(
 
 # Budget Analytics Endpoints
 
-@router.get("/{event_id}/budget/summary", response_model=None)
+@router.get("/{event_id}/budget/summary/", response_model=None)
 async def get_budget_summary(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -391,7 +391,7 @@ async def get_budget_summary(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve budget summary: {str(e)}")
 
 
-@router.get("/{event_id}/budget/categories-summary", response_model=None)
+@router.get("/{event_id}/budget/categories-summary/", response_model=None)
 async def get_category_spending_summary(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -414,7 +414,7 @@ async def get_category_spending_summary(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve category spending summary: {str(e)}")
 
 
-@router.get("/budget/categories/{category_id}/expenses", response_model=List[Expense])
+@router.get("/budget/categories/{category_id}/expenses/", response_model=List[Expense])
 async def get_expenses_by_category(
     category_id: UUID,
     db: AsyncSession = Depends(get_db),

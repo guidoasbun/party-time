@@ -16,7 +16,7 @@ from app.services.cognito_service import cognito_service
 router = APIRouter()
 
 
-@router.get("/me", response_model=Dict[str, Any])
+@router.get("/me/", response_model=Dict[str, Any])
 async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_current_user)):
     """
     Get current user information from JWT token
@@ -31,7 +31,7 @@ async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_curre
     }
 
 
-@router.get("/protected")
+@router.get("/protected/")
 async def protected_route(current_user: Dict[str, Any] = Depends(get_current_active_user)):
     """
     Example protected route that requires verified email
@@ -42,7 +42,7 @@ async def protected_route(current_user: Dict[str, Any] = Depends(get_current_act
     }
 
 
-@router.post("/logout")
+@router.post("/logout/")
 async def logout():
     """
     Logout endpoint - client should discard the JWT token
@@ -51,7 +51,7 @@ async def logout():
     return {"message": "Successfully logged out. Please discard your token."}
 
 
-@router.post("/register", response_model=UserRegisterResponse)
+@router.post("/register/", response_model=UserRegisterResponse)
 async def register_user(request: UserRegisterRequest):
     """
     Register a new user with email/password
@@ -77,7 +77,7 @@ async def register_user(request: UserRegisterRequest):
         raise HTTPException(status_code=500, detail="Registration failed. Please try again.")
 
 
-@router.post("/login", response_model=UserLoginResponse)
+@router.post("/login/", response_model=UserLoginResponse)
 async def login_user(request: UserLoginRequest):
     """
     Authenticate user with email/password and return JWT tokens
@@ -106,7 +106,7 @@ async def login_user(request: UserLoginRequest):
         raise HTTPException(status_code=500, detail="Authentication failed. Please try again.")
 
 
-@router.post("/verify-email", response_model=EmailVerificationResponse)
+@router.post("/verify-email/", response_model=EmailVerificationResponse)
 async def verify_email(request: EmailVerificationRequest):
     """
     Verify user email with confirmation code
@@ -128,7 +128,7 @@ async def verify_email(request: EmailVerificationRequest):
         raise HTTPException(status_code=500, detail="Email verification failed. Please try again.")
 
 
-@router.post("/resend-verification", response_model=EmailVerificationResponse)
+@router.post("/resend-verification/", response_model=EmailVerificationResponse)
 async def resend_verification_code(request: PasswordResetRequest):
     """
     Resend email verification code
@@ -147,7 +147,7 @@ async def resend_verification_code(request: PasswordResetRequest):
         raise HTTPException(status_code=500, detail="Failed to resend verification code. Please try again.")
 
 
-@router.post("/password-reset", response_model=PasswordResetResponse)
+@router.post("/password-reset/", response_model=PasswordResetResponse)
 async def initiate_password_reset(request: PasswordResetRequest):
     """
     Initiate password reset process
@@ -165,7 +165,7 @@ async def initiate_password_reset(request: PasswordResetRequest):
         raise HTTPException(status_code=500, detail="Password reset failed. Please try again.")
 
 
-@router.post("/password-reset-confirm", response_model=PasswordResetConfirmResponse)
+@router.post("/password-reset-confirm/", response_model=PasswordResetConfirmResponse)
 async def confirm_password_reset(request: PasswordResetConfirmRequest):
     """
     Confirm password reset with new password
@@ -187,7 +187,7 @@ async def confirm_password_reset(request: PasswordResetConfirmRequest):
         raise HTTPException(status_code=500, detail="Password reset confirmation failed. Please try again.")
 
 
-@router.get("/profile", response_model=UserProfileResponse)
+@router.get("/profile/", response_model=UserProfileResponse)
 async def get_user_profile(authorization: str = Header(...)):
     """
     Get user profile using access token
@@ -216,7 +216,7 @@ async def get_user_profile(authorization: str = Header(...)):
         raise HTTPException(status_code=500, detail="Failed to get user profile. Please try again.")
 
 
-@router.put("/profile", response_model=UserProfileUpdateResponse)
+@router.put("/profile/", response_model=UserProfileUpdateResponse)
 async def update_user_profile(
     request: UserProfileUpdateRequest,
     authorization: str = Header(...)

@@ -102,7 +102,7 @@ async def get_events(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve events: {str(e)}")
 
 
-@router.get("/search", response_model=List[Event])
+@router.get("/search/", response_model=List[Event])
 async def search_events(
     search_term: Optional[str] = Query(None, description="Search in name, description, location"),
     event_type: Optional[EventType] = Query(None, description="Filter by event type"),
@@ -127,7 +127,7 @@ async def search_events(
         raise HTTPException(status_code=500, detail=f"Failed to search events: {str(e)}")
 
 
-@router.get("/public", response_model=List[Event])
+@router.get("/public/", response_model=List[Event])
 async def get_public_events(
     skip: int = Query(0, ge=0, description="Number of events to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Number of events to return"),
@@ -142,7 +142,7 @@ async def get_public_events(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve public events: {str(e)}")
 
 
-@router.get("/stats")
+@router.get("/stats/")
 async def get_dashboard_stats(
     db: AsyncSession = Depends(get_db),
     current_user: dict = Depends(get_current_user)
@@ -244,7 +244,7 @@ async def get_dashboard_stats(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve dashboard stats: {str(e)}")
 
 
-@router.get("/{event_id}", response_model=Event)
+@router.get("/{event_id}/", response_model=Event)
 async def get_event(
     event_id: UUID,
     include_relations: bool = Query(False, description="Include related data (guests, budget)"),
@@ -270,7 +270,7 @@ async def get_event(
         raise HTTPException(status_code=500, detail=f"Failed to retrieve event: {str(e)}")
 
 
-@router.put("/{event_id}", response_model=Event)
+@router.put("/{event_id}/", response_model=Event)
 async def update_event(
     event_id: UUID,
     event_data: EventUpdate,
@@ -294,7 +294,7 @@ async def update_event(
         raise HTTPException(status_code=400, detail=f"Failed to update event: {str(e)}")
 
 
-@router.patch("/{event_id}", response_model=Event)
+@router.patch("/{event_id}/", response_model=Event)
 async def partial_update_event(
     event_id: UUID,
     event_data: EventUpdate,
@@ -318,7 +318,7 @@ async def partial_update_event(
         raise HTTPException(status_code=400, detail=f"Failed to update event: {str(e)}")
 
 
-@router.patch("/{event_id}/status", response_model=Event)
+@router.patch("/{event_id}/status/", response_model=Event)
 async def update_event_status(
     event_id: UUID,
     status: EventStatus,
@@ -342,7 +342,7 @@ async def update_event_status(
         raise HTTPException(status_code=400, detail=f"Failed to update event status: {str(e)}")
 
 
-@router.delete("/{event_id}", status_code=204)
+@router.delete("/{event_id}/", status_code=204)
 async def delete_event(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -365,7 +365,7 @@ async def delete_event(
         raise HTTPException(status_code=500, detail=f"Failed to delete event: {str(e)}")
 
 
-@router.get("/{event_id}/stats")
+@router.get("/{event_id}/stats/")
 async def get_event_stats(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -410,7 +410,7 @@ async def get_event_stats(
 # FR-7: The system shall send email invitations
 # 5.2.3: Email Campaign Interface
 
-@router.post("/{event_id}/send-invitations", response_model=BulkInvitationResponse)
+@router.post("/{event_id}/send-invitations/", response_model=BulkInvitationResponse)
 async def send_bulk_invitations(
     event_id: UUID,
     request: BulkInvitationRequest,
@@ -462,7 +462,7 @@ async def send_bulk_invitations(
         raise HTTPException(status_code=500, detail=f"Failed to send invitations: {str(e)}")
 
 
-@router.get("/{event_id}/invitation-stats", response_model=CampaignStatsResponse)
+@router.get("/{event_id}/invitation-stats/", response_model=CampaignStatsResponse)
 async def get_invitation_stats(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),

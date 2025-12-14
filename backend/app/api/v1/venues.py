@@ -41,7 +41,7 @@ router = APIRouter()
 # Google Places API Search Endpoints
 # ============================================================
 
-@router.get("/search", response_model=VenueSearchResponse)
+@router.get("/search/", response_model=VenueSearchResponse)
 async def search_venues(
     query: str = Query(..., min_length=1, max_length=500, description="Search query"),
     latitude: Optional[float] = Query(None, ge=-90, le=90, description="Center latitude"),
@@ -72,7 +72,7 @@ async def search_venues(
     return result
 
 
-@router.get("/{place_id}", response_model=VenueDetailsResponse)
+@router.get("/{place_id}/", response_model=VenueDetailsResponse)
 async def get_venue_details(
     place_id: str,
     current_user: dict = Depends(get_current_user)
@@ -89,7 +89,7 @@ async def get_venue_details(
     return details
 
 
-@router.get("/{place_id}/photos", response_model=List[VenuePhotoResponse])
+@router.get("/{place_id}/photos/", response_model=List[VenuePhotoResponse])
 async def get_venue_photos(
     place_id: str,
     max_width: int = Query(800, ge=100, le=4096, description="Maximum photo width"),
@@ -110,7 +110,7 @@ async def get_venue_photos(
 # Event Venue Management Endpoints
 # ============================================================
 
-@router.post("/events/{event_id}/venues", response_model=EventVenueResponse, status_code=201)
+@router.post("/events/{event_id}/venues/", response_model=EventVenueResponse, status_code=201)
 async def add_venue_to_event(
     event_id: UUID,
     venue_data: EventVenueCreate,
@@ -203,7 +203,7 @@ async def add_venue_to_event(
     return new_venue
 
 
-@router.get("/events/{event_id}/venues", response_model=EventVenuesListResponse)
+@router.get("/events/{event_id}/venues/", response_model=EventVenuesListResponse)
 async def get_event_venues(
     event_id: UUID,
     db: AsyncSession = Depends(get_db),
@@ -237,7 +237,7 @@ async def get_event_venues(
     )
 
 
-@router.put("/events/{event_id}/venues/reorder", response_model=EventVenuesListResponse)
+@router.put("/events/{event_id}/venues/reorder/", response_model=EventVenuesListResponse)
 async def reorder_event_venues(
     event_id: UUID,
     reorder_request: EventVenueReorderRequest,
@@ -295,7 +295,7 @@ async def reorder_event_venues(
     )
 
 
-@router.get("/events/{event_id}/venues/{venue_id}", response_model=EventVenueWithDetails)
+@router.get("/events/{event_id}/venues/{venue_id}/", response_model=EventVenueWithDetails)
 async def get_event_venue(
     event_id: UUID,
     venue_id: UUID,
@@ -332,7 +332,7 @@ async def get_event_venue(
     )
 
 
-@router.put("/events/{event_id}/venues/{venue_id}", response_model=EventVenueResponse)
+@router.put("/events/{event_id}/venues/{venue_id}/", response_model=EventVenueResponse)
 async def update_event_venue(
     event_id: UUID,
     venue_id: UUID,
@@ -374,7 +374,7 @@ async def update_event_venue(
     return venue
 
 
-@router.delete("/events/{event_id}/venues/{venue_id}", status_code=204)
+@router.delete("/events/{event_id}/venues/{venue_id}/", status_code=204)
 async def remove_venue_from_event(
     event_id: UUID,
     venue_id: UUID,

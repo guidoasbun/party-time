@@ -43,7 +43,7 @@ settings = get_settings()
 router = APIRouter()
 
 
-@router.post("/test", response_model=EmailSendResponse, status_code=status.HTTP_200_OK)
+@router.post("/test/", response_model=EmailSendResponse, status_code=status.HTTP_200_OK)
 async def send_test_email(
     request: EmailSendRequest,
     db: AsyncSession = Depends(get_db),
@@ -101,7 +101,7 @@ async def send_test_email(
         )
 
 
-@router.post("/send-template", response_model=EmailSendResponse, status_code=status.HTTP_200_OK)
+@router.post("/send-template/", response_model=EmailSendResponse, status_code=status.HTTP_200_OK)
 async def send_template_email(
     request: TemplatEmailSendRequest,
     db: AsyncSession = Depends(get_db),
@@ -159,7 +159,7 @@ async def send_template_email(
         )
 
 
-@router.get("/logs", response_model=List[EmailLogSchema])
+@router.get("/logs/", response_model=List[EmailLogSchema])
 async def get_email_logs(
     event_id: Optional[UUID] = Query(None, description="Filter by event ID"),
     guest_id: Optional[UUID] = Query(None, description="Filter by guest ID"),
@@ -217,7 +217,7 @@ async def get_email_logs(
     return logs
 
 
-@router.get("/stats", response_model=EmailStatsResponse)
+@router.get("/stats/", response_model=EmailStatsResponse)
 async def get_email_stats(
     event_id: Optional[UUID] = Query(None, description="Filter by event ID"),
     days: int = Query(30, ge=1, le=365, description="Number of days for statistics"),
@@ -277,7 +277,7 @@ async def get_email_stats(
     )
 
 
-@router.post("/verify", response_model=EmailVerificationResponse)
+@router.post("/verify/", response_model=EmailVerificationResponse)
 async def verify_email_address(
     request: EmailVerificationRequest,
 ) -> EmailVerificationResponse:
@@ -312,7 +312,7 @@ async def verify_email_address(
         )
 
 
-@router.get("/verify/{email}", response_model=EmailVerificationResponse)
+@router.get("/verify/{email}/", response_model=EmailVerificationResponse)
 async def check_verification_status(
     email: str,
 ) -> EmailVerificationResponse:
@@ -344,7 +344,7 @@ async def check_verification_status(
         )
 
 
-@router.get("/quota", response_model=EmailQuotaResponse)
+@router.get("/quota/", response_model=EmailQuotaResponse)
 async def get_ses_quota() -> EmailQuotaResponse:
     """
     Get AWS SES sending quota and usage.
@@ -423,7 +423,7 @@ FR-7: The system shall send email invitations
 5.2.2: Email Templates
 """
 
-@router.post("/preview", response_model=TemplatePreviewResponse, status_code=status.HTTP_200_OK)
+@router.post("/preview/", response_model=TemplatePreviewResponse, status_code=status.HTTP_200_OK)
 async def preview_template(
     request: TemplatePreviewRequest,
     db: AsyncSession = Depends(get_db),
