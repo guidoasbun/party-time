@@ -28,12 +28,13 @@ output "id" {
 }
 
 # Connection URLs use rediss:// scheme for TLS-enabled Redis
+# ssl_cert_reqs=CERT_REQUIRED is required for Celery to work with SSL Redis
 output "redis_url" {
   description = "Redis connection URL for Celery broker (database 0, TLS enabled)"
-  value       = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/0"
+  value       = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/0?ssl_cert_reqs=CERT_REQUIRED"
 }
 
 output "celery_result_backend_url" {
   description = "Redis connection URL for Celery result backend (database 1, TLS enabled)"
-  value       = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/1"
+  value       = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/1?ssl_cert_reqs=CERT_REQUIRED"
 }
