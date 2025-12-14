@@ -5,7 +5,8 @@ import { ApiError } from "@/types";
 /**
  * Get the API base URL with automatic HTTPS upgrade in production.
  * This ensures that even if NEXT_PUBLIC_API_URL is incorrectly set to HTTP,
- * requests will be upgraded to HTTPS when the page is served over HTTPS.
+ * requests will be upgraded to HTTPS when the page is served over HTTPS
+ * or when running in production mode on the server.
  *
  * IMPORTANT: This function must be called at RUNTIME (not module load time)
  * to correctly detect the browser's protocol. The axios baseURL is set to
@@ -13,28 +14,27 @@ import { ApiError } from "@/types";
  *
  * Works in both client-side (browser) and server-side (Node.js) contexts:
  * - Client-side: Checks window.location.protocol
- * - Server-side: Checks NODE_ENV and NEXTAUTH_URL for production detection
+ * - Server-side: Checks NODE_ENV === "production" (simplified, no NEXTAUTH_URL dependency)
  */
 export const getApiBaseUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+  // Determine if we're in a production environment
   // Client-side: Check if page is served over HTTPS
-  if (typeof window !== "undefined" && window.location.protocol === "https:") {
+  // Server-side: Check if NODE_ENV is "production"
+  const isProduction =
+    (typeof window !== "undefined" && window.location.protocol === "https:") ||
+    (typeof window === "undefined" && process.env.NODE_ENV === "production");
+
+  if (isProduction) {
     const httpsUrl = url.replace(/^http:/, "https:");
-    console.log("[API] HTTPS upgrade applied:", url, "->", httpsUrl);
+    // Only log on client-side to avoid server log noise, and only when there's an actual change
+    if (typeof window !== "undefined" && url !== httpsUrl) {
+      console.log("[API] HTTPS upgrade applied:", url, "->", httpsUrl);
+    }
     return httpsUrl;
   }
 
-  // Server-side: Check if running in production with HTTPS configured
-  if (
-    typeof window === "undefined" &&
-    process.env.NODE_ENV === "production" &&
-    process.env.NEXTAUTH_URL?.startsWith("https://")
-  ) {
-    return url.replace(/^http:/, "https:");
-  }
-
-  console.log("[API] Using base URL:", url);
   return url;
 };
 
