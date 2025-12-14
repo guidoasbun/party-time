@@ -20,7 +20,9 @@ export const getApiBaseUrl = (): string => {
 
   // Client-side: Check if page is served over HTTPS
   if (typeof window !== "undefined" && window.location.protocol === "https:") {
-    return url.replace(/^http:/, "https:");
+    const httpsUrl = url.replace(/^http:/, "https:");
+    console.log("[API] HTTPS upgrade applied:", url, "->", httpsUrl);
+    return httpsUrl;
   }
 
   // Server-side: Check if running in production with HTTPS configured
@@ -32,6 +34,7 @@ export const getApiBaseUrl = (): string => {
     return url.replace(/^http:/, "https:");
   }
 
+  console.log("[API] Using base URL:", url);
   return url;
 };
 
