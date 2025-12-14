@@ -169,6 +169,82 @@ resource "aws_iam_role_policy" "github_actions" {
           "dynamodb:DeleteItem"
         ]
         Resource = "arn:aws:dynamodb:${var.aws_region}:${data.aws_caller_identity.current.account_id}:table/${var.project_name}-terraform-locks"
+      },
+      {
+        Sid    = "TerraformInfrastructure"
+        Effect = "Allow"
+        Action = [
+          # Secrets Manager - for Redis URLs and other secrets
+          "secretsmanager:GetSecretValue",
+          "secretsmanager:DescribeSecret",
+          "secretsmanager:PutSecretValue",
+          "secretsmanager:CreateSecret",
+          "secretsmanager:UpdateSecret",
+          "secretsmanager:TagResource",
+          "secretsmanager:ListSecrets",
+
+          # ElastiCache - for Redis
+          "elasticache:Describe*",
+          "elasticache:ListTagsForResource",
+
+          # VPC/EC2 - for networking resources
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeNetworkInterfaces",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeInternetGateways",
+          "ec2:DescribeNatGateways",
+          "ec2:DescribeAddresses",
+
+          # ACM - for SSL certificates
+          "acm:DescribeCertificate",
+          "acm:ListCertificates",
+          "acm:ListTagsForCertificate",
+
+          # Route53 - for DNS
+          "route53:GetHostedZone",
+          "route53:ListHostedZones",
+          "route53:ListResourceRecordSets",
+          "route53:GetChange",
+
+          # RDS - describe for Terraform state
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBSubnetGroups",
+          "rds:ListTagsForResource",
+
+          # ALB - for load balancer state
+          "elasticloadbalancing:Describe*",
+
+          # CloudWatch - for alarms and metrics
+          "cloudwatch:DescribeAlarms",
+          "cloudwatch:ListTagsForResource",
+          "logs:DescribeLogGroups",
+          "logs:ListTagsLogGroup",
+
+          # IAM - read-only for role/policy state
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:GetOpenIDConnectProvider",
+
+          # S3 - for additional buckets
+          "s3:GetBucketPolicy",
+          "s3:GetBucketAcl",
+          "s3:GetBucketCORS",
+          "s3:GetBucketVersioning",
+          "s3:GetBucketLocation",
+          "s3:GetBucketTagging",
+          "s3:ListAllMyBuckets",
+
+          # KMS - for encryption keys
+          "kms:DescribeKey",
+          "kms:GetKeyPolicy",
+          "kms:ListAliases"
+        ]
+        Resource = "*"
       }
     ]
   })

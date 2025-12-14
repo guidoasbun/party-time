@@ -385,6 +385,11 @@ resource "aws_ecs_task_definition" "celery_beat" {
       ]
 
       secrets = [
+        # Database secrets (required by Settings)
+        {
+          name      = "DATABASE_URL"
+          valueFrom = "${var.database_secret_arn}:DATABASE_URL::"
+        },
         # Redis secrets (for broker)
         {
           name      = "REDIS_URL"
@@ -397,6 +402,15 @@ resource "aws_ecs_task_definition" "celery_beat" {
         {
           name      = "CELERY_RESULT_BACKEND"
           valueFrom = "${var.redis_secret_arn}:CELERY_RESULT_BACKEND::"
+        },
+        # App secrets (required by Settings)
+        {
+          name      = "SECRET_KEY"
+          valueFrom = "${var.app_secret_arn}:SECRET_KEY::"
+        },
+        {
+          name      = "JWT_SECRET_KEY"
+          valueFrom = "${var.app_secret_arn}:JWT_SECRET_KEY::"
         }
       ]
 

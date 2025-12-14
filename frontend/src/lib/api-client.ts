@@ -5,33 +5,57 @@ import { ApiError } from "@/types";
 /**
  * Get the API base URL with automatic HTTPS upgrade in production.
  * This ensures that even if NEXT_PUBLIC_API_URL is incorrectly set to HTTP,
- * requests will be upgraded to HTTPS when the page is served over HTTPS.
+ * requests will be upgraded to HTTPS.
  *
- * Works in both client-side (browser) and server-side (Node.js) contexts:
- * - Client-side: Checks window.location.protocol
- * - Server-side: Checks NODE_ENV and NEXTAUTH_URL for production detection
+ * HTTPS upgrade is applied in the following priority:
+ * 1. Production domain detection (celebration-time.com) - most reliable
+ * 2. Browser protocol detection (window.location.protocol === "https:")
+ * 3. Server-side NODE_ENV === "production" check
+ *
+ * IMPORTANT: This function must be called at RUNTIME (not module load time)
+ * to correctly detect the browser's protocol. The axios baseURL is set to
+ * a placeholder and the actual URL is resolved in the request interceptor.
  */
 export const getApiBaseUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Client-side: Check if page is served over HTTPS
-  if (typeof window !== "undefined" && window.location.protocol === "https:") {
-    return url.replace(/^http:/, "https:");
+  // Force HTTPS if URL contains production domain (more reliable than protocol detection)
+  // This handles cases where the env var is set to HTTP but the domain requires HTTPS
+  const isProductionDomain =
+    url.includes("staging.celebration-time.com") ||
+    url.includes("celebration-time.com");
+
+  if (isProductionDomain) {
+    const httpsUrl = url.replace(/^http:/, "https:");
+    if (typeof window !== "undefined" && url !== httpsUrl) {
+      console.log("[API] HTTPS upgrade applied (production domain):", url, "->", httpsUrl);
+    }
+    return httpsUrl;
   }
 
-  // Server-side: Check if running in production with HTTPS configured
-  if (
-    typeof window === "undefined" &&
-    process.env.NODE_ENV === "production" &&
-    process.env.NEXTAUTH_URL?.startsWith("https://")
-  ) {
-    return url.replace(/^http:/, "https:");
+  // Fallback: Determine if we're in a production environment by protocol/NODE_ENV
+  // Client-side: Check if page is served over HTTPS
+  // Server-side: Check if NODE_ENV is "production"
+  const isProduction =
+    (typeof window !== "undefined" && window.location.protocol === "https:") ||
+    (typeof window === "undefined" && process.env.NODE_ENV === "production");
+
+  if (isProduction) {
+    const httpsUrl = url.replace(/^http:/, "https:");
+    if (typeof window !== "undefined" && url !== httpsUrl) {
+      console.log("[API] HTTPS upgrade applied (production env):", url, "->", httpsUrl);
+    }
+    return httpsUrl;
   }
 
   return url;
 };
 
-const API_BASE_URL = getApiBaseUrl();
+// Store the raw URL for build time - actual HTTPS upgrade happens at runtime in interceptor
+const RAW_API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// For backward compatibility - this is evaluated at runtime when called
+const API_BASE_URL = RAW_API_URL;
 
 // Custom error classes
 export class ApiException extends Error {
@@ -106,10 +130,18 @@ export const apiClient = axios.create({
   validateStatus: (status) => status < 500, // Don't throw for 4xx errors
 });
 
-// Request interceptor to add auth token and request ID
+// Request interceptor to add auth token, request ID, and handle HTTPS upgrade
 apiClient.interceptors.request.use(
   async (config) => {
     try {
+      // HTTPS upgrade: Dynamically set baseURL at runtime to ensure HTTPS when page is served over HTTPS
+      // This is necessary because NEXT_PUBLIC_* env vars are baked in at build time,
+      // and we can't detect window.location.protocol until runtime
+      const runtimeBaseUrl = getApiBaseUrl();
+      if (config.baseURL !== runtimeBaseUrl) {
+        config.baseURL = runtimeBaseUrl;
+      }
+
       // Add authentication token (unless explicitly disabled in test)
       if (
         process.env.NODE_ENV !== "test" ||
@@ -318,31 +350,37 @@ export const createApiClient = (config?: ApiClientConfig) => {
 
   // Apply the same interceptors manually since handlers array is not accessible
   client.interceptors.request.use(
-    async (config) => {
+    async (reqConfig) => {
       try {
+        // HTTPS upgrade: Dynamically set baseURL at runtime
+        const runtimeBaseUrl = getApiBaseUrl();
+        if (reqConfig.baseURL !== runtimeBaseUrl) {
+          reqConfig.baseURL = runtimeBaseUrl;
+        }
+
         // Add authentication token
         const session = await getSession();
         if (session?.idToken) {
-          config.headers.Authorization = `Bearer ${session.idToken}`;
+          reqConfig.headers.Authorization = `Bearer ${session.idToken}`;
         }
 
         // Add request ID for cancellation support
-        const requestId = `${config.method?.toUpperCase()}-${
-          config.url
+        const requestId = `${reqConfig.method?.toUpperCase()}-${
+          reqConfig.url
         }-${Date.now()}`;
-        config.metadata = { requestId };
+        reqConfig.metadata = { requestId };
 
         // Set up abort controller for cancellation
         const controller = new AbortController();
-        config.signal = controller.signal;
+        reqConfig.signal = controller.signal;
         cancelTokens.set(requestId, controller);
 
         // Add request timestamp for debugging
-        config.headers["X-Request-Timestamp"] = new Date().toISOString();
+        reqConfig.headers["X-Request-Timestamp"] = new Date().toISOString();
       } catch (error) {
         console.warn("Failed to prepare API request:", error);
       }
-      return config;
+      return reqConfig;
     },
     () => {
       return Promise.reject(new NetworkException("Request preparation failed"));
