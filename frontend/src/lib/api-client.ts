@@ -5,21 +5,35 @@ import { ApiError } from "@/types";
 /**
  * Get the API base URL with automatic HTTPS upgrade in production.
  * This ensures that even if NEXT_PUBLIC_API_URL is incorrectly set to HTTP,
- * requests will be upgraded to HTTPS when the page is served over HTTPS
- * or when running in production mode on the server.
+ * requests will be upgraded to HTTPS.
+ *
+ * HTTPS upgrade is applied in the following priority:
+ * 1. Production domain detection (celebration-time.com) - most reliable
+ * 2. Browser protocol detection (window.location.protocol === "https:")
+ * 3. Server-side NODE_ENV === "production" check
  *
  * IMPORTANT: This function must be called at RUNTIME (not module load time)
  * to correctly detect the browser's protocol. The axios baseURL is set to
  * a placeholder and the actual URL is resolved in the request interceptor.
- *
- * Works in both client-side (browser) and server-side (Node.js) contexts:
- * - Client-side: Checks window.location.protocol
- * - Server-side: Checks NODE_ENV === "production" (simplified, no NEXTAUTH_URL dependency)
  */
 export const getApiBaseUrl = (): string => {
   const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-  // Determine if we're in a production environment
+  // Force HTTPS if URL contains production domain (more reliable than protocol detection)
+  // This handles cases where the env var is set to HTTP but the domain requires HTTPS
+  const isProductionDomain =
+    url.includes("staging.celebration-time.com") ||
+    url.includes("celebration-time.com");
+
+  if (isProductionDomain) {
+    const httpsUrl = url.replace(/^http:/, "https:");
+    if (typeof window !== "undefined" && url !== httpsUrl) {
+      console.log("[API] HTTPS upgrade applied (production domain):", url, "->", httpsUrl);
+    }
+    return httpsUrl;
+  }
+
+  // Fallback: Determine if we're in a production environment by protocol/NODE_ENV
   // Client-side: Check if page is served over HTTPS
   // Server-side: Check if NODE_ENV is "production"
   const isProduction =
@@ -28,9 +42,8 @@ export const getApiBaseUrl = (): string => {
 
   if (isProduction) {
     const httpsUrl = url.replace(/^http:/, "https:");
-    // Only log on client-side to avoid server log noise, and only when there's an actual change
     if (typeof window !== "undefined" && url !== httpsUrl) {
-      console.log("[API] HTTPS upgrade applied:", url, "->", httpsUrl);
+      console.log("[API] HTTPS upgrade applied (production env):", url, "->", httpsUrl);
     }
     return httpsUrl;
   }
