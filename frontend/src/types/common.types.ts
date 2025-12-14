@@ -99,93 +99,95 @@ export type Optional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export type RequiredFields<T, K extends keyof T> = T & Required<Pick<T, K>>;
 
 // API endpoint paths
+// NOTE: Trailing slashes are required to match FastAPI backend routes
+// and avoid redirect issues with CloudFront
 export const API_ENDPOINTS = {
   // Auth endpoints
   AUTH: {
-    REGISTER: "/api/v1/auth/register",
-    LOGIN: "/api/v1/auth/login",
-    LOGOUT: "/api/v1/auth/logout",
-    ME: "/api/v1/auth/me",
-    VERIFY_EMAIL: "/api/v1/auth/verify-email",
-    RESEND_VERIFICATION: "/api/v1/auth/resend-verification",
-    PASSWORD_RESET: "/api/v1/auth/password-reset",
-    PASSWORD_RESET_CONFIRM: "/api/v1/auth/password-reset-confirm",
-    PROFILE: "/api/v1/auth/profile",
-    PROTECTED: "/api/v1/auth/protected",
+    REGISTER: "/api/v1/auth/register/",
+    LOGIN: "/api/v1/auth/login/",
+    LOGOUT: "/api/v1/auth/logout/",
+    ME: "/api/v1/auth/me/",
+    VERIFY_EMAIL: "/api/v1/auth/verify-email/",
+    RESEND_VERIFICATION: "/api/v1/auth/resend-verification/",
+    PASSWORD_RESET: "/api/v1/auth/password-reset/",
+    PASSWORD_RESET_CONFIRM: "/api/v1/auth/password-reset-confirm/",
+    PROFILE: "/api/v1/auth/profile/",
+    PROTECTED: "/api/v1/auth/protected/",
   },
   // Event endpoints
   EVENTS: {
-    LIST: "/api/v1/events",
-    CREATE: "/api/v1/events",
-    GET: (id: string) => `/api/v1/events/${id}`,
-    UPDATE: (id: string) => `/api/v1/events/${id}`,
-    DELETE: (id: string) => `/api/v1/events/${id}`,
-    SUMMARY: (id: string) => `/api/v1/events/${id}/summary`,
+    LIST: "/api/v1/events/",
+    CREATE: "/api/v1/events/",
+    GET: (id: string) => `/api/v1/events/${id}/`,
+    UPDATE: (id: string) => `/api/v1/events/${id}/`,
+    DELETE: (id: string) => `/api/v1/events/${id}/`,
+    SUMMARY: (id: string) => `/api/v1/events/${id}/summary/`,
   },
   // Guest endpoints
   GUESTS: {
-    LIST: (eventId: string) => `/api/v1/events/${eventId}/guests`,
-    CREATE: (eventId: string) => `/api/v1/events/${eventId}/guests`,
-    BULK_CREATE: (eventId: string) => `/api/v1/events/${eventId}/guests/bulk`,
+    LIST: (eventId: string) => `/api/v1/events/${eventId}/guests/`,
+    CREATE: (eventId: string) => `/api/v1/events/${eventId}/guests/`,
+    BULK_CREATE: (eventId: string) => `/api/v1/events/${eventId}/guests/bulk/`,
     BULK_DELETE: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/bulk-delete`,
+      `/api/v1/events/${eventId}/guests/bulk-delete/`,
     BULK_UPDATE: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/bulk-update`,
-    SEARCH: (eventId: string) => `/api/v1/events/${eventId}/guests/search`,
+      `/api/v1/events/${eventId}/guests/bulk-update/`,
+    SEARCH: (eventId: string) => `/api/v1/events/${eventId}/guests/search/`,
     GET: (eventId: string, guestId: string) =>
-      `/api/v1/events/${eventId}/guests/${guestId}`,
+      `/api/v1/events/${eventId}/guests/${guestId}/`,
     UPDATE: (eventId: string, guestId: string) =>
-      `/api/v1/events/${eventId}/guests/${guestId}`,
+      `/api/v1/events/${eventId}/guests/${guestId}/`,
     DELETE: (eventId: string, guestId: string) =>
-      `/api/v1/events/${eventId}/guests/${guestId}`,
+      `/api/v1/events/${eventId}/guests/${guestId}/`,
     RSVP_VALIDATE: (token: string) =>
-      `/api/v1/events/guests/rsvp/${token}/validate`,
+      `/api/v1/events/guests/rsvp/${token}/validate/`,
     RSVP_DETAILS: (token: string) =>
-      `/api/v1/events/guests/rsvp/${token}/event-details`,
-    RSVP_SUBMIT: (token: string) => `/api/v1/events/guests/rsvp/${token}`,
+      `/api/v1/events/guests/rsvp/${token}/event-details/`,
+    RSVP_SUBMIT: (token: string) => `/api/v1/events/guests/rsvp/${token}/`,
     IMPORT_PREVIEW: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/import-preview`,
+      `/api/v1/events/${eventId}/guests/import-preview/`,
     IMPORT_EXECUTE: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/import-execute`,
-    STATS: (eventId: string) => `/api/v1/events/${eventId}/guests/stats`,
+      `/api/v1/events/${eventId}/guests/import-execute/`,
+    STATS: (eventId: string) => `/api/v1/events/${eventId}/guests/stats/`,
     DIETARY_RESTRICTIONS: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/dietary-restrictions`,
+      `/api/v1/events/${eventId}/guests/dietary-restrictions/`,
     // FR-6: The system shall display an RSVP submission page.
     // 5.1.3: RSVP Management Dashboard
     RSVP_TIMELINE: (eventId: string) =>
-      `/api/v1/events/${eventId}/guests/rsvp-timeline`,
+      `/api/v1/events/${eventId}/guests/rsvp-timeline/`,
   },
   // Budget endpoints
   BUDGET: {
     CATEGORIES: (eventId: string) =>
-      `/api/v1/events/${eventId}/budget/categories`,
+      `/api/v1/events/${eventId}/budget/categories/`,
     CREATE_CATEGORY: (eventId: string) =>
-      `/api/v1/events/${eventId}/budget/categories`,
+      `/api/v1/events/${eventId}/budget/categories/`,
     GET_CATEGORY: (eventId: string, categoryId: string) =>
-      `/api/v1/events/${eventId}/budget/categories/${categoryId}`,
+      `/api/v1/events/${eventId}/budget/categories/${categoryId}/`,
     UPDATE_CATEGORY: (eventId: string, categoryId: string) =>
-      `/api/v1/events/${eventId}/budget/categories/${categoryId}`,
+      `/api/v1/events/${eventId}/budget/categories/${categoryId}/`,
     DELETE_CATEGORY: (eventId: string, categoryId: string) =>
-      `/api/v1/events/${eventId}/budget/categories/${categoryId}`,
-    EXPENSES: (eventId: string) => `/api/v1/events/${eventId}/budget/expenses`,
+      `/api/v1/events/${eventId}/budget/categories/${categoryId}/`,
+    EXPENSES: (eventId: string) => `/api/v1/events/${eventId}/budget/expenses/`,
     CREATE_EXPENSE: (eventId: string) =>
-      `/api/v1/events/${eventId}/budget/expenses`,
+      `/api/v1/events/${eventId}/budget/expenses/`,
     GET_EXPENSE: (eventId: string, expenseId: string) =>
-      `/api/v1/events/${eventId}/budget/expenses/${expenseId}`,
+      `/api/v1/events/${eventId}/budget/expenses/${expenseId}/`,
     UPDATE_EXPENSE: (eventId: string, expenseId: string) =>
-      `/api/v1/events/${eventId}/budget/expenses/${expenseId}`,
+      `/api/v1/events/${eventId}/budget/expenses/${expenseId}/`,
     DELETE_EXPENSE: (eventId: string, expenseId: string) =>
-      `/api/v1/events/${eventId}/budget/expenses/${expenseId}`,
-    SUMMARY: (eventId: string) => `/api/v1/events/${eventId}/budget/summary`,
+      `/api/v1/events/${eventId}/budget/expenses/${expenseId}/`,
+    SUMMARY: (eventId: string) => `/api/v1/events/${eventId}/budget/summary/`,
   },
   // RSVP endpoints (public - no authentication required)
   // FR-6: The system shall display an RSVP submission page.
   RSVP: {
-    VALIDATE: (token: string) => `/api/v1/rsvp/${token}/validate`,
-    EVENT_DETAILS: (token: string) => `/api/v1/rsvp/${token}/event-details`,
-    SUBMIT: (token: string) => `/api/v1/rsvp/${token}/respond`,
-    UPDATE_PREFERENCES: (token: string) => `/api/v1/rsvp/${token}/preferences`,
-    UPDATE_PLUS_ONE: (token: string) => `/api/v1/rsvp/${token}/plus-one`,
+    VALIDATE: (token: string) => `/api/v1/rsvp/${token}/validate/`,
+    EVENT_DETAILS: (token: string) => `/api/v1/rsvp/${token}/event-details/`,
+    SUBMIT: (token: string) => `/api/v1/rsvp/${token}/respond/`,
+    UPDATE_PREFERENCES: (token: string) => `/api/v1/rsvp/${token}/preferences/`,
+    UPDATE_PLUS_ONE: (token: string) => `/api/v1/rsvp/${token}/plus-one/`,
   },
   // Seating chart endpoints
   // FR-21: The system shall provide an interactive seating chart interface
@@ -195,51 +197,51 @@ export const API_ENDPOINTS = {
    */
 
   SEATING: {
-    CREATE: (eventId: string) => `/api/v1/events/${eventId}/seating`,
-    GET_CHART: (eventId: string) => `/api/v1/events/${eventId}/seating`,
+    CREATE: (eventId: string) => `/api/v1/events/${eventId}/seating/`,
+    GET_CHART: (eventId: string) => `/api/v1/events/${eventId}/seating/`,
     UPDATE_CHART: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/`,
     DELETE_CHART: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/`,
     CREATE_TABLE: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/`,
     BULK_CREATE_TABLES: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables/bulk`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/bulk/`,
     GET_TABLE: (eventId: string, chartId: string, tableId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/`,
     UPDATE_TABLE: (eventId: string, chartId: string, tableId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/`,
     DELETE_TABLE: (eventId: string, chartId: string, tableId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/`,
     ASSIGN_SEAT: (eventId: string, chartId: string, tableId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/seats`,
+      `/api/v1/events/${eventId}/seating/${chartId}/tables/${tableId}/seats/`,
     UPDATE_SEAT: (eventId: string, chartId: string, seatId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}/`,
     DELETE_SEAT: (eventId: string, chartId: string, seatId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}`,
+      `/api/v1/events/${eventId}/seating/${chartId}/seats/${seatId}/`,
     AUTO_ASSIGN: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/auto-assign`,
+      `/api/v1/events/${eventId}/seating/${chartId}/auto-assign/`,
     STATISTICS: (eventId: string, chartId: string) =>
-      `/api/v1/events/${eventId}/seating/${chartId}/statistics`,
+      `/api/v1/events/${eventId}/seating/${chartId}/statistics/`,
   },
   // Venue endpoints (Phase 7.1.1: Google Places API Integration)
   // FR-8: The system shall provide a venue search interface.
   // Phase 7.1.1: Google Places API Integration
   VENUES: {
-    SEARCH: "/api/v1/venues/search",
-    GET_DETAILS: (placeId: string) => `/api/v1/venues/${placeId}`,
-    GET_PHOTOS: (placeId: string) => `/api/v1/venues/${placeId}/photos`,
+    SEARCH: "/api/v1/venues/search/",
+    GET_DETAILS: (placeId: string) => `/api/v1/venues/${placeId}/`,
+    GET_PHOTOS: (placeId: string) => `/api/v1/venues/${placeId}/photos/`,
     // Event venues
-    LIST: (eventId: string) => `/api/v1/venues/events/${eventId}/venues`,
-    ADD: (eventId: string) => `/api/v1/venues/events/${eventId}/venues`,
+    LIST: (eventId: string) => `/api/v1/venues/events/${eventId}/venues/`,
+    ADD: (eventId: string) => `/api/v1/venues/events/${eventId}/venues/`,
     GET: (eventId: string, venueId: string) =>
-      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+      `/api/v1/venues/events/${eventId}/venues/${venueId}/`,
     UPDATE: (eventId: string, venueId: string) =>
-      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+      `/api/v1/venues/events/${eventId}/venues/${venueId}/`,
     DELETE: (eventId: string, venueId: string) =>
-      `/api/v1/venues/events/${eventId}/venues/${venueId}`,
+      `/api/v1/venues/events/${eventId}/venues/${venueId}/`,
     REORDER: (eventId: string) =>
-      `/api/v1/venues/events/${eventId}/venues/reorder`,
+      `/api/v1/venues/events/${eventId}/venues/reorder/`,
   },
 } as const;
 

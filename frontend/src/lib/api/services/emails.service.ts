@@ -38,7 +38,7 @@ export class EmailsService {
     request: BulkInvitationRequest
   ): Promise<BulkInvitationResponse> {
     const response = await api.post<BulkInvitationResponse>(
-      `/api/v1/events/${eventId}/send-invitations`,
+      `/api/v1/events/${eventId}/send-invitations/`,
       request
     );
     return response.data;
@@ -52,7 +52,7 @@ export class EmailsService {
    */
   async getInvitationStats(eventId: UUID): Promise<CampaignStatsResponse> {
     const response = await api.get<CampaignStatsResponse>(
-      `/api/v1/events/${eventId}/invitation-stats`
+      `/api/v1/events/${eventId}/invitation-stats/`
     );
     return response.data;
   }
@@ -67,7 +67,7 @@ export class EmailsService {
     request: TemplatePreviewRequest
   ): Promise<TemplatePreviewResponse> {
     const response = await api.post<TemplatePreviewResponse>(
-      '/api/v1/emails/preview',
+      '/api/v1/emails/preview/',
       request
     );
     return response.data;
@@ -81,7 +81,7 @@ export class EmailsService {
    */
   async sendTestEmail(request: EmailSendRequest): Promise<EmailSendResponse> {
     const response = await api.post<EmailSendResponse>(
-      '/api/v1/emails/test',
+      '/api/v1/emails/test/',
       request
     );
     return response.data;
@@ -94,7 +94,7 @@ export class EmailsService {
    * @returns Array of email log entries
    */
   async getEmailLogs(params?: EmailLogParams): Promise<EmailLog[]> {
-    const response = await api.get<EmailLog[]>('/api/v1/emails/logs', {
+    const response = await api.get<EmailLog[]>('/api/v1/emails/logs/', {
       params,
     });
     return response.data;
@@ -115,7 +115,7 @@ export class EmailsService {
     if (eventId) params.event_id = eventId;
     if (days) params.days = days;
 
-    const response = await api.get<EmailStatsResponse>('/api/v1/emails/stats', {
+    const response = await api.get<EmailStatsResponse>('/api/v1/emails/stats/', {
       params,
     });
     return response.data;
@@ -129,7 +129,7 @@ export class EmailsService {
    */
   async verifyEmail(email: string): Promise<{ status: string; verified: boolean; message?: string }> {
     const response = await api.post<{ status: string; verified: boolean; message?: string }>(
-      '/api/v1/emails/verify',
+      '/api/v1/emails/verify/',
       { email }
     );
     return response.data;
@@ -145,7 +145,7 @@ export class EmailsService {
     email: string
   ): Promise<{ status: string; verified: boolean }> {
     const response = await api.get<{ status: string; verified: boolean }>(
-      `/api/v1/emails/verify/${encodeURIComponent(email)}`
+      `/api/v1/emails/verify/${encodeURIComponent(email)}/`
     );
     return response.data;
   }
@@ -168,7 +168,7 @@ export class EmailsService {
       sent_last_24_hours: number;
       remaining_24_hour: number;
       usage_percentage: number;
-    }>('/api/v1/emails/quota');
+    }>('/api/v1/emails/quota/');
     return response.data;
   }
 }

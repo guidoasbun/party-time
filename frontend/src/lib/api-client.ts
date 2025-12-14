@@ -647,23 +647,24 @@ export const withRequestId = (id?: string): { requestId: string } => ({
 });
 
 // Legacy auth API - will be moved to dedicated service
+// NOTE: Trailing slashes required to match FastAPI backend routes
 export const legacyAuthApi = {
   register: (data: { email: string; password: string; name: string }) =>
-    api.post("/api/v1/auth/register", data),
+    api.post("/api/v1/auth/register/", data),
   verifyEmail: (data: { email: string; verification_code: string }) =>
-    api.post("/api/v1/auth/verify-email", data),
+    api.post("/api/v1/auth/verify-email/", data),
   resendVerification: (data: { email: string }) =>
-    api.post("/api/v1/auth/resend-verification", data),
+    api.post("/api/v1/auth/resend-verification/", data),
   requestPasswordReset: (data: { email: string }) =>
-    api.post("/api/v1/auth/password-reset", data),
+    api.post("/api/v1/auth/password-reset/", data),
   confirmPasswordReset: (data: {
     email: string;
     confirmation_code: string;
     new_password: string;
-  }) => api.post("/api/v1/auth/password-reset-confirm", data),
-  getCurrentUser: () => api.get("/api/v1/auth/me"),
+  }) => api.post("/api/v1/auth/password-reset-confirm/", data),
+  getCurrentUser: () => api.get("/api/v1/auth/me/"),
   updateProfile: (data: { name?: string; phone?: string }) =>
-    api.patch("/api/v1/auth/profile", data),
+    api.patch("/api/v1/auth/profile/", data),
 };
 
 // Backward compatibility

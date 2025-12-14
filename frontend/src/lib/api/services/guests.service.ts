@@ -765,7 +765,7 @@ export class GuestsService {
    */
   async validateToken(token: string): Promise<TokenValidationResult> {
     return api.get<TokenValidationResult>(
-      `/api/v1/events/guests/rsvp/${token}/validate`,
+      `/api/v1/events/guests/rsvp/${token}/validate/`,
       undefined,
       withRetry({ attempts: 2 })
     );
@@ -776,7 +776,7 @@ export class GuestsService {
    */
   async getEventDetailsForRSVP(token: string): Promise<RSVPEventDetails> {
     return api.get<RSVPEventDetails>(
-      `/api/v1/events/guests/rsvp/${token}/event-details`,
+      `/api/v1/events/guests/rsvp/${token}/event-details/`,
       undefined,
       withRetry({ attempts: 2 })
     );

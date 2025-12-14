@@ -28,7 +28,7 @@ export const validateRSVPToken = async (
 ): Promise<RSVPValidationResponse> => {
   try {
     const data = await api.get<RSVPValidationResponse>(
-      `/api/v1/rsvp/${token}/validate`,
+      `/api/v1/rsvp/${token}/validate/`,
       undefined,
       {
         // No authorization header for public endpoint - handled by default params
@@ -63,7 +63,7 @@ export const getRSVPEventDetails = async (
 ): Promise<RSVPEventDetailsResponse> => {
   try {
     const data = await api.get<RSVPEventDetailsResponse>(
-      `/api/v1/rsvp/${token}/event-details`
+      `/api/v1/rsvp/${token}/event-details/`
     );
     return data;
   } catch (error: unknown) {
@@ -96,7 +96,7 @@ export const submitRSVPResponse = async (
 ): Promise<RSVPSubmissionResponse> => {
   try {
     const data = await api.post<RSVPSubmissionResponse>(
-      `/api/v1/rsvp/${token}/respond`,
+      `/api/v1/rsvp/${token}/respond/`,
       requestData
     );
     return data;
@@ -149,7 +149,7 @@ export const updateRSVPPreferences = async (
 ): Promise<{ success: boolean; message: string }> => {
   try {
     const data = await api.patch<{ success: boolean; message: string }>(
-      `/api/v1/rsvp/${token}/preferences`,
+      `/api/v1/rsvp/${token}/preferences/`,
       preferences
     );
     return data;
@@ -183,7 +183,7 @@ export const updateRSVPPlusOne = async (
       success: boolean;
       message: string;
       plus_one_name?: string;
-    }>(`/api/v1/rsvp/${token}/plus-one`, plusOneData);
+    }>(`/api/v1/rsvp/${token}/plus-one/`, plusOneData);
     return data;
   } catch (error: unknown) {
     if (error && typeof error === "object" && "response" in error) {
@@ -267,7 +267,7 @@ export const getUnsubscribePageInfo = async (
 ): Promise<UnsubscribePageInfo> => {
   try {
     const data = await api.get<UnsubscribePageInfo>(
-      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}`
+      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}/`
     );
     return data;
   } catch (error: unknown) {
@@ -296,7 +296,7 @@ export const confirmUnsubscribe = async (
 ): Promise<UnsubscribeResponse> => {
   try {
     const data = await api.post<UnsubscribeResponse>(
-      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}`,
+      `/api/v1/rsvp/unsubscribe/${unsubscribeToken}/`,
       { confirm }
     );
     return data;
