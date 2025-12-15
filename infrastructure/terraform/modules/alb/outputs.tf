@@ -37,3 +37,21 @@ output "https_listener_arn" {
   description = "HTTPS listener ARN (only available when certificate_arn is provided)"
   value       = length(aws_lb_listener.https) > 0 ? aws_lb_listener.https[0].arn : null
 }
+
+#------------------------------------------------------------------------------
+# Phase 7: Monitoring - ARN Suffixes for CloudWatch Metrics
+#------------------------------------------------------------------------------
+output "alb_arn_suffix" {
+  description = "ALB ARN suffix for CloudWatch metrics dimensions"
+  value       = aws_lb.main.arn_suffix
+}
+
+output "frontend_target_group_arn_suffix" {
+  description = "Frontend target group ARN suffix for CloudWatch metrics"
+  value       = aws_lb_target_group.frontend.arn_suffix
+}
+
+output "backend_target_group_arn_suffix" {
+  description = "Backend target group ARN suffix for CloudWatch metrics"
+  value       = aws_lb_target_group.backend.arn_suffix
+}

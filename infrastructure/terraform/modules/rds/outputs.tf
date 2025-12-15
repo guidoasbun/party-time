@@ -47,3 +47,11 @@ output "connection_url" {
   description = "PostgreSQL connection URL (without password - for reference)"
   value       = "postgresql://${aws_db_instance.main.username}:PASSWORD@${aws_db_instance.main.endpoint}/${aws_db_instance.main.db_name}"
 }
+
+#------------------------------------------------------------------------------
+# Phase 7: Monitoring - Instance identifier for CloudWatch metrics
+#------------------------------------------------------------------------------
+output "identifier" {
+  description = "RDS instance identifier (for CloudWatch metrics dimensions)"
+  value       = aws_db_instance.main.identifier
+}

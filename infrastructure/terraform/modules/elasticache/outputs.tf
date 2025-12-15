@@ -38,3 +38,11 @@ output "celery_result_backend_url" {
   description = "Redis connection URL for Celery result backend (database 1, TLS enabled)"
   value       = "rediss://${aws_elasticache_replication_group.main.primary_endpoint_address}:6379/1?ssl_cert_reqs=CERT_REQUIRED"
 }
+
+#------------------------------------------------------------------------------
+# Phase 7: Monitoring - Replication group ID for CloudWatch metrics
+#------------------------------------------------------------------------------
+output "replication_group_id" {
+  description = "ElastiCache replication group ID (for CloudWatch metrics dimensions)"
+  value       = aws_elasticache_replication_group.main.replication_group_id
+}
