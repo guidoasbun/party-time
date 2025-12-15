@@ -1,14 +1,21 @@
 """
 FR-21: The system shall provide an interactive seating chart interface.
+FR-22: The system shall be deployed on AWS Infrastructure.
 Phase 6: 6.1.2 Seating Chart API Endpoints
 Phase 9.1: Performance Optimization - Added response timing middleware
+Phase 7: Monitoring - Added X-Ray tracing and enhanced health checks
 """
 import logging
+import os
 import time
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from app.core.config import get_settings
+
+# Phase 7: X-Ray tracing middleware
+from app.middleware.xray import XRayMiddleware, XRAY_ENABLED
 
 logger = logging.getLogger(__name__)
 from app.api.v1.auth import router as auth_router
@@ -33,6 +40,11 @@ app = FastAPI(
 # This ensures redirects (like trailing slash redirects) use HTTPS instead of HTTP
 # when the app is behind a reverse proxy that terminates SSL
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
+
+# Phase 7: X-Ray tracing middleware (must be early in chain)
+if XRAY_ENABLED:
+    app.add_middleware(XRayMiddleware)
+    logger.info("X-Ray tracing middleware enabled")
 
 
 # CloudFront forwards CloudFront-Forwarded-Proto instead of X-Forwarded-Proto
@@ -124,15 +136,86 @@ app.include_router(venues_router, prefix=f"{settings.API_V1_STR}/venues", tags=[
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
+    """Root endpoint with basic API info"""
     return {
         "message": "Party-Time API is running!",
         "version": "1.0.0",
-        "environment": "development"
+        "environment": os.getenv("ENVIRONMENT", "development")
     }
 
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy"}
+    """
+    Enhanced health check endpoint with dependency verification.
+
+    Phase 7: Monitoring - Provides detailed health status for:
+    - Overall application health
+    - Database connectivity
+    - Redis/cache connectivity
+    - Environment information
+
+    Returns:
+        JSON with health status and individual service checks
+    """
+    checks = {}
+    overall_healthy = True
+
+    # Check database connection
+    try:
+        from app.db.session import engine
+        from sqlalchemy import text
+
+        start = time.perf_counter()
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        latency = (time.perf_counter() - start) * 1000
+        checks["database"] = {"status": "healthy", "latency_ms": round(latency, 2)}
+    except Exception as e:
+        checks["database"] = {"status": "unhealthy", "error": str(e)[:100]}
+        overall_healthy = False
+
+    # Check Redis connection
+    try:
+        from app.core.cache import cache_manager
+
+        start = time.perf_counter()
+        redis_client = await cache_manager.get_redis(db=0)
+        if redis_client:
+            await redis_client.ping()
+            latency = (time.perf_counter() - start) * 1000
+            checks["redis"] = {"status": "healthy", "latency_ms": round(latency, 2)}
+        else:
+            checks["redis"] = {"status": "not_configured", "message": "Redis not available"}
+    except Exception as e:
+        checks["redis"] = {"status": "degraded", "error": str(e)[:100]}
+        # Redis failure is degraded, not critical for health check
+
+    return {
+        "status": "healthy" if overall_healthy else "unhealthy",
+        "checks": checks,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": "1.0.0",
+        "environment": os.getenv("ENVIRONMENT", "development"),
+        "xray_enabled": XRAY_ENABLED
+    }
+
+
+@app.get("/ready")
+async def readiness_probe():
+    """
+    Readiness probe for container orchestration (ECS/Kubernetes).
+
+    Returns 200 when the application is ready to accept traffic.
+    """
+    return {"ready": True}
+
+
+@app.get("/live")
+async def liveness_probe():
+    """
+    Liveness probe for container orchestration (ECS/Kubernetes).
+
+    Returns 200 when the application process is alive.
+    """
+    return {"alive": True}

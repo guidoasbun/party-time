@@ -353,3 +353,74 @@ module "security" {
   enable_cloudtrail_cloudwatch  = false
   cloudtrail_log_retention_days = 30
 }
+
+#------------------------------------------------------------------------------
+# PHASE 7: MONITORING
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# Monitoring Module
+# Creates CloudWatch dashboards, alarms, SNS topics, X-Ray, and Synthetics
+#------------------------------------------------------------------------------
+module "monitoring" {
+  source = "../../modules/monitoring"
+
+  project_name = var.project_name
+  environment  = var.environment
+  aws_region   = var.aws_region
+
+  # SNS Configuration
+  alert_email               = "guido@asbun.io"
+  enable_email_subscription = true
+
+  # ECS Configuration
+  ecs_cluster_name = module.ecs.cluster_name
+  ecs_services = {
+    frontend      = module.ecs.frontend_service_name
+    backend       = module.ecs.backend_service_name
+    celery_worker = module.ecs.celery_worker_service_name
+    celery_beat   = module.ecs.celery_beat_service_name
+  }
+
+  # ALB Configuration
+  alb_arn_suffix                   = module.alb.alb_arn_suffix
+  frontend_target_group_arn_suffix = module.alb.frontend_target_group_arn_suffix
+  backend_target_group_arn_suffix  = module.alb.backend_target_group_arn_suffix
+
+  # RDS Configuration
+  rds_instance_identifier  = module.rds.identifier
+  rds_max_connections      = 87 # db.t3.micro default
+  rds_allocated_storage_gb = 20
+
+  # ElastiCache Configuration
+  elasticache_cluster_id = module.elasticache.replication_group_id
+
+  # Application URLs
+  app_url           = "https://${var.subdomain}.${var.domain_name}"
+  health_check_path = "/health"
+
+  # X-Ray Configuration (100% sampling for staging)
+  enable_xray        = true
+  xray_sampling_rate = 1.0
+
+  # Synthetics Configuration (enable for uptime monitoring)
+  enable_synthetics       = true
+  synthetics_rate_minutes = 5
+
+  # Alarm Thresholds (staging defaults)
+  alarm_thresholds = {
+    ecs_cpu_percent            = 80
+    ecs_memory_percent         = 85
+    alb_5xx_count              = 10
+    alb_unhealthy_hosts        = 0
+    alb_latency_p95_seconds    = 2
+    rds_cpu_percent            = 80
+    rds_connections_percent    = 80
+    rds_free_storage_gb        = 4
+    rds_freeable_memory_mb     = 100
+    rds_read_latency_seconds   = 0.02
+    elasticache_cpu_percent    = 75
+    elasticache_memory_percent = 80
+    elasticache_evictions      = 100
+  }
+}

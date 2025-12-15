@@ -444,3 +444,77 @@ output "cloudtrail_s3_bucket_id" {
   description = "CloudTrail S3 bucket ID"
   value       = module.security.cloudtrail_s3_bucket_id
 }
+
+#------------------------------------------------------------------------------
+# PHASE 7: MONITORING OUTPUTS
+#------------------------------------------------------------------------------
+
+#------------------------------------------------------------------------------
+# SNS Topic Outputs
+#------------------------------------------------------------------------------
+output "sns_topic_critical_arn" {
+  description = "Critical alerts SNS topic ARN"
+  value       = module.monitoring.sns_topic_critical_arn
+}
+
+output "sns_topic_warning_arn" {
+  description = "Warning alerts SNS topic ARN"
+  value       = module.monitoring.sns_topic_warning_arn
+}
+
+output "sns_topic_info_arn" {
+  description = "Info notifications SNS topic ARN"
+  value       = module.monitoring.sns_topic_info_arn
+}
+
+#------------------------------------------------------------------------------
+# Dashboard Outputs
+#------------------------------------------------------------------------------
+output "dashboard_overview_name" {
+  description = "Application overview dashboard name"
+  value       = module.monitoring.dashboard_overview_name
+}
+
+output "dashboard_database_name" {
+  description = "Database health dashboard name"
+  value       = module.monitoring.dashboard_database_name
+}
+
+output "dashboard_email_name" {
+  description = "Email/SES dashboard name"
+  value       = module.monitoring.dashboard_email_name
+}
+
+output "dashboard_overview_url" {
+  description = "URL to the Application Overview dashboard"
+  value       = module.monitoring.dashboard_overview_url
+}
+
+#------------------------------------------------------------------------------
+# X-Ray Outputs
+#------------------------------------------------------------------------------
+output "xray_sampling_rule_name" {
+  description = "X-Ray sampling rule name"
+  value       = module.monitoring.xray_sampling_rule_name
+}
+
+#------------------------------------------------------------------------------
+# Synthetics Outputs
+#------------------------------------------------------------------------------
+output "canary_homepage_name" {
+  description = "Homepage canary name"
+  value       = module.monitoring.canary_homepage_name
+}
+
+output "canary_api_health_name" {
+  description = "API health canary name"
+  value       = module.monitoring.canary_api_health_name
+}
+
+#------------------------------------------------------------------------------
+# Alarm Summary
+#------------------------------------------------------------------------------
+output "monitoring_alarm_summary" {
+  description = "Summary of monitoring alarms created"
+  value       = module.monitoring.alarm_summary
+}
