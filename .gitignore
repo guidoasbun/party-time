@@ -159,6 +159,7 @@ temp/
 .claude/
 .playwright-mcp
 CLAUDE.md
+CHANGELOG.md
 documentation/
 
 # Deliverables - tracked for capstone submission (ignore macOS files)
