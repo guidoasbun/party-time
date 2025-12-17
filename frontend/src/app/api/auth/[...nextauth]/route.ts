@@ -38,7 +38,7 @@ const authOptions: NextAuthOptions = {
           // For credentials authentication, we'll use AWS Cognito's InitiateAuth
           // This requires implementing the backend authentication flow
           // For now, we'll call our backend to authenticate
-          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/login`, {
+          const response = await fetch(`${getApiBaseUrl()}/api/v1/auth/login/`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
