@@ -127,7 +127,7 @@ export class EventsService {
    */
   async getEventsStats(): Promise<EventStats> {
     return api.get<EventStats>(
-      `${API_ENDPOINTS.EVENTS.LIST}/stats`,
+      `${API_ENDPOINTS.EVENTS.LIST}stats/`,
       undefined,
       withRetry({ attempts: 2 })
     )
