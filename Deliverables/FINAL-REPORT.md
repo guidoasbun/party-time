@@ -19,7 +19,7 @@ Fall 2025 | December 2025
 [github.com/yourusername/party-time](https://github.com/yourusername/party-time)
 
 **Demo Videos:**
-[Application Walkthrough](https://youtube.com/watch?v=PLACEHOLDER)
+[Application Walkthrough](https://youtu.be/I6nYMH-vmGc)
 [Infrastructure Walkthrough](https://youtube.com/watch?v=PLACEHOLDER)
 
 </div>
