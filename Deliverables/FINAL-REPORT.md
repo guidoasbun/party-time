@@ -239,7 +239,7 @@ Fall 2025 | December 2025
   - [16.8 Academic Resources](#16.8-academic)
   - [16.9 AI Development Tools](#16.9-ai-tools)
 
-# Abstract {#abstract}
+# Abstract
 
 Party-Time is a comprehensive cloud-native web application designed to streamline the entire event planning lifecycle. The platform addresses the fragmented nature of current event planning solutions, where organizers must juggle multiple disconnected tools for guest management, venue booking, budget tracking, and communications. The motivation for this project stems from the recognition that event planners often struggle with coordinating these disparate systems, leading to inefficiencies, miscommunication, and overlooked details during the planning process.
 
@@ -247,93 +247,93 @@ The objectives of Party-Time include enabling event planners to create and manag
 
 Party-Time successfully consolidates the essential components of event planning into a unified, user-friendly platform accessible through any web browser. The application features a responsive design optimized for both desktop and mobile devices, comprehensive testing with over 1,100 passing tests, and production-grade infrastructure with automated CI/CD pipelines. The project's significance lies in its demonstration of full-stack software engineering principles, cloud-native architecture patterns, and DevOps best practices while providing a practical solution that simplifies event coordination for planners and enhances the RSVP experience for guests.
 
-# 1.0 Introduction {#1.0-introduction}
+# 1.0 Introduction
 
 Event planning has become increasingly complex in the digital age, with organizers managing multiple aspects including venue selection, guest coordination, budget tracking, and stakeholder communications. While numerous digital tools exist for individual planning tasks, the fragmented nature of these solutions forces event planners to juggle disconnected platforms, leading to data silos, duplicated efforts, and increased risk of errors. Recent advancements in cloud computing, modern web frameworks, and integrated API services have created opportunities to consolidate these disparate functions into unified platforms. Party-Time addresses this fragmentation by providing a comprehensive cloud-native web application that streamlines the entire event planning lifecycle. By leveraging technologies such as Next.js for responsive interfaces, FastAPI for scalable backend services, and AWS cloud infrastructure for reliability, the application aims to transform event planning from a fragmented, stressful process into an organized and efficient experience for planners and guests alike.
 
-# 2.0 Problem Statement {#2.0-problem-statement}
+# 2.0 Problem Statement
 
 The event planning industry faces a significant challenge with fragmented digital tools that force planners to juggle multiple disconnected platforms for different aspects of event management. Current solutions require event organizers to switch between separate applications for venue discovery, guest list management, budget tracking, and communication with stakeholders. This fragmentation leads to data silos, increased risk of errors, duplicated efforts, and inefficient workflows that can compromise the success of events ranging from intimate gatherings to large-scale corporate functions.
 
 Additionally, event planners often struggle with real-time coordination among multiple stakeholders—venues, vendors, and guests—who all need access to different levels of information at various stages of the planning process. The lack of integrated communication channels and centralized information management creates confusion, missed deadlines, and increased stress during what should be a celebratory planning experience.
 
-## 2.1 Problem Definition {#2.1-problem-definition}
+## 2.1 Problem Definition
 
 Current event planning workflows require organizers to use multiple disconnected tools: spreadsheets for budget tracking, email chains for vendor coordination, separate platforms for venue booking, and various applications for guest management and RSVP collection. This disjointed approach creates several critical issues. First, data becomes siloed across platforms, making it difficult to maintain a comprehensive view of event status. Second, manual data transfer between systems introduces errors and inconsistencies. Third, the cognitive overhead of managing multiple tools detracts from the creative and interpersonal aspects of event planning. The problem this project seeks to solve is consolidating these disparate functions into a unified platform that provides event planners with a single source of truth for all event-related information while enabling guests to easily respond to invitations and access event details.
 
-## 2.2 Problem Rationale {#2.2-problem-rationale}
+## 2.2 Problem Rationale
 
 The purpose of solving this problem extends beyond mere convenience to addressing real pain points experienced by event planners and their guests. For planners, the fragmented tool landscape leads to increased stress, longer planning cycles, and higher likelihood of overlooked details. For guests, scattered communication channels result in missed invitations, confusion about event details, and friction in the RSVP process. By developing Party-Time as a comprehensive event planning platform, this project aims to demonstrate how modern full-stack development practices and cloud-native architecture can solve complex real-world coordination problems. The solution leverages technologies such as AWS Cognito for secure authentication, AWS SES for reliable email delivery, and PostgreSQL for robust data persistence to ensure the platform can handle the demands of production event planning while maintaining reliability during critical moments like RSVP deadlines.
 
-# 3.0 What is known about the problem {#3.0-what-is-known-about-the-problem}
+# 3.0 What is known about the problem
 
 The challenges of event planning coordination have been extensively studied in both academic and industry contexts. Understanding the landscape of existing solutions, technological capabilities, and user needs provides essential context for developing Party-Time as a comprehensive event planning platform.
 
-## 3.1 Existing Event Planning Solutions {#3.1-existing-solutions}
+## 3.1 Existing Event Planning Solutions
 
 The current event planning software market offers numerous specialized tools, each addressing specific aspects of event management. Popular platforms include dedicated RSVP services like Evite and Paperless Post, venue booking marketplaces like The Knot and WeddingWire, budget tracking spreadsheets and applications, and general project management tools adapted for event coordination. However, research into user experiences reveals consistent frustration with the need to manually transfer data between these platforms, maintain multiple accounts, and reconcile conflicting information across systems. Industry surveys indicate that event planners spend an average of 20-30% of their planning time on administrative tasks related to managing multiple tools rather than actual event planning activities.
 
-## 3.2 Modern Web Development Paradigms {#3.2-web-development}
+## 3.2 Modern Web Development Paradigms
 
 Recent advancements in web development have created opportunities for building more integrated, responsive, and user-friendly applications. The emergence of modern JavaScript frameworks like React and Next.js enables the creation of dynamic, single-page applications that provide desktop-like experiences in the browser. Server-side rendering and static site generation improve initial load times and search engine optimization. Component-based architecture promotes code reusability and maintainability. Additionally, the adoption of TypeScript has improved code quality through static type checking, reducing runtime errors and improving developer productivity. These technologies collectively enable the development of sophisticated web applications that can rival native desktop software in functionality while maintaining the accessibility and cross-platform compatibility of web-based solutions.
 
-## 3.3 Cloud-Native Architecture Patterns {#3.3-cloud-architecture}
+## 3.3 Cloud-Native Architecture Patterns
 
 Cloud computing has fundamentally transformed how applications are built, deployed, and scaled. Infrastructure-as-a-Service (IaaS) and Platform-as-a-Service (PaaS) offerings from providers like Amazon Web Services (AWS) allow developers to focus on application logic rather than infrastructure management. Key patterns relevant to Party-Time include containerization using Docker for consistent deployment environments, orchestration services like AWS ECS for managing containerized applications, managed database services for reliable data persistence, and content delivery networks for global performance optimization. The adoption of Infrastructure as Code (IaC) tools like Terraform enables reproducible, version-controlled infrastructure deployments, reducing configuration drift and enabling disaster recovery capabilities.
 
-## 3.4 Authentication and Security Best Practices {#3.4-authentication}
+## 3.4 Authentication and Security Best Practices
 
 Secure authentication is critical for any application handling personal data and event coordination. Research into authentication best practices emphasizes the importance of using established identity providers rather than implementing custom authentication systems. Services like AWS Cognito provide battle-tested authentication flows including secure password storage with industry-standard hashing algorithms, multi-factor authentication options, OAuth 2.0 and OpenID Connect compliance, and built-in protection against common attacks such as credential stuffing and brute force attempts. By leveraging managed authentication services, applications can achieve enterprise-grade security without the overhead of maintaining custom security infrastructure.
 
-## 3.5 User Research Insights {#3.5-user-research}
+## 3.5 User Research Insights
 
 Understanding target users is essential for designing effective solutions. Research into event planning user personas reveals distinct categories with varying needs. First-time event planners, such as individuals planning weddings or milestone celebrations, often feel overwhelmed by the number of decisions and lack experience with vendor coordination. They prioritize simplicity, guided workflows, and mobile accessibility. Professional event coordinators managing multiple concurrent events require advanced features like bulk operations, comprehensive reporting, and integration with corporate systems. Event guests, particularly those with lower technical proficiency, need frictionless RSVP experiences with minimal required information and clear, readable interfaces. These insights directly inform Party-Time's design decisions, including progressive disclosure of advanced features, mobile-responsive layouts, and streamlined guest-facing workflows.
 
-## 3.6 Email Delivery and Communication Systems {#3.6-email-systems}
+## 3.6 Email Delivery and Communication Systems
 
 Reliable email delivery is fundamental to event planning applications, as invitations and reminders must reach recipients consistently. Research into email infrastructure reveals the complexity of achieving high deliverability rates, including proper DNS configuration (SPF, DKIM, DMARC records), reputation management, bounce handling, and compliance with anti-spam regulations. Managed email services like AWS Simple Email Service (SES) abstract these complexities while providing deliverability monitoring, sending statistics, and automatic handling of bounces and complaints. Asynchronous processing using task queues ensures that email operations do not block user interactions, improving perceived application performance.
 
-# 4.0 Proposed Method of Solving the Problem {#4.0-proposed-method-of-solving-the-problem}
+# 4.0 Proposed Method of Solving the Problem
 
 The proposed method of solving the event planning fragmentation problem is the development of Party-Time, a comprehensive cloud-native web application that consolidates all essential event planning functions into a unified platform. The solution employs a modern full-stack architecture with a React-based frontend for responsive user interfaces, a Python FastAPI backend for robust API services, PostgreSQL for relational data persistence, and AWS cloud infrastructure for scalability and reliability. The project follows a phased development approach spanning 13 weeks, with each phase building upon the previous to deliver incremental functionality while maintaining production-quality code standards.
 
-## 4.1 Project Overview {#4.1-project-overview}
+## 4.1 Project Overview
 
 Party-Time is designed as a multi-tenant web application that serves three primary user roles: event planners who create and manage events, guests who receive invitations and submit RSVPs, and administrators who oversee platform operations. The application provides a centralized dashboard where planners can manage every aspect of their event lifecycle, from initial creation through post-event follow-up.
 
 The core functionality includes event lifecycle management supporting various event types such as weddings, birthdays, corporate events, and graduations. Planners can create events with customizable details, set dates and locations, configure RSVP deadlines, and track event status through defined states including draft, active, and completed. The system automatically manages state transitions based on event dates and planner actions.
 
-## 4.2 Guest Management System {#4.2-guest-management}
+## 4.2 Guest Management System
 
 The guest management system addresses one of the most time-consuming aspects of event planning. Planners can add guests individually through a web form or import entire guest lists via CSV file upload, supporting bulk operations for events with hundreds of attendees. Each guest record stores contact information, dietary restrictions, accessibility requirements, and plus-one allowances.
 
 The system generates unique, cryptographically secure RSVP tokens for each guest, enabling personalized invitation links that do not require guests to create accounts. This frictionless approach improves RSVP response rates by reducing barriers to participation. Guests can view event details, submit their attendance response, specify meal preferences, and indicate any special requirements through a streamlined interface optimized for both desktop and mobile devices.
 
-## 4.3 Email Communication Infrastructure {#4.3-email-infrastructure}
+## 4.3 Email Communication Infrastructure
 
 Reliable communication is essential for successful event coordination. Party-Time integrates with AWS Simple Email Service (SES) for transactional email delivery, supporting invitation distribution, RSVP confirmations, event reminders, and update notifications. The email system operates asynchronously using Celery task queues with Redis as the message broker, ensuring that email operations do not block user interactions or degrade application performance.
 
 Email templates are customizable and support dynamic content injection, allowing planners to personalize messages with event-specific details and guest names. The system tracks email delivery status, handles bounces gracefully, and provides delivery analytics through the planner dashboard. Batch sending capabilities enable efficient distribution to large guest lists while respecting rate limits and maintaining sender reputation.
 
-## 4.4 Venue Discovery Integration {#4.4-venue-discovery}
+## 4.4 Venue Discovery Integration
 
 Finding the right venue is often the first major decision in event planning. Party-Time integrates with the Google Places API to provide comprehensive venue search and discovery capabilities. Planners can search for venues by location, filter by capacity and amenities, view photos and reviews, and save potential venues to their event for comparison.
 
 The integration retrieves detailed venue information including address, contact details, operating hours, and user ratings. Search results can be filtered by venue type (restaurants, hotels, event spaces, outdoor venues) and sorted by relevance, distance, or rating. This integration eliminates the need for planners to use separate venue booking platforms, keeping all event-related information within the Party-Time ecosystem.
 
-## 4.5 Budget Tracking and Analytics {#4.5-budget-tracking}
+## 4.5 Budget Tracking and Analytics
 
 Financial management is critical for events of all sizes. The budget tracking module enables planners to set overall budget limits and allocate funds across customizable expense categories such as venue, catering, decorations, entertainment, and photography. As expenses are recorded, the system calculates remaining budget, tracks spending against allocations, and visualizes financial data through interactive charts and graphs.
 
 The budget interface provides real-time updates as expenses are added or modified, with visual indicators highlighting categories approaching or exceeding their allocated amounts. Planners can export budget reports for record-keeping or sharing with co-planners and stakeholders. The system supports multiple currencies and handles currency conversion for international events.
 
-## 4.6 Interactive Seating Chart Editor {#4.6-seating-charts}
+## 4.6 Interactive Seating Chart Editor
 
 For events requiring assigned seating, Party-Time provides an interactive drag-and-drop seating chart editor. Planners can create custom venue layouts by placing tables of various shapes (round, rectangular, square) and sizes on a visual canvas. Guests are assigned to seats by dragging their names from the guest list onto specific positions at tables.
 
 The seating chart system enforces capacity constraints, preventing over-assignment of tables, and provides visual feedback showing table utilization. Planners can create multiple seating arrangements for events with different configurations (ceremony versus reception) and print or export seating charts for venue staff. The interface is optimized for both mouse and touch interactions, supporting use on tablets during venue visits.
 
-## 4.7 Technical Architecture Approach {#4.7-technical-architecture}
+## 4.7 Technical Architecture Approach
 
 The technical architecture follows modern best practices for cloud-native application development. The frontend is built with Next.js 15 and React 19, leveraging server-side rendering for improved performance and SEO, and TypeScript for type safety. Tailwind CSS v4 provides utility-first styling with support for light and dark themes. State management uses React Query for server state synchronization and React Context for application state.
 
@@ -341,13 +341,13 @@ The backend API is developed with Python 3.13 and FastAPI, chosen for its high p
 
 Infrastructure is deployed on AWS using Terraform for Infrastructure as Code, ensuring reproducible and version-controlled deployments. The application runs on ECS Fargate for serverless container orchestration, with RDS PostgreSQL for the database, ElastiCache Redis for caching and session storage, and S3 with CloudFront for static asset delivery. This architecture provides automatic scaling, high availability, and operational simplicity.
 
-## 4.8 Development Methodology {#4.8-development-methodology}
+## 4.8 Development Methodology
 
 The project follows an iterative development approach with clearly defined phases. Phase 1 establishes core infrastructure and fundamental features including authentication, event CRUD operations, and basic guest management. Phase 2 builds upon this foundation to add RSVP functionality, email communications, and venue integration. Phase 3 introduces advanced features including budget tracking, seating charts, and comprehensive testing.
 
 Each phase concludes with integration testing and deployment to a staging environment, ensuring continuous validation of functionality. The development process emphasizes test-driven development with comprehensive unit tests, integration tests, and end-to-end tests. Code quality is maintained through automated linting, formatting with Black and Prettier, and continuous integration pipelines that run tests on every commit.
 
-## 4.9 Benefits and Significance {#4.9-benefits-significance}
+## 4.9 Benefits and Significance
 
 Party-Time delivers significant benefits to event planners by consolidating fragmented workflows into a unified platform. Planners save time by eliminating manual data transfer between systems, reduce errors through centralized information management, and improve guest communication through automated notifications. The platform's responsive design ensures access from any device, enabling planners to manage events on-the-go.
 
@@ -355,17 +355,17 @@ For guests, Party-Time provides a frictionless RSVP experience that respects the
 
 From a technical perspective, the project demonstrates mastery of modern full-stack development practices, cloud-native architecture patterns, and DevOps methodologies. The comprehensive test suite, automated CI/CD pipelines, and production-grade monitoring infrastructure showcase professional software engineering standards applicable to enterprise environments.
 
-## 4.10 Future Enhancements {#4.10-future-enhancements}
+## 4.10 Future Enhancements
 
 While the current implementation delivers a comprehensive event planning platform, several enhancements are planned for future development. These include AI-powered planning assistance using Claude for generating timelines, suggesting vendors, and answering planning questions. Real-time chat functionality would enable direct communication between planners, vendors, and guests within the platform.
 
 Additional planned features include vendor marketplace integration for discovering and booking service providers, photo and video gallery sharing for guest contributions, calendar synchronization with Google Calendar and other providers, and native mobile applications for iOS and Android. Payment processing integration would enable direct transaction handling for vendor deposits and guest contributions. These enhancements would further differentiate Party-Time as a comprehensive event planning solution.
 
-# 5.0 Objectives {#5.0-objectives}
+# 5.0 Objectives
 
 The primary objective of Party-Time is to create a comprehensive, user-friendly event planning platform that consolidates fragmented workflows into a unified application. The project aims to demonstrate mastery of modern full-stack development practices while delivering practical value to event planners and their guests. Specific objectives are organized into functional, user experience, and technical categories.
 
-## 5.1 Functional Objectives {#5.1-functional-objectives}
+## 5.1 Functional Objectives
 
 The functional objectives define the core capabilities Party-Time must provide to address event planning needs:
 
@@ -383,7 +383,7 @@ The functional objectives define the core capabilities Party-Time must provide t
 
 7. **Seating Charts**: Develop an interactive drag-and-drop seating chart editor supporting multiple table configurations, capacity enforcement, and export functionality for venue staff.
 
-## 5.2 User Experience Objectives {#5.2-ux-objectives}
+## 5.2 User Experience Objectives
 
 The user experience objectives ensure the application is accessible and enjoyable for users of all technical abilities:
 
@@ -397,7 +397,7 @@ The user experience objectives ensure the application is accessible and enjoyabl
 
 5. **Guest-Friendly Interfaces**: Develop streamlined guest-facing pages with minimal required information, large touch targets, and clear calls-to-action optimized for users with varying technical proficiency.
 
-## 5.3 Technical Objectives {#5.3-technical-objectives}
+## 5.3 Technical Objectives
 
 The technical objectives establish the engineering standards and infrastructure requirements:
 
@@ -415,11 +415,11 @@ The technical objectives establish the engineering standards and infrastructure 
 
 7. **Production Monitoring**: Implement comprehensive observability using CloudWatch dashboards, alarms, X-Ray distributed tracing, and Synthetics canaries for proactive issue detection and resolution.
 
-# 6.0 Activities {#6.0-activities}
+# 6.0 Activities
 
 The Party-Time capstone project was developed over a 13-week period from September 2025 through December 2025, following a phased development approach. Each phase focused on specific functionality areas, with activities organized to build incrementally upon previous work while maintaining production-quality code standards throughout the development lifecycle.
 
-## 6.1 Phase 1: Infrastructure Setup (September 2025) {#6.1-infrastructure-setup}
+## 6.1 Phase 1: Infrastructure Setup (September 2025)
 
 The initial phase established the foundational infrastructure and core authentication systems required for all subsequent development:
 
@@ -433,7 +433,7 @@ The initial phase established the foundational infrastructure and core authentic
 
 **Deliverables**: 340+ tests passing, functional authentication flow, event management foundation.
 
-## 6.2 Phase 3: Event Forms and Detail Pages (September-October 2025) {#6.2-event-forms}
+## 6.2 Phase 3: Event Forms and Detail Pages (September-October 2025)
 
 Phase 3 expanded the event management system with comprehensive form handling and detail views across 11 sub-activities:
 
@@ -449,7 +449,7 @@ Phase 3 expanded the event management system with comprehensive form handling an
 
 **Deliverables**: 15 smoke tests passing, complete event CRUD workflow, responsive multi-step forms.
 
-## 6.3 Phase 4: Guest Management (October 2025) {#6.3-guest-management}
+## 6.3 Phase 4: Guest Management (October 2025)
 
 Phase 4 implemented the comprehensive guest management system across 7 sub-activities:
 
@@ -469,7 +469,7 @@ Phase 4 implemented the comprehensive guest management system across 7 sub-activ
 
 **Deliverables**: 25 smoke tests passing, bulk import capability, comprehensive guest analytics.
 
-## 6.4 Phase 5: RSVP and Email Systems (October 2025) {#6.4-rsvp-email}
+## 6.4 Phase 5: RSVP and Email Systems (October 2025)
 
 Phase 5 delivered the guest-facing RSVP experience and email communication infrastructure across 8 sub-activities:
 
@@ -495,7 +495,7 @@ Phase 5 delivered the guest-facing RSVP experience and email communication infra
 
 **Deliverables**: 47 smoke tests passing, asynchronous email processing, guest-friendly RSVP experience.
 
-## 6.5 Phase 6: Seating Charts (November 2025) {#6.5-seating-charts}
+## 6.5 Phase 6: Seating Charts (November 2025)
 
 Phase 6 was the most complex feature implementation, spanning 23 sub-activities across three sub-phases:
 
@@ -522,7 +522,7 @@ Phase 6 was the most complex feature implementation, spanning 23 sub-activities 
 
 **Deliverables**: 2,500+ lines of code, 36 unit tests, interactive canvas editor, mobile-responsive design.
 
-## 6.6 Phase 7: Venue and Budget Systems (November-December 2025) {#6.6-venue-budget}
+## 6.6 Phase 7: Venue and Budget Systems (November-December 2025)
 
 Phase 7 completed the core feature set with venue discovery and budget management:
 
@@ -544,7 +544,7 @@ Phase 7 completed the core feature set with venue discovery and budget managemen
 
 **Deliverables**: 2,500+ lines of code, 24 Postman test assertions, Google Places integration, visual budget analytics.
 
-## 6.7 Phase 8: Testing and UI Polish (December 4-5, 2025) {#6.7-testing-polish}
+## 6.7 Phase 8: Testing and UI Polish (December 4-5, 2025)
 
 Phase 8 focused on comprehensive test coverage and user experience refinements over two intensive days:
 
@@ -565,7 +565,7 @@ Phase 8 focused on comprehensive test coverage and user experience refinements o
 
 **Deliverables**: 1,182 tests passing (85.6% pass rate), enhanced loading states, keyboard accessibility.
 
-## 6.8 Phase 9: Performance and Final Polish (December 5, 2025) {#6.8-performance}
+## 6.8 Phase 9: Performance and Final Polish (December 5, 2025)
 
 Phase 9 optimized application performance and completed final refinements:
 
@@ -587,7 +587,7 @@ Phase 9 optimized application performance and completed final refinements:
 
 **Deliverables**: 800+ lines of optimization code, Web Vitals integration, complete error handling, onboarding flow.
 
-## 6.9 Phase 10: AWS Infrastructure Deployment (December 8-15, 2025) {#6.9-infrastructure}
+## 6.9 Phase 10: AWS Infrastructure Deployment (December 8-15, 2025)
 
 Phase 10 deployed the complete AWS cloud infrastructure across 8 sub-phases:
 
@@ -609,7 +609,7 @@ Phase 10 deployed the complete AWS cloud infrastructure across 8 sub-phases:
 
 **Deliverables**: 210+ AWS resources deployed, staging environment live, comprehensive monitoring and alerting.
 
-## 6.10 Project Timeline Summary {#6.10-timeline}
+## 6.10 Project Timeline Summary
 
 | Phase | Timeframe              | Duration | Key Deliverables                          |
 | ----- | ---------------------- | -------- | ----------------------------------------- |
@@ -631,11 +631,11 @@ Phase 10 deployed the complete AWS cloud infrastructure across 8 sub-phases:
 - 210+ AWS resources deployed
 - Staging environment: https://staging.celebration-time.com
 
-# 7.0 Development Environment {#7.0-development-environment}
+# 7.0 Development Environment
 
 The Party-Time development environment is configured to support modern full-stack web development with containerized services, automated testing, and consistent tooling across development and production environments. The environment leverages Docker for service isolation, ensuring that all developers work with identical configurations regardless of their host operating system.
 
-## 7.1 Technology Stack Versions {#7.1-technology-versions}
+## 7.1 Technology Stack Versions
 
 The application uses the following core technology versions:
 
@@ -661,7 +661,7 @@ The application uses the following core technology versions:
 - PostgreSQL: 16 (Alpine container)
 - Redis: 7 (Alpine container)
 
-## 7.2 Docker Configuration {#7.2-docker-configuration}
+## 7.2 Docker Configuration
 
 Local development uses Docker Compose to orchestrate the following services:
 
@@ -677,7 +677,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - party_time_db_data: PostgreSQL data persistence
 - party_time_redis_data: Redis data persistence
 
-## 7.3 Frontend Development Environment {#7.3-frontend-environment}
+## 7.3 Frontend Development Environment
 
 **Key Dependencies:**
 
@@ -707,7 +707,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - Playwright 1.55.0: End-to-end testing with browser automation
 - React Testing Library 16.3.0: Component testing utilities
 
-## 7.4 Backend Development Environment {#7.4-backend-environment}
+## 7.4 Backend Development Environment
 
 **Key Dependencies:**
 
@@ -739,7 +739,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - pytest-cov 6.3.0: Coverage reporting
 - pytest-mock 3.15.0: Mocking utilities
 
-## 7.5 Code Quality Tools {#7.5-code-quality}
+## 7.5 Code Quality Tools
 
 **Frontend:**
 
@@ -753,7 +753,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - Pydantic: Runtime type validation for API schemas
 - pytest-cov: Test coverage reporting
 
-## 7.6 Local Development Setup {#7.6-local-setup}
+## 7.6 Local Development Setup
 
 **Initial Setup Steps:**
 
@@ -784,7 +784,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - Backend API: http://localhost:8000
 - API Documentation: http://localhost:8000/docs
 
-## 7.7 Environment Variables {#7.7-environment-variables}
+## 7.7 Environment Variables
 
 **Frontend (.env.local):**
 
@@ -807,7 +807,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 - CELERY_BROKER_URL: Redis URL for Celery task broker
 - SES_FROM_EMAIL: Verified sender email for AWS SES
 
-## 7.8 Database Configuration {#7.8-database-config}
+## 7.8 Database Configuration
 
 **Local Development:**
 
@@ -822,7 +822,7 @@ All containers communicate via a bridge network (party-time-network) using DNS n
 psql -h localhost -U party_admin -d party_time
 ```
 
-## 7.9 IDE Recommendations {#7.9-ide-recommendations}
+## 7.9 IDE Recommendations
 
 **Visual Studio Code** with extensions:
 
@@ -838,7 +838,7 @@ psql -h localhost -U party_admin -d party_time
 - PyCharm Professional: Full-stack Python development
 - WebStorm: JavaScript/TypeScript development
 
-## 7.10 Development Environment Summary {#7.10-dev-summary}
+## 7.10 Development Environment Summary
 
 | Category           | Technology      | Version       |
 | ------------------ | --------------- | ------------- |
@@ -856,11 +856,11 @@ psql -h localhost -U party_admin -d party_time
 | Backend Tests      | pytest          | 8.4.2         |
 | Containerization   | Docker          | Latest        |
 
-# 8.0 Operational Environment {#8.0-operational-environment}
+# 8.0 Operational Environment
 
 The Party-Time production environment is deployed on Amazon Web Services (AWS) using a cloud-native architecture designed for high availability, security, and scalability. The infrastructure is defined entirely as code using Terraform, enabling reproducible deployments and version-controlled infrastructure changes. The staging environment is currently live at https://staging.celebration-time.com, with production deployment pending completion of Phase 10.8.
 
-## 8.1 AWS Infrastructure Overview {#8.1-aws-overview}
+## 8.1 AWS Infrastructure Overview
 
 **Deployment Configuration:**
 
@@ -876,7 +876,7 @@ The Party-Time production environment is deployed on Amazon Web Services (AWS) u
 - Production: https://celebration-time.com (Phase 10.8 pending)
 - API Documentation: https://staging.celebration-time.com/docs
 
-## 8.2 Compute and Container Services {#8.2-compute}
+## 8.2 Compute and Container Services
 
 The application runs on AWS ECS Fargate, providing serverless container orchestration without the need to manage underlying EC2 instances.
 
@@ -901,7 +901,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - ARM64 architecture for AWS Graviton2 processors (20% cost savings)
 - Images tagged with git SHA and "latest"
 
-## 8.3 Networking and Load Balancing {#8.3-networking}
+## 8.3 Networking and Load Balancing
 
 **VPC Configuration:**
 
@@ -920,7 +920,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Health checks every 30 seconds to /health endpoint
 - Target groups with unhealthy host detection
 
-## 8.4 Database Layer {#8.4-database}
+## 8.4 Database Layer
 
 **RDS PostgreSQL 16:**
 
@@ -940,7 +940,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Snapshot Retention: 7 days
 - Uses: API response caching, session storage, Celery task broker and result backend
 
-## 8.5 Storage and Content Delivery {#8.5-storage}
+## 8.5 Storage and Content Delivery
 
 **S3 Buckets:**
 
@@ -971,7 +971,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Hosted zone with A records pointing to CloudFront
 - Health checks for failover routing (production)
 
-## 8.6 Security Infrastructure {#8.6-security}
+## 8.6 Security Infrastructure
 
 **Web Application Firewall (WAF v2):**
 
@@ -1001,7 +1001,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Secrets Manager: Database credentials, Redis URL, API keys, Cognito credentials
 - Automatic Rotation: 90-day default rotation policy
 
-## 8.7 Monitoring and Observability {#8.7-monitoring}
+## 8.7 Monitoring and Observability
 
 **CloudWatch Alarms (22 total):**
 
@@ -1043,7 +1043,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - ECS logs: Frontend, Backend, Celery Worker, Celery Beat (30-day retention)
 - Infrastructure logs: RDS, ALB, WAF, VPC Flow Logs (7-30 day retention)
 
-## 8.8 CI/CD Pipeline {#8.8-cicd}
+## 8.8 CI/CD Pipeline
 
 **GitHub Actions Workflows (5):**
 
@@ -1071,7 +1071,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Manual approval gates for production deployments
 - Circuit breaker enabled for automatic rollback
 
-## 8.9 Disaster Recovery {#8.9-disaster-recovery}
+## 8.9 Disaster Recovery
 
 **Recovery Objectives:**
 
@@ -1085,7 +1085,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Pre-deployment snapshots before major releases
 - Cross-region replication: us-east-1 → us-west-2 (production)
 
-## 8.10 Cost Optimization {#8.10-cost}
+## 8.10 Cost Optimization
 
 **Staging Environment: ~$80-100/month**
 
@@ -1101,7 +1101,7 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 - Reserved capacity for predictable workloads
 - Spot capacity for Celery workers
 
-## 8.11 Operational Environment Summary {#8.11-summary}
+## 8.11 Operational Environment Summary
 
 | Category           | Staging  | Production |
 | ------------------ | -------- | ---------- |
@@ -1114,11 +1114,11 @@ The application runs on AWS ECS Fargate, providing serverless container orchestr
 | Monthly Cost       | ~$80-100 | ~$350-400  |
 | Status             | Live     | Pending    |
 
-# 9.0 Overall Description {#9.0-overall-description}
+# 9.0 Overall Description
 
 This section provides a high-level overview of the Party-Time application, describing its context within the event planning ecosystem, the functions it provides, the characteristics of its users, and the constraints and dependencies that shape its design and operation.
 
-## 9.1 System Perspective {#9.1-system-perspective}
+## 9.1 System Perspective
 
 Party-Time is a cloud-native, standalone web application designed to serve as a unified event planning platform. While operating independently, the system strategically integrates with external services to provide comprehensive functionality:
 
@@ -1129,7 +1129,7 @@ Party-Time is a cloud-native, standalone web application designed to serve as a 
 
 The system is designed to eliminate platform fragmentation by consolidating multiple disparate tools into one ecosystem. Rather than forcing users to juggle spreadsheets for budgets, email chains for vendor coordination, separate platforms for venue booking, and various applications for guest management, Party-Time provides a centralized hub where all event planning activities occur within a single, cohesive interface.
 
-## 9.2 System Functions {#9.2-system-functions}
+## 9.2 System Functions
 
 Party-Time provides comprehensive event lifecycle management through the following core functional areas:
 
@@ -1147,7 +1147,7 @@ Party-Time provides comprehensive event lifecycle management through the followi
 
 **Email Communications**: Automated email infrastructure via AWS SES with Celery task queue processing. Four template types (invitation, confirmation, reminder, thank you) with dynamic content injection. Batch sending capabilities with delivery tracking and analytics.
 
-## 9.3 User Characteristics {#9.3-user-characteristics}
+## 9.3 User Characteristics
 
 Party-Time serves three primary user categories with distinct needs and technical proficiency levels:
 
@@ -1157,7 +1157,7 @@ Party-Time serves three primary user categories with distinct needs and technica
 
 **System Administrators (Tertiary Users)**: Platform maintenance and support personnel responsible for monitoring, troubleshooting, and user assistance. Technical proficiency is high. Primary needs include monitoring tools, administrative controls, system metrics, and user management capabilities. Access CloudWatch dashboards, system health endpoints, and audit logging.
 
-## 9.4 Constraints {#9.4-constraints}
+## 9.4 Constraints
 
 The system operates within the following constraints:
 
@@ -1189,7 +1189,7 @@ The system operates within the following constraints:
 - Email compliance with DMARC, SPF, and DKIM records for deliverability
 - All production data stored in AWS us-east-1 region
 
-## 9.5 Assumptions and Dependencies {#9.5-assumptions-dependencies}
+## 9.5 Assumptions and Dependencies
 
 **Assumptions**:
 
@@ -1224,7 +1224,7 @@ _Framework Dependencies_:
 - Backend: Python 3.13, FastAPI 0.116.1, SQLAlchemy 2.0.43
 - Infrastructure: Docker, Terraform 1.6+, GitHub Actions
 
-## 9.6 Overall Description Summary {#9.6-summary}
+## 9.6 Overall Description Summary
 
 | Aspect                | Details                                                             |
 | --------------------- | ------------------------------------------------------------------- |
@@ -1237,11 +1237,11 @@ _Framework Dependencies_:
 | Security Model        | AWS Cognito, JWT tokens, HTTPS/TLS, WAF protection                  |
 | Deployment Status     | Staging live at staging.celebration-time.com                        |
 
-# 10.0 System Architecture {#10.0-system-architecture}
+# 10.0 System Architecture
 
 The Party-Time application architecture is designed as a cloud-native, distributed system leveraging AWS managed services to minimize operational overhead while ensuring scalability and reliability. The architecture follows Domain-Driven Design principles, organizing code around business domains rather than technical layers. This section details the microservices architecture pattern, frontend component architecture, data flow patterns, and supporting infrastructure that enable the Party-Time platform to deliver comprehensive event planning capabilities.
 
-## 10.1 Microservices Architecture {#10.1-microservices}
+## 10.1 Microservices Architecture
 
 ![Figure 10.1: Microservices Architecture of Party-Time Application](Images/image9.png)
 
@@ -1283,7 +1283,7 @@ The Notification Service processes asynchronous communication tasks through AWS 
 - Delivery status tracking and bounce handling
 - Retry logic with exponential backoff
 
-## 10.2 Frontend Component Architecture {#10.2-frontend-architecture}
+## 10.2 Frontend Component Architecture
 
 ![Figure 10.2: Frontend Component Architecture](Images/image8.png)
 
@@ -1341,7 +1341,7 @@ Next.js TypeScript Application
 - **React Hook Form** with Zod validation for type-safe form handling
 - **React Query** for server state management with automatic caching and synchronization
 
-## 10.3 Backend Services Architecture {#10.3-backend-architecture}
+## 10.3 Backend Services Architecture
 
 **Core API Service (FastAPI)**
 
@@ -1377,7 +1377,7 @@ backend/
 └── tests/
 ```
 
-## 10.4 Data Architecture {#10.4-data-architecture}
+## 10.4 Data Architecture
 
 The system employs a hybrid database strategy optimized for different data access patterns:
 
@@ -1414,7 +1414,7 @@ The system employs a hybrid database strategy optimized for different data acces
 | seating_charts | Seating layouts | id, event_id, layout_data, table_configurations    |
 | email_logs     | Email tracking  | id, event_id, recipient, status, sent_at           |
 
-## 10.5 Data Flow Architecture {#10.5-data-flow}
+## 10.5 Data Flow Architecture
 
 ![Figure 10.5: Data Flow Architecture](Images/image6.png)
 
@@ -1439,7 +1439,7 @@ The data flow architecture illustrates how information moves through the system 
 5. **Result Storage**: Task result stored in Redis
 6. **Status Update**: Database updated with delivery status
 
-## 10.6 Security Architecture {#10.6-security-architecture}
+## 10.6 Security Architecture
 
 The system implements defense-in-depth security across multiple layers:
 
@@ -1472,7 +1472,7 @@ The system implements defense-in-depth security across multiple layers:
 - Cross-site scripting (XSS) protection
 - Request body size limits
 
-## 10.7 Deployment Architecture {#10.7-deployment-architecture}
+## 10.7 Deployment Architecture
 
 The application deploys using containerized microservices on AWS infrastructure:
 
@@ -1508,7 +1508,7 @@ The application deploys using containerized microservices on AWS infrastructure:
 - Database migration execution
 - Smoke test verification
 
-## 10.8 Integration Architecture {#10.8-integration-architecture}
+## 10.8 Integration Architecture
 
 ![Figure 10.8: Integration Architecture](Images/image12.png)
 
@@ -1528,7 +1528,7 @@ The application deploys using containerized microservices on AWS infrastructure:
 - **Circuit Breaker Pattern** for handling third-party service failures gracefully
 - **Webhook Endpoints** for receiving real-time updates from external services
 
-## 10.9 System Architecture Summary {#10.9-summary}
+## 10.9 System Architecture Summary
 
 | Component      | Technology            | Purpose             |
 | -------------- | --------------------- | ------------------- |
@@ -1545,11 +1545,11 @@ The application deploys using containerized microservices on AWS infrastructure:
 | CI/CD          | GitHub Actions        | Automation          |
 | Monitoring     | CloudWatch, X-Ray     | Observability       |
 
-# 11.0 UML Diagrams {#11.0-uml-diagrams}
+# 11.0 UML Diagrams
 
 This section presents the Unified Modeling Language (UML) diagrams that document the Party-Time system design. These diagrams provide visual representations of system behavior, data flow, and structural relationships, serving as essential documentation for understanding the application architecture and guiding implementation decisions.
 
-## 11.1 Use Case Diagram {#11.1-use-case}
+## 11.1 Use Case Diagram
 
 The Use Case Diagram (Figure 11.1) illustrates the functional requirements of the Party-Time system from the perspective of its primary actors. The diagram identifies three main actors and their interactions with system functionality.
 
@@ -1585,11 +1585,11 @@ The Use Case Diagram (Figure 11.1) illustrates the functional requirements of th
 - **Extend**: "Manage Guests" extends to "Import CSV" (optional bulk operation)
 - **Extend**: "Track Budget" extends to "Export Report" (optional reporting)
 
-## 11.2 Sequence Diagrams {#11.2-sequence}
+## 11.2 Sequence Diagrams
 
 Sequence diagrams illustrate the temporal ordering of interactions between system components for key workflows. Three critical sequences are documented below.
 
-#### 11.2.1 User Authentication Sequence {#11.2.1-auth-sequence}
+#### 11.2.1 User Authentication Sequence
 
 ![Figure 11.2: User Authentication Sequence Diagram](Images/image3.png)
 
@@ -1628,7 +1628,7 @@ The authentication sequence (Figure 11.2) depicts the login flow using AWS Cogni
 | 6    | Frontend | Backend  | GET /api/v1/events (Authorization: Bearer token) |
 | 7    | Backend  | Frontend | 200 OK (events data)                             |
 
-#### 11.2.2 Event Creation Sequence {#11.2.2-event-sequence}
+#### 11.2.2 Event Creation Sequence
 
 ![Figure 11.3: Event Creation Sequence Diagram](Images/image11.png)
 
@@ -1660,7 +1660,7 @@ The event creation sequence (Figure 11.3) shows the multi-step wizard flow:
 14. React Query invalidates events cache
 15. Frontend redirects to event detail page
 
-#### 11.2.3 RSVP Submission Sequence {#11.2.3-rsvp-sequence}
+#### 11.2.3 RSVP Submission Sequence
 
 ![Figure 11.4: RSVP Submission Sequence Diagram](Images/image4.png)
 
@@ -1695,7 +1695,7 @@ The RSVP submission sequence (Figure 11.4) depicts the guest response flow:
 16. AWS SES delivers confirmation email to guest
 17. Frontend displays success animation with confetti
 
-## 11.3 Activity Diagram {#11.3-activity}
+## 11.3 Activity Diagram
 
 ![Figure 11.5: Activity Diagram for Event Planning Workflow](Images/image10.png)
 
@@ -1710,11 +1710,11 @@ The Activity Diagram (Figure 11.5) models the workflow for the complete event pl
 | Guest             | Receive Invitation, Submit RSVP, View Details          |
 | External Services | Process Emails (SES), Venue Search (Google Places)     |
 
-## 11.4 Data Flow Diagrams {#11.4-dfd}
+## 11.4 Data Flow Diagrams
 
 Data Flow Diagrams illustrate how information moves through the Party-Time system at different levels of abstraction.
 
-#### 11.4.1 Context Diagram (Level 0) {#11.4.1-context}
+#### 11.4.1 Context Diagram (Level 0)
 
 ![Figure 11.6: Context Diagram (Level 0)](Images/image5.png)
 
@@ -1733,7 +1733,7 @@ The Context Diagram (Figure 11.6) shows the system boundary and external entitie
 **System Boundary:**
 The Party-Time System processes all internal data transformations including event management, guest coordination, budget calculations, and seating optimization.
 
-#### 11.4.2 Level 1 Data Flow Diagram {#11.4.2-level1}
+#### 11.4.2 Level 1 Data Flow Diagram
 
 ![Figure 11.7: Level 1 Data Flow Diagram](Images/image2.png)
 
@@ -1762,7 +1762,7 @@ The Level 1 DFD (Figure 11.7) decomposes the system into major processes:
 | D5: Seating Charts | Table layouts and seat assignments | seating_chart_id     |
 | D6: Saved Venues   | Cached venue information           | venue_id             |
 
-## 11.5 Class Diagram {#11.5-class}
+## 11.5 Class Diagram
 
 ![Figure 11.8: Class Diagram](Images/image7.png)
 
@@ -1946,7 +1946,7 @@ EmailLog
 | Event → EmailLog             | One-to-Many | An event has multiple email logs          |
 | Guest → EmailLog             | One-to-Many | A guest receives multiple emails          |
 
-## 11.6 UML Diagrams Summary {#11.6-summary}
+## 11.6 UML Diagrams Summary
 
 | Diagram                       | Figure | Purpose                                        |
 | ----------------------------- | ------ | ---------------------------------------------- |
@@ -1959,11 +1959,11 @@ EmailLog
 | Level 1 DFD                   | 11.7   | Process decomposition and data stores          |
 | Class Diagram                 | 11.8   | Domain model with entities and relationships   |
 
-# 12.0 Implementation {#12.0-implementation}
+# 12.0 Implementation
 
 This section documents the implementation of the Party-Time application, covering the development process, code organization, key implementation decisions, and notable features developed across the 13-week capstone timeline. The implementation followed a phased approach with each phase building incrementally upon previous work while maintaining production-quality code standards.
 
-## 12.1 Development Process Overview {#12.1-development-process}
+## 12.1 Development Process Overview
 
 The Party-Time application was developed over 13 weeks from September through December 2025, following an iterative development approach with clearly defined phases. Each phase focused on specific functionality areas, culminating in a production-ready application with comprehensive AWS cloud infrastructure.
 
@@ -1981,11 +1981,11 @@ The Party-Time application was developed over 13 weeks from September through De
 | 9     | December 5        | Performance          | Code splitting, caching, Web Vitals             |
 | 10    | December 8-15     | AWS Infrastructure   | 210+ resources, staging deployment              |
 
-## 12.2 Frontend Implementation {#12.2-frontend-implementation}
+## 12.2 Frontend Implementation
 
 The frontend was built with Next.js 15 using the App Router architecture, React 19 for UI components, and TypeScript for type safety.
 
-#### 12.2.1 Project Structure {#12.2.1-frontend-structure}
+#### 12.2.1 Project Structure
 
 ```
 frontend/src/
@@ -2016,7 +2016,7 @@ frontend/src/
 └── types/                 # TypeScript type definitions
 ```
 
-#### 12.2.2 Key Frontend Technologies {#12.2.2-frontend-tech}
+#### 12.2.2 Key Frontend Technologies
 
 | Technology      | Version | Purpose                         |
 | --------------- | ------- | ------------------------------- |
@@ -2030,7 +2030,7 @@ frontend/src/
 | Fabric.js       | 6.7.1   | Canvas-based seating editor     |
 | NextAuth.js     | 4.24.11 | Authentication integration      |
 
-#### 12.2.3 Component Implementation Highlights {#12.2.3-components}
+#### 12.2.3 Component Implementation Highlights
 
 **Event Management (Phase 3)**:
 
@@ -2076,7 +2076,7 @@ Key seating features implemented:
 - MobileSeatingView for touch-optimized seating interaction
 - FindMySeat feature with pinch-to-zoom support
 
-#### 12.2.4 State Management {#12.2.4-state-management}
+#### 12.2.4 State Management
 
 **Server State (React Query)**:
 
@@ -2104,11 +2104,11 @@ const createEvent = useMutation({
 - KeyboardShortcutsContext: Global keyboard shortcuts
 - AnalyticsContext: Event tracking
 
-## 12.3 Backend Implementation {#12.3-backend-implementation}
+## 12.3 Backend Implementation
 
 The backend was built with Python 3.13 and FastAPI, following a layered architecture with clear separation of concerns.
 
-#### 12.3.1 Project Structure {#12.3.1-backend-structure}
+#### 12.3.1 Project Structure
 
 ```
 backend/
@@ -2136,7 +2136,7 @@ backend/
 └── tests/                  # pytest test suite
 ```
 
-#### 12.3.2 Key Backend Technologies {#12.3.2-backend-tech}
+#### 12.3.2 Key Backend Technologies
 
 | Technology | Version     | Purpose                |
 | ---------- | ----------- | ---------------------- |
@@ -2149,7 +2149,7 @@ backend/
 | Redis      | Via asyncpg | Caching and broker     |
 | boto3      | 1.40.25     | AWS SDK                |
 
-#### 12.3.3 API Implementation {#12.3.3-api-implementation}
+#### 12.3.3 API Implementation
 
 **RESTful Endpoints (50+ total)**:
 
@@ -2190,7 +2190,7 @@ async def create_event(
     return EventResponse(data=event, message="Event created successfully")
 ```
 
-#### 12.3.4 Database Models {#12.3.4-database-models}
+#### 12.3.4 Database Models
 
 **Core Models (SQLAlchemy)**:
 
@@ -2212,7 +2212,7 @@ async def create_event(
 - Automatic migration generation with `alembic revision --autogenerate`
 - Applied via ECS RunTask during CI/CD deployment
 
-#### 12.3.5 Asynchronous Processing {#12.3.5-async-processing}
+#### 12.3.5 Asynchronous Processing
 
 **Celery Task Queue (Phase 5)**:
 
@@ -2243,7 +2243,7 @@ def send_email_task(self, email_data: dict):
 - celery-worker: Processes email and background tasks
 - celery-beat: Schedules automated reminders and reports
 
-#### 12.3.6 Caching Layer {#12.3.6-caching}
+#### 12.3.6 Caching Layer
 
 **Redis Caching Implementation (Phase 9)**:
 
@@ -2281,11 +2281,11 @@ class CacheTTL:
 - Venue details: 24-hour TTL
 - User sessions: Stored in Redis
 
-## 12.4 Authentication Implementation {#12.4-authentication}
+## 12.4 Authentication Implementation
 
 Authentication is handled by AWS Cognito with NextAuth.js on the frontend.
 
-#### 12.4.1 Authentication Flow {#12.4.1-auth-flow}
+#### 12.4.1 Authentication Flow
 
 1. User enters credentials on login page
 2. NextAuth.js sends credentials to AWS Cognito
@@ -2295,7 +2295,7 @@ Authentication is handled by AWS Cognito with NextAuth.js on the frontend.
 6. Backend validates JWT signature and claims
 7. Token refresh handled automatically by NextAuth.js
 
-#### 12.4.2 JWT Validation {#12.4.2-jwt-validation}
+#### 12.4.2 JWT Validation
 
 ```python
 async def get_current_user(
@@ -2320,9 +2320,9 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Invalid token")
 ```
 
-## 12.5 External Service Integrations {#12.5-integrations}
+## 12.5 External Service Integrations
 
-#### 12.5.1 Google Places API (Phase 7) {#12.5.1-google-places}
+#### 12.5.1 Google Places API (Phase 7)
 
 Integration with Google Places API (New) for venue discovery:
 
@@ -2339,7 +2339,7 @@ Integration with Google Places API (New) for venue discovery:
 - `GET /api/v1/venues/{place_id}` - Get venue details
 - `GET /api/v1/venues/{place_id}/photos` - Get venue photos
 
-#### 12.5.2 AWS SES Email Service (Phase 5) {#12.5.2-aws-ses}
+#### 12.5.2 AWS SES Email Service (Phase 5)
 
 Email delivery via AWS Simple Email Service:
 
@@ -2357,11 +2357,11 @@ Email delivery via AWS Simple Email Service:
 - Delivery tracking via EmailLog model
 - Bounce and complaint handling
 
-## 12.6 Infrastructure Implementation {#12.6-infrastructure}
+## 12.6 Infrastructure Implementation
 
 The Party-Time application is deployed on AWS using enterprise-grade infrastructure designed to showcase DevOps best practices. The infrastructure was implemented incrementally across 8 phases, with each phase independently deployable and building upon previous work. This section provides a comprehensive overview of the cloud architecture, deployment strategies, security measures, and operational practices.
 
-### 12.6.1 Infrastructure Overview {#12.6.1-overview}
+### 12.6.1 Infrastructure Overview
 
 The AWS infrastructure follows cloud-native design principles with a focus on high availability, security, scalability, and cost optimization. The architecture leverages managed AWS services to minimize operational overhead while maintaining enterprise-level reliability.
 
@@ -2386,7 +2386,7 @@ The architecture diagram above illustrates the complete AWS infrastructure, show
 
 ---
 
-### 12.6.2 Network Architecture {#12.6.2-network}
+### 12.6.2 Network Architecture
 
 The foundation of the infrastructure is a properly segmented Virtual Private Cloud (VPC) that isolates resources and controls traffic flow across multiple Availability Zones.
 
@@ -2426,7 +2426,7 @@ The diagram above shows the VPC layout with its three-tier subnet architecture, 
 
 ---
 
-### 12.6.3 Request Flow Architecture {#12.6.3-request-flow}
+### 12.6.3 Request Flow Architecture
 
 Understanding how user requests traverse the infrastructure is critical for debugging, performance optimization, and security analysis. Each request passes through multiple layers before reaching the application.
 
@@ -2482,7 +2482,7 @@ The request flow diagram illustrates the complete journey of a user request from
 
 ---
 
-### 12.6.4 Security Architecture {#12.6.4-security}
+### 12.6.4 Security Architecture
 
 Security is implemented as a defense-in-depth strategy with five distinct layers. Each layer provides specific protections, and together they create a comprehensive security posture.
 
@@ -2551,7 +2551,7 @@ The security architecture diagram shows how the five security layers work togeth
 
 ---
 
-### 12.6.5 CI/CD Pipeline {#12.6.5-cicd}
+### 12.6.5 CI/CD Pipeline
 
 Continuous Integration and Continuous Deployment are implemented using GitHub Actions with secure AWS authentication via OIDC (no long-lived access keys).
 
@@ -2611,7 +2611,7 @@ The CI/CD diagram shows the complete pipeline from code commit through testing, 
 
 ---
 
-### 12.6.6 Blue-Green Deployment {#12.6.6-blue-green}
+### 12.6.6 Blue-Green Deployment
 
 Zero-downtime deployments are achieved using a blue-green deployment strategy with ECS and Application Load Balancer target groups.
 
@@ -2664,7 +2664,7 @@ The blue-green deployment diagram illustrates the three phases of deployment: be
 
 ---
 
-### 12.6.7 Monitoring & Observability {#12.6.7-monitoring}
+### 12.6.7 Monitoring & Observability
 
 Comprehensive observability is implemented through metrics, logs, traces, and synthetic monitoring to ensure rapid issue detection and resolution.
 
@@ -2728,7 +2728,7 @@ The monitoring diagram shows the complete observability stack including CloudWat
 
 ---
 
-### 12.6.8 Disaster Recovery & Backup {#12.6.8-disaster-recovery}
+### 12.6.8 Disaster Recovery & Backup
 
 A comprehensive backup and disaster recovery strategy ensures data protection and business continuity.
 
@@ -2788,7 +2788,7 @@ The disaster recovery diagram shows the backup flows, retention policies, cross-
 
 ---
 
-### 12.6.9 Cost Optimization {#12.6.9-cost}
+### 12.6.9 Cost Optimization
 
 Cost optimization is built into the infrastructure design from the start, balancing reliability requirements with budget constraints.
 
@@ -2853,7 +2853,7 @@ The cost optimization diagram illustrates the three categories of savings (immed
 
 ---
 
-### 12.6.10 Terraform Infrastructure as Code {#12.6.10-terraform}
+### 12.6.10 Terraform Infrastructure as Code
 
 All infrastructure is defined as code using Terraform, enabling version control, peer review, and reproducible deployments.
 
@@ -2921,9 +2921,9 @@ infrastructure/terraform/
 4. **Apply**: `terraform apply` executes changes
 5. **Verify**: Outputs validated against expected values
 
-## 12.7 Performance Optimizations {#12.7-performance}
+## 12.7 Performance Optimizations
 
-#### 12.7.1 Frontend Optimizations (Phase 9) {#12.7.1-frontend-perf}
+#### 12.7.1 Frontend Optimizations (Phase 9)
 
 | Optimization       | Implementation            | Impact                 |
 | ------------------ | ------------------------- | ---------------------- |
@@ -2933,7 +2933,7 @@ infrastructure/terraform/
 | Response caching   | React Query staleTime     | Reduced API calls      |
 | Web Vitals         | LCP, INP, CLS tracking    | Performance monitoring |
 
-#### 12.7.2 Backend Optimizations {#12.7.2-backend-perf}
+#### 12.7.2 Backend Optimizations
 
 | Optimization       | Implementation           | Impact                 |
 | ------------------ | ------------------------ | ---------------------- |
@@ -2943,7 +2943,7 @@ infrastructure/terraform/
 | Async processing   | Celery task queue        | Non-blocking emails    |
 | Database indexes   | Strategic index creation | Faster queries         |
 
-## 12.8 Implementation Statistics {#12.8-statistics}
+## 12.8 Implementation Statistics
 
 **Codebase Metrics**:
 
@@ -2976,11 +2976,11 @@ infrastructure/terraform/
 | 10.8      | Production         | Pending  |
 | 11        | Chat & AI          | Deferred |
 
-# 13.0 Testing and Integration {#13.0-testing-and-integration}
+# 13.0 Testing and Integration
 
 This section documents the comprehensive testing strategy implemented for the Party-Time application, covering unit tests, integration tests, end-to-end tests, and the continuous integration pipeline that ensures code quality throughout the development lifecycle.
 
-## 13.1 Testing Strategy Overview {#13.1-testing-overview}
+## 13.1 Testing Strategy Overview
 
 The Party-Time application employs a multi-layered testing approach to ensure reliability, maintainability, and correctness across all system components.
 
@@ -2995,9 +2995,9 @@ The Party-Time application employs a multi-layered testing approach to ensure re
 
 **Total Tests: 1,182 passing (85.6% pass rate)**
 
-## 13.2 Frontend Testing {#13.2-frontend-testing}
+## 13.2 Frontend Testing
 
-#### 13.2.1 Unit Testing with Jest {#13.2.1-jest}
+#### 13.2.1 Unit Testing with Jest
 
 Frontend unit tests use Jest with React Testing Library for component testing.
 
@@ -3045,7 +3045,7 @@ describe("EventCard", () => {
 });
 ```
 
-#### 13.2.2 Integration Testing {#13.2.2-integration}
+#### 13.2.2 Integration Testing
 
 Integration tests verify component interactions and data flow.
 
@@ -3072,7 +3072,7 @@ export const createMockBudgetCategory = (overrides = {}) => ({
 });
 ```
 
-#### 13.2.3 End-to-End Testing with Playwright {#13.2.3-playwright}
+#### 13.2.3 End-to-End Testing with Playwright
 
 Playwright tests validate complete user workflows across browsers.
 
@@ -3104,9 +3104,9 @@ export default defineConfig({
 | RSVP Submission    | Access link → Fill form → Submit                | Response recorded, confirmation shown |
 | Seating Assignment | Open editor → Drag guest → Drop on table        | Assignment persisted                  |
 
-## 13.3 Backend Testing {#13.3-backend-testing}
+## 13.3 Backend Testing
 
-#### 13.3.1 Unit Testing with pytest {#13.3.1-pytest}
+#### 13.3.1 Unit Testing with pytest
 
 Backend tests use pytest with async support for testing FastAPI endpoints and business logic.
 
@@ -3130,7 +3130,7 @@ addopts = -v --cov=app --cov-report=html
 | Models     | 6     | 80+   | Database model behavior              |
 | Schemas    | 5     | 50+   | Pydantic validation rules            |
 
-#### 13.3.2 API Integration Tests {#13.3.2-api-integration}
+#### 13.3.2 API Integration Tests
 
 API tests verify endpoint behavior with database interactions.
 
@@ -3173,7 +3173,7 @@ class TestEventAPI:
         assert "page" in data
 ```
 
-#### 13.3.3 Complete Flow Tests (Phase 8) {#13.3.3-flow-tests}
+#### 13.3.3 Complete Flow Tests (Phase 8)
 
 End-to-end backend tests validate complex workflows across multiple services.
 
@@ -3216,9 +3216,9 @@ class TestGuestManagement:
             assert len(guest["rsvp_token"]) == 8
 ```
 
-## 13.4 Test Infrastructure {#13.4-test-infrastructure}
+## 13.4 Test Infrastructure
 
-#### 13.4.1 Test Database Setup {#13.4.1-test-db}
+#### 13.4.1 Test Database Setup
 
 Tests use isolated PostgreSQL databases to ensure test independence.
 
@@ -3238,7 +3238,7 @@ async def test_db():
         await conn.run_sync(Base.metadata.drop_all)
 ```
 
-#### 13.4.2 Mock Services {#13.4.2-mocks}
+#### 13.4.2 Mock Services
 
 External services are mocked during testing to ensure reliability and speed.
 
@@ -3260,7 +3260,7 @@ def mock_ses_client(mocker):
     return mock
 ```
 
-#### 13.4.3 Test Fixtures {#13.4.3-fixtures}
+#### 13.4.3 Test Fixtures
 
 Reusable fixtures provide consistent test data across test files.
 
@@ -3296,9 +3296,9 @@ async def sample_event(test_db, authenticated_user):
     return event
 ```
 
-## 13.5 Continuous Integration {#13.5-ci}
+## 13.5 Continuous Integration
 
-#### 13.5.1 CI Pipeline Configuration {#13.5.1-ci-pipeline}
+#### 13.5.1 CI Pipeline Configuration
 
 The GitHub Actions CI pipeline runs on every pull request to ensure code quality.
 
@@ -3359,7 +3359,7 @@ jobs:
           format: "sarif"
 ```
 
-#### 13.5.2 Quality Gates {#13.5.2-quality-gates}
+#### 13.5.2 Quality Gates
 
 Pull requests must pass all quality gates before merging.
 
@@ -3374,9 +3374,9 @@ Pull requests must pass all quality gates before merging.
 | Security      | Trivy            | No high/critical vulnerabilities |
 | Build         | Next.js, Docker  | Successful                       |
 
-## 13.6 Deployment Testing {#13.6-deployment-testing}
+## 13.6 Deployment Testing
 
-#### 13.6.1 Smoke Tests {#13.6.1-smoke-tests}
+#### 13.6.1 Smoke Tests
 
 Post-deployment smoke tests verify production health.
 
@@ -3413,7 +3413,7 @@ for endpoint in "${ENDPOINTS[@]}"; do
 done
 ```
 
-#### 13.6.2 Synthetics Canaries {#13.6.2-synthetics}
+#### 13.6.2 Synthetics Canaries
 
 AWS Synthetics canaries continuously monitor production availability.
 
@@ -3426,7 +3426,7 @@ AWS Synthetics canaries continuously monitor production availability.
 | Login Flow   | 15 min   | Navigate login, verify form       |
 | Create Event | 30 min   | Complete event creation (staging) |
 
-#### 13.6.3 Production Monitoring Integration {#13.6.3-monitoring-integration}
+#### 13.6.3 Production Monitoring Integration
 
 Post-deployment verification includes extended health monitoring.
 
@@ -3443,7 +3443,7 @@ Post-deployment verification includes extended health monitoring.
     done
 ```
 
-## 13.7 Test Results Summary {#13.7-test-summary}
+## 13.7 Test Results Summary
 
 **Overall Test Statistics**:
 
@@ -3481,13 +3481,13 @@ Post-deployment verification includes extended health monitoring.
 | Docker build   | 4 minutes        |
 | **Total**      | **~12 minutes**  |
 
-# 14.0 Installation Instructions {#14.0-installation-instructions}
+# 14.0 Installation Instructions
 
 This section provides comprehensive instructions for installing and configuring the Party-Time application in both local development and cloud production environments.
 
-## 14.1 Prerequisites {#14.1-prerequisites}
+## 14.1 Prerequisites
 
-#### 14.1.1 System Requirements {#14.1.1-system-requirements}
+#### 14.1.1 System Requirements
 
 **Development Machine:**
 
@@ -3508,7 +3508,7 @@ This section provides comprehensive instructions for installing and configuring 
 | Git               | 2.x      | Version control         |
 | PostgreSQL Client | 16.x     | Database access         |
 
-#### 14.1.2 Account Requirements {#14.1.2-accounts}
+#### 14.1.2 Account Requirements
 
 **For Local Development:**
 
@@ -3521,9 +3521,9 @@ This section provides comprehensive instructions for installing and configuring 
 - Domain registered (e.g., celebration-time.com)
 - GitHub account with repository write access
 
-## 14.2 Local Development Setup {#14.2-local-setup}
+## 14.2 Local Development Setup
 
-#### 14.2.1 Clone Repository {#14.2.1-clone}
+#### 14.2.1 Clone Repository
 
 ```bash
 # Clone the repository
@@ -3531,7 +3531,7 @@ git clone https://github.com/your-org/party-time.git
 cd party-time
 ```
 
-#### 14.2.2 Start Docker Services {#14.2.2-docker}
+#### 14.2.2 Start Docker Services
 
 ```bash
 # Start Docker Desktop (macOS)
@@ -3548,7 +3548,7 @@ docker ps
 # def456         redis:7-alpine     0.0.0.0:6379->6379/tcp   party-time-redis
 ```
 
-#### 14.2.3 Backend Setup {#14.2.3-backend}
+#### 14.2.3 Backend Setup
 
 ```bash
 # Navigate to backend directory
@@ -3589,7 +3589,7 @@ python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 - Documentation: http://localhost:8000/docs
 - Health Check: http://localhost:8000/health
 
-#### 14.2.4 Frontend Setup {#14.2.4-frontend}
+#### 14.2.4 Frontend Setup
 
 ```bash
 # Navigate to frontend directory (new terminal)
@@ -3618,7 +3618,7 @@ npm run dev
 
 - Application: http://localhost:3000
 
-#### 14.2.5 Celery Workers (Optional) {#14.2.5-celery}
+#### 14.2.5 Celery Workers (Optional)
 
 For email functionality, start Celery workers:
 
@@ -3634,9 +3634,9 @@ source .venv/bin/activate
 celery -A app.celery_app beat --loglevel=info
 ```
 
-## 14.3 Environment Configuration {#14.3-environment-config}
+## 14.3 Environment Configuration
 
-#### 14.3.1 Backend Environment Variables {#14.3.1-backend-env}
+#### 14.3.1 Backend Environment Variables
 
 | Variable              | Required | Description                  | Example                             |
 | --------------------- | -------- | ---------------------------- | ----------------------------------- |
@@ -3650,7 +3650,7 @@ celery -A app.celery_app beat --loglevel=info
 | SES_FROM_EMAIL        | No       | Verified sender email        | noreply@domain.com                  |
 | GOOGLE_PLACES_API_KEY | No       | Google Places API key        | AIza...                             |
 
-#### 14.3.2 Frontend Environment Variables {#14.3.2-frontend-env}
+#### 14.3.2 Frontend Environment Variables
 
 | Variable              | Required | Description              | Example                |
 | --------------------- | -------- | ------------------------ | ---------------------- |
@@ -3662,9 +3662,9 @@ celery -A app.celery_app beat --loglevel=info
 | NEXT_PUBLIC_API_URL   | Yes      | Backend API URL          | http://localhost:8000  |
 | NEXT_PUBLIC_APP_NAME  | No       | Application display name | Party-Time             |
 
-## 14.4 Database Setup {#14.4-database}
+## 14.4 Database Setup
 
-#### 14.4.1 Local Database {#14.4.1-local-db}
+#### 14.4.1 Local Database
 
 The Docker Compose configuration automatically creates the database. To connect manually:
 
@@ -3680,7 +3680,7 @@ SELECT * FROM users;  # Query users
 \q                    # Exit
 ```
 
-#### 14.4.2 Database Migrations {#14.4.2-migrations}
+#### 14.4.2 Database Migrations
 
 ```bash
 cd backend
@@ -3699,9 +3699,9 @@ alembic downgrade -1
 alembic history
 ```
 
-## 14.5 AWS Infrastructure Deployment {#14.5-aws-deployment}
+## 14.5 AWS Infrastructure Deployment
 
-#### 14.5.1 Prerequisites for AWS {#14.5.1-aws-prereqs}
+#### 14.5.1 Prerequisites for AWS
 
 ```bash
 # Install AWS CLI
@@ -3722,7 +3722,7 @@ aws --version
 terraform --version
 ```
 
-#### 14.5.2 Bootstrap Terraform State {#14.5.2-bootstrap}
+#### 14.5.2 Bootstrap Terraform State
 
 ```bash
 cd infrastructure/scripts
@@ -3735,7 +3735,7 @@ cd infrastructure/scripts
 # Created DynamoDB table: party-time-terraform-locks
 ```
 
-#### 14.5.3 Deploy Infrastructure {#14.5.3-deploy-infra}
+#### 14.5.3 Deploy Infrastructure
 
 ```bash
 cd infrastructure/terraform/environments/staging
@@ -3757,7 +3757,7 @@ terraform apply
 # - RDS endpoint
 ```
 
-#### 14.5.4 Deploy Application {#14.5.4-deploy-app}
+#### 14.5.4 Deploy Application
 
 **Build and Push Docker Images:**
 
@@ -3806,7 +3806,7 @@ aws ecs update-service \
   --force-new-deployment
 ```
 
-#### 14.5.5 Configure DNS {#14.5.5-dns}
+#### 14.5.5 Configure DNS
 
 After deployment, configure your domain:
 
@@ -3820,9 +3820,9 @@ After deployment, configure your domain:
 - https://staging.celebration-time.com/docs
 - https://staging.celebration-time.com/health
 
-## 14.6 CI/CD Configuration {#14.6-cicd-config}
+## 14.6 CI/CD Configuration
 
-#### 14.6.1 GitHub Secrets {#14.6.1-github-secrets}
+#### 14.6.1 GitHub Secrets
 
 Configure the following secrets in GitHub repository settings:
 
@@ -3832,7 +3832,7 @@ Configure the following secrets in GitHub repository settings:
 | AWS_REGION         | Deployment region (us-east-1)      |
 | NOTIFICATION_EMAIL | Email for deployment notifications |
 
-#### 14.6.2 GitHub Environments {#14.6.2-github-envs}
+#### 14.6.2 GitHub Environments
 
 Create the following environments in GitHub:
 
@@ -3840,7 +3840,7 @@ Create the following environments in GitHub:
 2. **production**: Requires manual approval, deploy on push to `main`
 3. **infrastructure**: Requires manual approval for Terraform changes
 
-#### 14.6.3 Deployment Workflow {#14.6.3-deploy-workflow}
+#### 14.6.3 Deployment Workflow
 
 ```bash
 # Deploy to staging
@@ -3856,9 +3856,9 @@ git push origin main
 # Approve deployment in GitHub Actions UI
 ```
 
-## 14.7 Troubleshooting {#14.7-troubleshooting}
+## 14.7 Troubleshooting
 
-#### 14.7.1 Common Issues {#14.7.1-common-issues}
+#### 14.7.1 Common Issues
 
 **Database Connection Failed:**
 
@@ -3907,7 +3907,7 @@ aws ecs describe-services \
   --services party-time-staging-backend
 ```
 
-#### 14.7.2 Health Check Endpoints {#14.7.2-health-checks}
+#### 14.7.2 Health Check Endpoints
 
 | Endpoint | Expected Response | Checks                       |
 | -------- | ----------------- | ---------------------------- |
@@ -3915,7 +3915,7 @@ aws ecs describe-services \
 | /ready   | 200               | Full dependency check        |
 | /live    | 200               | Simple heartbeat             |
 
-#### 14.7.3 Logs and Debugging {#14.7.3-logs}
+#### 14.7.3 Logs and Debugging
 
 **Local Development:**
 
@@ -3937,7 +3937,7 @@ aws logs tail /ecs/party-time/staging/frontend --follow
 # Navigate to AWS Console > CloudWatch > Dashboards > party-time-staging-overview
 ```
 
-## 14.8 Quick Start Summary {#14.8-quick-start}
+## 14.8 Quick Start Summary
 
 **Local Development (5 commands):**
 
@@ -3965,13 +3965,13 @@ git push origin staging
 curl https://staging.celebration-time.com/health
 ```
 
-# 15.0 Recommendations for Enhancement {#15.0-recommendations-for-enhancement}
+# 15.0 Recommendations for Enhancement
 
 This section outlines recommended enhancements for future development of the Party-Time application, organized by priority and implementation complexity.
 
-## 15.1 High Priority Enhancements {#15.1-high-priority}
+## 15.1 High Priority Enhancements
 
-#### 15.1.1 AI-Powered Planning Assistant (Phase 11) {#15.1.1-ai-assistant}
+#### 15.1.1 AI-Powered Planning Assistant (Phase 11)
 
 **Description:** Integrate Claude AI to provide intelligent event planning assistance through conversational chat.
 
@@ -3992,7 +3992,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 3-4 weeks
 
-#### 15.1.2 Real-Time Chat System {#15.1.2-chat-system}
+#### 15.1.2 Real-Time Chat System
 
 **Description:** Enable direct communication between planners, vendors, and guests within the platform.
 
@@ -4013,7 +4013,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 4-5 weeks
 
-#### 15.1.3 Production Environment Deployment (Phase 10.8) {#15.1.3-production}
+#### 15.1.3 Production Environment Deployment (Phase 10.8)
 
 **Description:** Complete production environment deployment with enhanced reliability and performance.
 
@@ -4034,9 +4034,9 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 1-2 weeks
 
-## 15.2 Medium Priority Enhancements {#15.2-medium-priority}
+## 15.2 Medium Priority Enhancements
 
-#### 15.2.1 Vendor Marketplace {#15.2.1-vendor-marketplace}
+#### 15.2.1 Vendor Marketplace
 
 **Description:** Create a marketplace for event vendors (caterers, photographers, decorators) to list services.
 
@@ -4057,7 +4057,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 6-8 weeks
 
-#### 15.2.2 Payment Processing Integration {#15.2.2-payments}
+#### 15.2.2 Payment Processing Integration
 
 **Description:** Enable in-platform payment processing for vendor deposits and guest contributions.
 
@@ -4079,7 +4079,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 4-6 weeks
 
-#### 15.2.3 Native Mobile Applications {#15.2.3-mobile-apps}
+#### 15.2.3 Native Mobile Applications
 
 **Description:** Develop native iOS and Android applications for enhanced mobile experience.
 
@@ -4100,7 +4100,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 8-12 weeks
 
-#### 15.2.4 Photo and Video Sharing {#15.2.4-media-sharing}
+#### 15.2.4 Photo and Video Sharing
 
 **Description:** Allow guests to upload and share photos and videos from events.
 
@@ -4122,9 +4122,9 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 4-6 weeks
 
-## 15.3 Lower Priority Enhancements {#15.3-lower-priority}
+## 15.3 Lower Priority Enhancements
 
-#### 15.3.1 Calendar Integration {#15.3.1-calendar}
+#### 15.3.1 Calendar Integration
 
 **Description:** Synchronize events with external calendar applications.
 
@@ -4145,7 +4145,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 2-3 weeks
 
-#### 15.3.2 Multi-Language Support (i18n) {#15.3.2-i18n}
+#### 15.3.2 Multi-Language Support (i18n)
 
 **Description:** Internationalize the application for non-English speaking users.
 
@@ -4166,7 +4166,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 3-4 weeks
 
-#### 15.3.3 Advanced Analytics Dashboard {#15.3.3-analytics}
+#### 15.3.3 Advanced Analytics Dashboard
 
 **Description:** Provide detailed analytics for event planners on guest engagement and event metrics.
 
@@ -4187,7 +4187,7 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 2-3 weeks
 
-#### 15.3.4 Template Library {#15.3.4-templates}
+#### 15.3.4 Template Library
 
 **Description:** Provide pre-built event templates for common event types.
 
@@ -4208,9 +4208,9 @@ This section outlines recommended enhancements for future development of the Par
 
 **Estimated Effort:** 2-3 weeks
 
-## 15.4 Technical Improvements {#15.4-technical}
+## 15.4 Technical Improvements
 
-#### 15.4.1 Performance Optimization {#15.4.1-performance}
+#### 15.4.1 Performance Optimization
 
 **Recommendations:**
 
@@ -4220,7 +4220,7 @@ This section outlines recommended enhancements for future development of the Par
 - Add edge caching for API responses
 - Optimize database queries with query analysis
 
-#### 15.4.2 Security Enhancements {#15.4.2-security}
+#### 15.4.2 Security Enhancements
 
 **Recommendations:**
 
@@ -4230,7 +4230,7 @@ This section outlines recommended enhancements for future development of the Par
 - Add data encryption key rotation
 - Regular penetration testing schedule
 
-#### 15.4.3 Scalability Improvements {#15.4.3-scalability}
+#### 15.4.3 Scalability Improvements
 
 **Recommendations:**
 
@@ -4240,7 +4240,7 @@ This section outlines recommended enhancements for future development of the Par
 - Add CDN for dynamic content caching
 - Implement circuit breaker patterns for external services
 
-#### 15.4.4 Developer Experience {#15.4.4-devex}
+#### 15.4.4 Developer Experience
 
 **Recommendations:**
 
@@ -4250,7 +4250,7 @@ This section outlines recommended enhancements for future development of the Par
 - Implement feature flags for gradual rollouts
 - Add comprehensive API documentation with examples
 
-## 15.5 Enhancement Priority Matrix {#15.5-priority-matrix}
+## 15.5 Enhancement Priority Matrix
 
 | Enhancement           | Priority | Effort   | Impact   | Dependencies |
 | --------------------- | -------- | -------- | -------- | ------------ |
@@ -4266,7 +4266,7 @@ This section outlines recommended enhancements for future development of the Par
 | Analytics Dashboard   | Low      | 3 weeks  | Medium   | Production   |
 | Template Library      | Low      | 3 weeks  | Low      | None         |
 
-## 15.6 Implementation Roadmap {#15.6-roadmap}
+## 15.6 Implementation Roadmap
 
 **Phase 1 (Immediate - 1-2 months):**
 
@@ -4292,11 +4292,11 @@ This section outlines recommended enhancements for future development of the Par
 - Template marketplace
 - Enterprise features and white-labeling
 
-# 16.0 References {#16.0-references}
+# 16.0 References
 
 This section lists the technical references, documentation, and resources consulted during the development of the Party-Time application.
 
-## 16.1 Framework Documentation {#16.1-frameworks}
+## 16.1 Framework Documentation
 
 ### Frontend Technologies
 
@@ -4372,7 +4372,7 @@ This section lists the technical references, documentation, and resources consul
     - https://docs.celeryq.dev
     - Task Queues, Scheduling, Workers
 
-## 16.2 AWS Services Documentation {#16.2-aws}
+## 16.2 AWS Services Documentation
 
 13. **AWS Cognito Developer Guide**
 
@@ -4427,7 +4427,7 @@ This section lists the technical references, documentation, and resources consul
     - https://docs.aws.amazon.com/waf
     - Web Application Firewall, Managed Rules
 
-## 16.3 Infrastructure Tools {#16.3-infrastructure}
+## 16.3 Infrastructure Tools
 
 22. **Terraform Documentation**
 
@@ -4446,7 +4446,7 @@ This section lists the technical references, documentation, and resources consul
     - https://docs.github.com/en/actions
     - CI/CD, Workflows, OIDC
 
-## 16.4 Testing Frameworks {#16.4-testing}
+## 16.4 Testing Frameworks
 
 25. **Jest Documentation**
 
@@ -4471,7 +4471,7 @@ This section lists the technical references, documentation, and resources consul
     - https://docs.pytest.org
     - Python Testing, Fixtures, Plugins
 
-## 16.5 Third-Party APIs {#16.5-apis}
+## 16.5 Third-Party APIs
 
 29. **Google Places API Documentation**
 
@@ -4484,7 +4484,7 @@ This section lists the technical references, documentation, and resources consul
     - https://next-auth.js.org
     - Authentication, Providers, Callbacks
 
-## 16.6 Design and UI Libraries {#16.6-design}
+## 16.6 Design and UI Libraries
 
 31. **Fabric.js Documentation**
 
@@ -4503,7 +4503,7 @@ This section lists the technical references, documentation, and resources consul
     - https://www.chartjs.org/docs
     - Data Visualization, Charts
 
-## 16.7 Standards and Best Practices {#16.7-standards}
+## 16.7 Standards and Best Practices
 
 34. **OWASP Top 10**
 
@@ -4528,7 +4528,7 @@ This section lists the technical references, documentation, and resources consul
     - https://www.w3.org/WAI/WCAG21
     - Accessibility Standards
 
-## 16.8 Academic Resources {#16.8-academic}
+## 16.8 Academic Resources
 
 38. **Software Engineering Body of Knowledge (SWEBOK)**
 
@@ -4549,7 +4549,7 @@ This section lists the technical references, documentation, and resources consul
     - Prentice Hall
     - Software Architecture Principles
 
-## 16.9 AI Development Tools {#16.9-ai-tools}
+## 16.9 AI Development Tools
 
 The following AI tools were utilized during the development of this project for code generation, documentation, infrastructure planning, and content creation.
 
