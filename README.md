@@ -10,6 +10,7 @@
 > **[View Full Project Report](Deliverables/FINAL-REPORT.md)** - Comprehensive documentation including architecture, implementation details, and project analysis.
 >
 > **[Documentation](Deliverables/)** - Project deliverables and reports
+>
 > **Live Staging Environment**: [staging.celebration-time.com](https://staging.celebration-time.com)
 
 ## Table of Contents
