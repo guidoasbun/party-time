@@ -199,6 +199,17 @@ cd frontend
 npm run dev
 ```
 
+### Exploring Demo Pages
+
+Once the development environment is running, visit `/demo` to explore interactive component demos:
+
+- **Event Management** - Event cards, filters, and list components
+- **Seating & Layout** - Interactive seating charts and venue layouts
+- **UI Components** - Theme switching, stats cards, animations
+- **Navigation** - Sidebar and breadcrumb demos
+
+Access at: http://localhost:3000/demo
+
 ### Available Scripts
 
 **Frontend Commands**
