@@ -12,6 +12,7 @@
 > **[Documentation](Deliverables/)** - Project deliverables and reports
 >
 > **Live Staging Environment**: [staging.celebration-time.com](https://staging.celebration-time.com)
+> (Due to high AWS costs to run this deplyment, it is currently down)
 
 ## Table of Contents
 
